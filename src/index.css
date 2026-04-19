@@ -1,0 +1,44 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+@layer base {
+  body {
+    @apply bg-[#F9FAFB] text-slate-900 antialiased;
+  }
+}
+
+@layer components {
+  /* Industrial Card Pattern */
+  .industrial-card {
+    @apply bg-white border border-slate-200 rounded-[2rem] shadow-sm hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300;
+  }
+
+  /* Cyber Heading */
+  .cyber-heading {
+    @apply font-black italic uppercase tracking-tighter;
+  }
+
+  /* Micro Label */
+  .micro-label {
+    @apply text-[10px] font-black uppercase tracking-[0.2em] text-slate-400;
+  }
+}
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+

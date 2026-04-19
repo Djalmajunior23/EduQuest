@@ -1,0 +1,234 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Comprehensive user profile",
+      "type": "object",
+      "properties": {
+        "nome": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "perfil": { "type": "string", "enum": ["ADMIN", "PROFESSOR", "ALUNO", "COORDINATOR", "SUPPORT"] },
+        "status": { "type": "string", "enum": ["ATIVO", "INATIVO", "BLOQUEADO", "PENDENTE"] },
+        "telefone": { "type": "string" },
+        "fotoUrl": { "type": "string" },
+        "turmaId": { "type": "string" },
+        "courseId": { "type": "string" },
+        "saldoTokensIA": { "type": "number" },
+        "ultimoLogin": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "createdBy": { "type": "string" },
+        "updatedBy": { "type": "string" },
+        "observacoes": { "type": "string" }
+      },
+      "required": ["nome", "email", "perfil", "status"]
+    },
+    "UserProfile": {
+      "title": "Role Definition",
+      "type": "object",
+      "properties": {
+        "nomePerfil": { "type": "string" },
+        "descricao": { "type": "string" },
+        "permissoes": { "type": "array", "items": { "type": "string" } },
+        "status": { "type": "string", "enum": ["ATIVO", "INATIVO"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "AuditLog": {
+      "title": "System Audit Log",
+      "type": "object",
+      "properties": {
+        "acao": { "type": "string" },
+        "usuarioAfetadoId": { "type": "string" },
+        "usuarioResponsavelId": { "type": "string" },
+        "descricao": { "type": "string" },
+        "dataHora": { "type": "string", "format": "date-time" },
+        "detalhes": { "type": "object" }
+      }
+    },
+    "Invitation": {
+      "title": "User Invitation",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "perfil": { "type": "string" },
+        "turmaId": { "type": "string" },
+        "token": { "type": "string" },
+        "status": { "type": "string", "enum": ["ENVIADO", "ACEITO", "EXPIRADO"] },
+        "expiresAt": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "createdBy": { "type": "string" }
+      }
+    },
+    "Question": {
+      "title": "Question",
+      "description": "Pedagogical queston",
+      "type": "object",
+      "properties": {
+        "text": { "type": "string" },
+        "options": { "type": "array", "items": { "type": "string" } },
+        "correctOptionIndex": { "type": "number" },
+        "difficulty": { "type": "string", "enum": ["easy", "medium", "hard"] },
+        "bloomTaxonomy": { "type": "string" },
+        "ucId": { "type": "string" },
+        "conhecimentoTecnicoIds": { "type": "array", "items": { "type": "string" } },
+        "capacidadeTecnicaIds": { "type": "array", "items": { "type": "string" } },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "createdBy": { "type": "string" }
+      }
+    },
+    "SituationLearning": {
+      "title": "Situation of Learning (SA)",
+      "description": "Complex pedagogical challenge based on SENAI methodology",
+      "type": "object",
+      "properties": {
+        "titulo": { "type": "string" },
+        "contexto": { "type": "string" },
+        "problema_desafio": { "type": "string" },
+        "objetivo_geral": { "type": "string" },
+        "objetivos_especificos": { "type": "array", "items": { "type": "string" } },
+        "entregas": { "type": "array", "items": { "type": "object", "properties": { "descricao": { "type": "string" }, "prazo": { "type": "string" } } } },
+        "criterios_avaliacao": { "type": "array", "items": { "type": "string" } },
+        "rubricas": { "type": "array", "items": { "$ref": "Rubric" } },
+        "evidencias": { "type": "array", "items": { "type": "string" } },
+        "ucId": { "type": "string" },
+        "conhecimentoTecnicoIds": { "type": "array", "items": { "type": "string" } },
+        "capacidadeTecnicaIds": { "type": "array", "items": { "type": "string" } },
+        "recursos_necessarios": { "type": "array", "items": { "type": "string" } },
+        "cronograma": { "type": "string" },
+        "orientacoes_aluno": { "type": "string" },
+        "orientacoes_professor": { "type": "string" },
+        "status": { "type": "string", "enum": ["DRAFT", "PUBLISHED", "ARCHIVED"] },
+        "isTemplate": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "createdBy": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["titulo", "contexto", "problema_desafio", "ucId", "status"]
+    },
+    "Rubric": {
+      "title": "Rubric",
+      "type": "object",
+      "properties": {
+        "criterio": { "type": "string" },
+        "niveis": { 
+          "type": "array", 
+          "items": { 
+            "type": "object", 
+            "properties": { 
+              "titulo": { "type": "string" }, 
+              "descricao": { "type": "string" }, 
+              "valor": { "type": "number" } 
+            } 
+          } 
+        }
+      }
+    },
+    "AIUsage": {
+      "title": "AI Usage Log",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "prompt": { "type": "string" },
+        "response": { "type": "string" },
+        "tokensConsumed": { "type": "number" },
+        "actionType": { "type": "string", "enum": ["EXPLANATION", "STUDY_GUIDE", "ERROR_HELP", "CONCEPT"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Recommendation": {
+      "title": "AI Recommendation",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "type": { "type": "string", "enum": ["REINFORCEMENT", "NEXT_STEP", "REVISION", "INTERVENTION"] },
+        "read": { "boolean": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "PedagogicalMaterial": {
+      "title": "Pedagogical Material",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "type": { "type": "string", "enum": ["LESSON_PLAN", "STUDY_GUIDE", "PRACTICAL_ACTIVITY", "CASE_STUDY"] },
+        "ucId": { "type": "string" },
+        "createdBy": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "ClassAnalysis": {
+      "title": "Class Pedagogical Analysis",
+      "type": "object",
+      "properties": {
+        "turmaId": { "type": "string" },
+        "summary": { "type": "string" },
+        "criticalPoints": { "type": "array", "items": { "type": "string" } },
+        "suggestedActions": { "type": "array", "items": { "type": "string" } },
+        "analyzedAt": { "type": "string", "format": "date-time" },
+        "createdBy": { "type": "string" }
+      }
+    },
+    "BIIndicator": {
+      "title": "BI Indicator",
+      "type": "object",
+      "properties": {
+        "targetId": { "type": "string" },
+        "type": { "type": "string", "enum": ["STUDENT", "CLASS", "OVERALL"] },
+        "metrics": {
+          "type": "object",
+          "properties": {
+            "avgPerformance": { "type": "number" },
+            "completionRate": { "type": "number" },
+            "engagementScore": { "type": "number" },
+            "tokensConsumed": { "type": "number" },
+            "riskLevel": { "type": "string", "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"] }
+          }
+        },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "firestore": {
+    "usuarios": {
+      "schema": "User",
+      "description": "Collection of all users in the system"
+    },
+    "questoes": {
+      "schema": "Question",
+      "description": "Bank of pedagogical questions"
+    },
+    "situacoes_aprendizagem": {
+      "schema": "SituationLearning",
+      "description": "Situations of Learning created by professors"
+    },
+    "cursos": { "schema": "object", "description": "Educational courses" },
+    "turmas": { "schema": "object", "description": "Class groups" },
+    "unidades_curriculares": { "schema": "object", "description": "Curricular units" },
+    "conhecimentos_tecnicos": { "schema": "object", "description": "Technical knowledge definitions" },
+    "capacidades_tecnicas": { "schema": "object", "description": "Technical capability definitions" },
+    "simulados": { "schema": "object", "description": "Simulations sessions" },
+    "atividades": { "schema": "object", "description": "Class activities" },
+    "exercicios": { "schema": "object", "description": "Class exercises" },
+    "trilhas_aprendizagem": { "schema": "object", "description": "Learning paths" },
+    "respostas": { "schema": "object", "description": "Individual answers to questions" },
+    "tentativas": { "schema": "object", "description": "Session attempts" },
+    "resultados": { "schema": "object", "description": "Consolidated results" },
+    "indicadores_bi": { "schema": "BIIndicator", "description": "Statistical indicators for BI" },
+    "planos_estudo": { "schema": "object", "description": "A-generated study plans" },
+    "recomendacoes": { "schema": "object", "description": "Personalized AI recommendations" },
+    "notificacoes": { "schema": "object", "description": "User notifications" },
+    "gamificacao": { "schema": "object", "description": "User points and streak data" },
+    "conquistas": { "schema": "object", "description": "User achievements" },
+    "ranking": { "schema": "object", "description": "Global and class rankings" },
+    "tokens_ia": { "schema": "object", "description": "Token balance and configuration" },
+    "uso_ia": { "schema": "object", "description": "Logs of AI usage" },
+    "materiais_apoio": { "schema": "object", "description": "Reference materials" },
+    "relatorios": { "schema": "object", "description": "Educational reports" },
+    "logs": { "schema": "object", "description": "System event logs" },
+    "configuracoes": { "schema": "object", "description": "System-wide settings" }
+  }
+}
