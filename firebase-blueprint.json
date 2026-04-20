@@ -691,16 +691,53 @@
         "updatedAt": { "type": "string", "format": "date-time" }
       }
     },
-    "GamificationLog": {
-       "title": "Log de Gamificação",
-       "type": "object",
-       "properties": {
-         "id": { "type": "string" },
-         "alunoId": { "type": "string" },
-         "mensagem": { "type": "string" },
-         "createdAt": { "type": "string", "format": "date-time" }
-       }
-    }
+    "Laboratorio": {
+      "title": "Laboratório Prático",
+      "type": "object",
+      "properties": {
+        "titulo": { "type": "string" },
+        "descricao": { "type": "string" },
+        "contexto": { "type": "string" },
+        "objetivoGeral": { "type": "string" },
+        "objetivosEspecificos": { "type": "array", "items": { "type": "string" } },
+        "cursoId": { "type": "string" },
+        "turmaId": { "type": "string" },
+        "unidadeCurricularId": { "type": "string" },
+        "conhecimentoTecnicoIds": { "type": "array", "items": { "type": "string" } },
+        "capacidadeTecnicaIds": { "type": "array", "items": { "type": "string" } },
+        "nivelDificuldade": { "type": "string", "enum": ["INICIANTE", "INTERMEDIARIO", "AVANCADO"] },
+        "tempoEstimado": { "type": "number" },
+        "preRequisitos": { "type": "array", "items": { "type": "string" } },
+        "materiaisNecessarios": { "type": "array", "items": { "type": "string" } },
+        "ferramentasNecessarias": { "type": "array", "items": { "type": "string" } },
+        "instrucoes": { "type": "string" },
+        "checklist": { "type": "array", "items": { "type": "string" } },
+        "criteriosAvaliacao": { "type": "array", "items": { "type": "string" } },
+        "rubricaId": { "type": "string" },
+        "entregaveis": { "type": "array", "items": { "type": "string" } },
+        "evidenciasEsperadas": { "type": "array", "items": { "type": "string" } },
+        "versaoProfessor": { "type": "string" },
+        "versaoAluno": { "type": "string" },
+        "status": { "type": "string", "enum": ["DRAFT", "PUBLISHED", "ARCHIVED"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "createdBy": { "type": "string" },
+        "tenantId": { "type": "string" }
+      }
+    },
+    "Execution": {
+      "title": "Execução de Laboratório",
+      "type": "object",
+      "properties": {
+        "laboratorioId": { "type": "string" },
+        "alunoId": { "type": "string" },
+        "status": { "type": "string", "enum": ["STARTED", "SUBMITTED", "COMPLETED"] },
+        "progresso": { "type": "number" },
+        "dataInicio": { "type": "string", "format": "date-time" },
+        "dataFim": { "type": "string", "format": "date-time" },
+        "tenantId": { "type": "string" }
+      }
+    },
   },
   "firestore": {
     "usuarios": {
@@ -725,6 +762,8 @@
     "conhecimentos_tecnicos": { "schema": "object", "description": "Technical knowledge definitions" },
     "capacidades_tecnicas": { "schema": "object", "description": "Technical capability definitions" },
     "gamificacao": { "schema": "GamificationProfile", "description": "Resumo gamificado por aluno" },
+    "laboratorios_praticos": { "schema": "Laboratorio", "description": "Collection of practical labs" },
+    "execucoes_laboratorio": { "schema": "Execution", "description": "Lab execution records" },
     "trilhas_gamificadas": { "schema": "GamificationTrack", "description": "Trilhas de aprendizado gamificadas" },
     "fases_trilha": { "schema": "TrackPhase", "description": "Fases que compõem uma trilha" },
     "missoes": { "schema": "GamificationMission", "description": "Missões diárias e especiais" },

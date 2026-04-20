@@ -20,6 +20,8 @@ import { db } from './lib/firebase';
 import { StudentGamification } from './modules/student/gamification';
 import ProfessorGamification from './modules/professor/gamification/ProfessorGamification';
 import AdminGamification from './modules/admin/gamification/AdminGamification';
+import Missions from './pages/admin/Missions';
+import LabDashboard from './modules/professor/laboratorios/LabDashboard';
 import { StudentAITutor } from './modules/student/ai-tutor';
 import { ProfessorAIHub } from './modules/professor/ai-hub';
 import UserManager from './pages/admin/UserManager';
@@ -143,11 +145,25 @@ export default function App() {
                 </Layout>
               </AuthGuard>
             } />
+            <Route path="/professor/laboratorios" element={
+              <AuthGuard requiredRole="PROFESSOR">
+                <Layout>
+                  <LabDashboard />
+                </Layout>
+              </AuthGuard>
+            } />
 
             <Route path="/admin/gamification" element={
               <AuthGuard requiredRole="ADMIN">
                 <Layout>
                   <AdminGamification />
+                </Layout>
+              </AuthGuard>
+            } />
+            <Route path="/admin/gamification/missions" element={
+              <AuthGuard requiredRole="ADMIN">
+                <Layout>
+                  <Missions />
                 </Layout>
               </AuthGuard>
             } />

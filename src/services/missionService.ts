@@ -107,9 +107,10 @@ export const missionService = {
   /**
    * Busca todas as missões ativas e anexa o progresso do aluno.
    */
-  async getMissionsWithProgress(userId: string) {
+  async getMissionsWithProgress(userId: string, tenantId: string) {
     try {
-      const missionsSnap = await getDocs(collection(db, 'gamificacao_missoes'));
+      const q = query(collection(db, 'gamificacao_missoes'), where('tenantId', '==', tenantId));
+      const missionsSnap = await getDocs(q);
       const missions = missionsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Mission));
       
       const progressQuery = query(collection(db, 'gamificacao_progresso_missoes'), where('userId', '==', userId));

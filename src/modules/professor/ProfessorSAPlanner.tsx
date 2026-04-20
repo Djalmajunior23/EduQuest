@@ -11,6 +11,22 @@ export function ProfessorSAPlanner() {
   const [tema, setTema] = useState('');
   const [contexto, setContexto] = useState('');
   const [curso, setCurso] = useState('Técnico em Desenvolvimento de Sistemas');
+
+  const saExamples = [
+      { id: '1', icon: BookOpen, titulo: "API E-commerce", tipo: 'Back-end', tema: "API REST em Node.js", contexto: "Alunos iniciantes em Back-end, foco em rotas de produtos.", curso: "Técnico em Desenvolvimento de Sistemas" },
+      { id: '2', icon: Target, titulo: "Dashboard Dados", tipo: 'Front-end', tema: "Visualização com D3.js", contexto: "Turma de Front-end, nível intermediário.", curso: "Informática para Internet" },
+      { id: '3', icon: Users, titulo: "Firewall Linux", tipo: 'Redes', tema: "Regras iptables", contexto: "Introdução à segurança de redes.", curso: "Técnico em Cibersegurança" },
+      { id: '4', icon: Sparkles, titulo: "Chatbot IA", tipo: 'Inteligência', tema: "Integração LLM", contexto: "Projeto integrador de final de curso.", curso: "Técnico em Desenvolvimento de Sistemas" },
+   ];
+
+  const [activeExampleId, setActiveExampleId] = useState<string | null>(null);
+
+  const loadExample = (ex: any) => {
+     setActiveExampleId(ex.id);
+     setTema(ex.tema);
+     setContexto(ex.contexto);
+     setCurso(ex.curso);
+   };
   
   const [loading, setLoading] = useState(false);
   const [generatedSA, setGeneratedSA] = useState('');
@@ -106,7 +122,7 @@ A estrutura de sua resposta em Markdown DEVE conter:
                    />
                  </div>
 
-                 <button
+                <button
                    onClick={handleGenerate}
                    disabled={loading || !tema}
                    className={cn(
@@ -120,6 +136,32 @@ A estrutura de sua resposta em Markdown DEVE conter:
                      <><Sparkles className="w-5 h-5" /> Gerar Situação (SA)</>
                    )}
                  </button>
+
+                 <div className="mt-8 space-y-3">
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-widest pl-2">Exemplos de SA Geradas</label>
+                    {saExamples.map((ex) => {
+                      const Icon = ex.icon;
+                      return (
+                      <button 
+                         key={ex.id}
+                         onClick={() => loadExample(ex)}
+                         className={cn(
+                           "w-full text-left p-4 rounded-xl border transition-all group flex items-start gap-4",
+                           activeExampleId === ex.id 
+                            ? "bg-indigo-50 border-indigo-200"
+                            : "bg-slate-50 border-slate-200 hover:border-indigo-300"
+                         )}
+                      >
+                         <div className={cn("p-2 rounded-lg", activeExampleId === ex.id ? "bg-indigo-100 text-indigo-700" : "bg-slate-100 text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-600")}>
+                           <Icon className="w-5 h-5" />
+                         </div>
+                         <div className="flex-1">
+                           <p className="text-xs font-black text-slate-900 group-hover:text-indigo-600">{ex.titulo}</p>
+                           <p className="text-[10px] text-slate-500 mt-0.5">{ex.tipo}</p>
+                         </div>
+                      </button>
+                    )})}
+                 </div>
 
                  <div className="mt-4 p-4 rounded-xl bg-orange-50 border border-orange-100 flex items-start gap-3">
                     <span className="text-xl">⚠️</span>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { 
   Shield, 
@@ -12,11 +13,13 @@ import {
   Activity,
   Layers,
   Settings2,
-  FileJson
+  FileJson,
+  ListTodo
 } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 
 export default function AdminGamification() {
+  const navigate = useNavigate();
   return (
     <div className="space-y-12 pb-20">
       <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-slate-200 pb-10">
@@ -62,6 +65,7 @@ export default function AdminGamification() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                {[
                  { title: 'Motor de XP & Níveis', desc: 'Configure as fórmulas de progressão (Logarítmica/Linear) e curvas de dificuldade.', icon: Settings2 },
+                 { title: 'Gestão de Missões', desc: 'Cadastre e gerencie as missões disponíveis para os alunos na plataforma.', icon: ListTodo, link: '/admin/gamification/missions' },
                  { title: 'Workflows de Automação', desc: 'Gerencie as conexões n8n para eventos de gamificação (webhook/firebase).', icon: Globe },
                  { title: 'Loja de Recompensas', desc: 'Defina custos, tipos de tokens e inventário global de prêmios.', icon: LayoutGrid },
                  { title: 'BI & Analytics Center', desc: 'Integre com PowerBI/Superset para dashboards gerenciais avançados.', icon: PieChart },
@@ -70,6 +74,7 @@ export default function AdminGamification() {
                    key={i}
                    whileHover={{ y: -5 }}
                    className="bg-white border border-slate-200 p-8 rounded-[2.5rem] shadow-sm hover:shadow-xl transition-all cursor-pointer group"
+                   onClick={() => item.link && navigate(item.link)}
                  >
                     <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-indigo-600 group-hover:text-white transition-all">
                        <item.icon className="w-6 h-6" />

@@ -177,15 +177,30 @@ export default function QuestionBank() {
     });
     setIsModalOpen(true);
   };
+  const [generatedQuestions, setGeneratedQuestions] = useState<any[]>([]);
+
   const handleAIGenerate = async () => {
     if (!aiPrompt) return;
     setIsGenerating(true);
+    setGeneratedQuestions([]);
     try {
       const generated = await generateQuestions(aiPrompt);
+      setGeneratedQuestions(generated);
+    } catch (error) {
+      console.error('Error generating AI questions:', error);
+      alert('Erro ao gerar questões com IA. Tente novamente.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleSaveAIQuestions = async () => {
+    setIsGenerating(true);
+    try {
       const batch = writeBatch(db);
       const newQuestions: any[] = [];
 
-      generated.forEach((q: any) => {
+      generatedQuestions.forEach((q: any) => {
         const qRef = doc(collection(db, 'questions'));
         const qData = {
           ...q,
@@ -202,9 +217,10 @@ export default function QuestionBank() {
       setQuestions([...newQuestions, ...questions]);
       setIsAIModalOpen(false);
       setAiPrompt('');
+      setGeneratedQuestions([]);
     } catch (error) {
-      console.error('Error generating AI questions:', error);
-      alert('Erro ao gerar questões com IA. Tente novamente.');
+      console.error('Error saving AI questions:', error);
+      alert('Erro ao salvar questões geradas.');
     } finally {
       setIsGenerating(false);
     }
@@ -526,37 +542,67 @@ export default function QuestionBank() {
               </div>
 
               <div className="space-y-6">
-                <p className="text-slate-600 text-sm">
-                  Descreva o tema ou competência para gerar questões automaticamente com Taxonomia de Bloom.
-                </p>
-                
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-2">Tema / Competência</label>
-                  <textarea 
-                    value={aiPrompt}
-                    onChange={e => setAiPrompt(e.target.value)}
-                    placeholder="Ex: Fundamentos de Redes de Computadores, Protocolo HTTP, Lógica de Programação com JavaScript..."
-                    className="w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none min-h-[100px]"
-                  />
-                </div>
+                {!generatedQuestions.length ? (
+                  <>
+                    <p className="text-slate-600 text-sm">
+                      Descreva o tema ou competência para gerar questões automaticamente com Taxonomia de Bloom.
+                    </p>
+                    
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 mb-2">Tema / Competência</label>
+                      <textarea 
+                        value={aiPrompt}
+                        onChange={e => setAiPrompt(e.target.value)}
+                        placeholder="Ex: Fundamentos de Redes de Computadores, Protocolo HTTP, Lógica de Programação com JavaScript..."
+                        className="w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none min-h-[100px]"
+                      />
+                    </div>
 
-                <button 
-                  onClick={handleAIGenerate}
-                  disabled={isGenerating || !aiPrompt}
-                  className="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200 flex items-center justify-center gap-2 disabled:opacity-50"
-                >
-                  {isGenerating ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      Gerando Questões...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-5 h-5" />
-                      Gerar 5 Questões
-                    </>
-                  )}
-                </button>
+                    <button 
+                      onClick={handleAIGenerate}
+                      disabled={isGenerating || !aiPrompt}
+                      className="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200 flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                      {isGenerating ? (
+                        <>
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          Gerando Questões...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-5 h-5" />
+                          Gerar 5 Questões
+                        </>
+                      )}
+                    </button>
+                  </>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="max-h-[400px] overflow-y-auto space-y-4 pr-2">
+                       {generatedQuestions.map((q, idx) => (
+                         <div key={idx} className="p-4 border border-slate-200 rounded-xl bg-slate-50">
+                           <p className="font-bold text-slate-900 mb-1">{q.text}</p>
+                           <p className="text-xs text-slate-500">Dificuldade: {q.difficulty}, Bloom: {q.bloomTaxonomy}</p>
+                         </div>
+                       ))}
+                    </div>
+                    <div className="flex gap-4">
+                      <button 
+                        onClick={() => setGeneratedQuestions([])}
+                        className="flex-1 bg-slate-200 text-slate-700 py-3 rounded-xl font-bold hover:bg-slate-300 transition-colors"
+                      >
+                        Descartar
+                      </button>
+                      <button 
+                        onClick={handleSaveAIQuestions}
+                        disabled={isGenerating}
+                        className="flex-1 bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200"
+                      >
+                        {isGenerating ? 'Salvando...' : 'Salvar Questões'}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </motion.div>
           </div>

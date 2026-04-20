@@ -37,7 +37,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
     // Listens to 1:1 Notifications. (Broadcast filtering will be left for Phase 2/App integration).
     const q = query(
-      collection(db, 'notificacoes'),
+      collection(db, 'notificacoes_gamificacao'),
       where('userId', '==', user.uid),
       orderBy('createdAt', 'desc')
     );
@@ -52,7 +52,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   const markAsRead = async (id: string) => {
     try {
-      await updateDoc(doc(db, 'notificacoes', id), { read: true });
+      await updateDoc(doc(db, 'notificacoes_gamificacao', id), { read: true });
     } catch (e) {
       console.error("Error marking notification as read:", e);
     }

@@ -49,7 +49,7 @@ export const adaptiveMissionService = {
   /**
    * Gera missões adaptativas personalizadas usando o Motor de IA.
    */
-  async generateAdaptiveMissions(userId: string, courseId: string) {
+  async generateAdaptiveMissions(userId: string, courseId: string, tenantId: string) {
     const profile = await this.determineStudentProfile(userId);
     const userSnap = await getDoc(doc(db, 'usuarios', userId));
     const userData = userSnap.exists() ? userSnap.data() : { nome: 'Aluno' };
@@ -100,7 +100,7 @@ export const adaptiveMissionService = {
     }
 
     // Limpa missões antigas pendentes/ativas (opcional, mas boa prática para evitar spam)
-    const oldQuery = query(collection(db, 'gamificacao_missoes_adaptativas'), where('userId', '==', userId), where('status', '==', 'ACTIVE'));
+    const oldQuery = query(collection(db, 'gamificacao_missoes_adaptativas'), where('userId', '==', userId), where('tenantId', '==', tenantId), where('status', '==', 'ACTIVE'));
     const oldSnap = await getDocs(oldQuery);
     for (const d of oldSnap.docs) {
       await updateDoc(doc(db, 'gamificacao_missoes_adaptativas', d.id), { status: 'EXPIRED' });
@@ -114,6 +114,7 @@ export const adaptiveMissionService = {
         ...m,
         id: missionRef.id,
         userId,
+        tenantId,
         courseId,
         status: 'ACTIVE',
         createdAt: serverTimestamp()
@@ -128,10 +129,11 @@ export const adaptiveMissionService = {
   /**
    * Busca as missões adaptativas ativas do aluno.
    */
-  async getActiveAdaptiveMissions(userId: string) {
+  async getActiveAdaptiveMissions(userId: string, tenantId: string) {
     const q = query(
       collection(db, 'gamificacao_missoes_adaptativas'), 
       where('userId', '==', userId),
+      where('tenantId', '==', tenantId),
       where('status', '==', 'ACTIVE')
     );
     const snap = await getDocs(q);

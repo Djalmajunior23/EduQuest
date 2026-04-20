@@ -128,11 +128,55 @@ export default function ProfessorAIHub() {
               </div>
            </section>
 
+           <section className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+              <div className="p-6 bg-slate-50 border-b border-slate-100">
+                <h2 className="text-xs font-black uppercase text-slate-500 tracking-widest flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-indigo-500" /> Inspiração para Prompts
+                </h2>
+              </div>
+              <div className="p-4 space-y-2">
+                 {[
+                   { t: "Plano Aula: Dev Web", p: "Crie um plano de aula sobre introdução ao React, focado em 'componentização'. Alunos: 15-18 anos, básico de JS." },
+                   { t: "Cibersegurança", p: "Gere 5 cenários práticos de ataque de engenharia social para alunos iniciarem análise de vulnerabilidades." },
+                   { t: "Rubrica: Projeto Node", p: "Crie uma rubrica de avaliação para um projeto prático de API Node.js seguindo requisitos de organização de rotas." }
+                 ].map((ex, i) => (
+                    <button 
+                      key={i} 
+                      onClick={() => setPrompt(ex.p)}
+                      className="w-full text-left p-3 rounded-xl bg-slate-50 border border-slate-100 hover:border-indigo-200 hover:bg-indigo-50 transition-all group"
+                    >
+                       <p className="text-[10px] font-black text-slate-900 group-hover:text-indigo-700">{ex.t}</p>
+                       <p className="text-[9px] text-slate-500 mt-1 line-clamp-2">{ex.p}</p>
+                    </button>
+                 ))}
+              </div>
+           </section>
+
            <section className="bg-blue-600 rounded-3xl p-6 text-white shadow-xl shadow-blue-100">
               <h3 className="font-black italic uppercase text-lg tracking-tighter mb-2">Dica Pro</h3>
               <p className="text-xs text-blue-100 leading-relaxed font-medium">
                 Seja específico nos KTs (Conhecimentos Técnicos) e CTs (Capacidades Técnicas) que deseja abordar para uma geração mais precisa.
               </p>
+           </section>
+
+           <section className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+              <div className="p-6 bg-slate-50 border-b border-slate-100">
+                <h2 className="text-xs font-black uppercase text-slate-500 tracking-widest flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-indigo-600" /> Dúvidas Frequentes (FAQ)
+                </h2>
+              </div>
+              <div className="p-4 space-y-4">
+                 {[
+                   { q: "Como melhorar meu prompt?", a: "Seja específico: defina o público, o objetivo de aprendizagem (Taxonomia de Bloom) e o contexto técnico." },
+                   { q: "A IA substitui o professor?", a: "Não, ela é uma ferramenta de produtividade. Você deve sempre revisar e editar o conteúdo gerado." },
+                   { q: "Como criar uma SA melhor?", a: "Forneça as competências, KTs, CTs e o cenário prático desejado." }
+                 ].map((faq, i) => (
+                    <div key={i} className="border-b border-slate-100 last:border-0 pb-2">
+                       <p className="text-[11px] font-black text-slate-900 mb-1">{faq.q}</p>
+                       <p className="text-[10px] text-slate-500">{faq.a}</p>
+                    </div>
+                 ))}
+              </div>
            </section>
         </aside>
 

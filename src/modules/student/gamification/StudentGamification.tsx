@@ -36,7 +36,8 @@ const DynamicIcon = ({ name, className }: { name: string, className?: string }) 
   return <IconComponent className={className} />;
 };
 import { useAuth } from '../../../lib/AuthContext';
-import { collection, query, orderBy, limit, onSnapshot, addDoc } from 'firebase/firestore';
+import { useTenant } from '../../../lib/TenantContext';
+import { collection, query, orderBy, limit, onSnapshot, addDoc, where } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
 import { missionService } from '../../../services/missionService';
 import { adaptiveMissionService, AdaptiveMission, StudentProfileType } from '../../../services/adaptiveMissionService';
@@ -58,6 +59,7 @@ type TabType = 'dashboard' | 'trilhas' | 'missoes' | 'desafios' | 'boss' | 'conq
 
 export default function StudentGamification() {
   const { profile, user } = useAuth();
+  const { tenant } = useTenant();
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [techProfile, setTechProfile] = useState<StudentProfileType>('INICIANTE_INSEGURO');
   const [missions, setMissions] = useState<MissionWithProgress[]>([]);
@@ -79,18 +81,18 @@ export default function StudentGamification() {
   ]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !tenant) return;
 
     // Real-time ranking fetch
-    const q = query(collection(db, 'ranking'), orderBy('xp', 'desc'), limit(10));
+    const q = query(collection(db, 'ranking'), where('tenantId', '==', tenant.id), orderBy('xp', 'desc'), limit(10));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setRanking(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
 
     // Initial missions load
     const loadMissions = async () => {
-      const data = await missionService.getMissionsWithProgress(user.uid);
-      const adaptiveData = await adaptiveMissionService.getActiveAdaptiveMissions(user.uid);
+      const data = await missionService.getMissionsWithProgress(user.uid, tenant.id);
+      const adaptiveData = await adaptiveMissionService.getActiveAdaptiveMissions(user.uid, tenant.id);
       setAdaptiveMissions(adaptiveData);
       
       // If no missions exist, seed some for demo if admin
@@ -413,8 +415,9 @@ export default function StudentGamification() {
                   <div className="flex items-center gap-3">
                     <button 
                       onClick={async () => {
-                         await adaptiveMissionService.generateAdaptiveMissions(user!.uid, 'DEV_ACADEMY');
-                         const fresh = await adaptiveMissionService.getActiveAdaptiveMissions(user!.uid);
+                         if (!tenant) return;
+                         await adaptiveMissionService.generateAdaptiveMissions(user!.uid, 'DEV_ACADEMY', tenant.id);
+                         const fresh = await adaptiveMissionService.getActiveAdaptiveMissions(user!.uid, tenant.id);
                          setAdaptiveMissions(fresh);
                       }}
                       className="bg-indigo-600/10 border border-indigo-500/20 text-indigo-400 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all flex items-center gap-2"

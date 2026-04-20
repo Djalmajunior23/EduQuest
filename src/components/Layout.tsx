@@ -63,7 +63,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   const adminMenuItems = [
     { icon: Settings2, label: 'Instucional Avançado', path: '/admin/institutional' },
-    { icon: Trophy, label: 'Gestão Gamificação', path: '/admin/gamification' },
+    { icon: Trophy, label: 'Gestão de Missões', path: '/admin/missions' },
     { icon: Lock, label: 'Auditoria e Logs', path: '/admin/audit' },
     { icon: Users, label: 'Usuários', path: '/admin/users' },
     { icon: GraduationCap, label: 'Cursos (Grades)', path: '/admin/courses' },
