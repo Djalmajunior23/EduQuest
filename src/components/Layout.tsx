@@ -9,6 +9,11 @@ import {
   BarChart3, 
   LogOut,
   GraduationCap,
+  Library,
+  Target,
+  Compass,
+  LineChart,
+  BrainCircuit,
   Menu,
   X,
   Trophy,
@@ -18,6 +23,7 @@ import {
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import LevelUpCelebration from './LevelUpCelebration';
+import { NotificationBell } from './NotificationBell';
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { profile, logout } = useAuth();
@@ -27,6 +33,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   const menuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/', roles: ['ALUNO', 'PROFESSOR', 'ADMIN'] },
+    { icon: Compass, label: 'Jornada Adaptativa', path: '/student/journey', roles: ['ALUNO', 'ADMIN'] },
+    { icon: BrainCircuit, label: 'Insights (BI IA)', path: '/professor/insights', roles: ['PROFESSOR', 'ADMIN', 'COORDINATOR'] },
     { icon: BookOpen, label: 'Simulados', path: '/exams', roles: ['ALUNO', 'PROFESSOR', 'ADMIN'] },
     { icon: Trophy, label: 'Gamificação', path: '/gamification', roles: ['ALUNO', 'ADMIN'] },
     { icon: Bot, label: 'Tutor IA', path: '/tutor-ia', roles: ['ALUNO', 'ADMIN'] },
@@ -39,6 +47,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   const adminMenuItems = [
     { icon: Users, label: 'Usuários', path: '/admin/users' },
+    { icon: GraduationCap, label: 'Cursos (Grades)', path: '/admin/courses' },
+    { icon: Library, label: 'Disciplinas (UCs)', path: '/admin/ucs' },
+    { icon: Target, label: 'Capacidades (Habilidades)', path: '/admin/capacidades' },
     { icon: FileText, label: 'Configurações', path: '/admin/settings' },
   ];
 
@@ -145,9 +156,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <GraduationCap className="w-6 h-6 text-blue-600" />
             <span className="text-lg font-bold text-slate-900">EduQuest</span>
           </div>
-          <button onClick={() => setIsMobileMenuOpen(true)}>
-            <Menu className="w-6 h-6 text-slate-600" />
-          </button>
+          <div className="flex items-center gap-2">
+            <NotificationBell />
+            <button onClick={() => setIsMobileMenuOpen(true)}>
+              <Menu className="w-6 h-6 text-slate-600" />
+            </button>
+          </div>
         </header>
 
         {/* Mobile Menu Overlay */}

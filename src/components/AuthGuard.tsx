@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../lib/AuthContext';
+import { OnboardingWizard } from './OnboardingWizard';
 
 export function AuthGuard({ children, requiredRole }: { children: React.ReactNode, requiredRole?: string }) {
   const { user, profile, loading } = useAuth();
@@ -16,6 +17,17 @@ export function AuthGuard({ children, requiredRole }: { children: React.ReactNod
 
   if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  // If user is authenticated but hasn't completed onboarding, show the Wizard hijacking the UI.
+  if (profile && profile.primeiroAcessoCompleto === false) {
+    return (
+       <>
+         <OnboardingWizard />
+         {/* Render children in background, but the wizard will block interaction */}
+         {children}
+       </>
+    );
   }
 
   if (requiredRole && profile?.perfil !== requiredRole && profile?.perfil !== 'ADMIN') {

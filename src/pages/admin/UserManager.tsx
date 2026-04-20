@@ -81,13 +81,36 @@ export default function UserManager() {
           <h1 className="text-4xl font-black italic uppercase tracking-tighter text-slate-900 leading-none">Gestão de Usuários</h1>
           <p className="text-slate-500 font-medium mt-1">Administre as contas e permissões de alunos e professores.</p>
         </div>
-        <button 
-          onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2 px-8 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl shadow-slate-200 hover:scale-[1.02] active:scale-95 transition-all"
-        >
-          <UserPlus className="w-4 h-4" /> Convidar Usuário
-        </button>
+        <div className="flex gap-3">
+           <button className="flex items-center gap-2 px-6 py-4 bg-slate-100 text-slate-600 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-200 transition-all">
+             Importar Lote
+           </button>
+           <button className="flex items-center gap-2 px-6 py-4 bg-slate-100 text-slate-600 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-200 transition-all">
+             Exportar CSV
+           </button>
+           <button 
+             onClick={() => setIsModalOpen(true)}
+             className="flex items-center gap-2 px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl shadow-indigo-200 hover:scale-[1.02] active:scale-95 transition-all"
+           >
+             <UserPlus className="w-4 h-4" /> Convidar Usuário
+           </button>
+        </div>
       </header>
+
+      {/* Tabs / Filters Navigation */}
+      <div className="flex gap-6 border-b border-slate-200">
+         {['USUARIOS_ATIVOS', 'CONVITES_PENDENTES', 'AUDITORIA'].map((tab) => (
+            <button 
+               key={tab} 
+               className={cn(
+                  "pb-4 text-[10px] font-black uppercase tracking-widest transition-colors border-b-2",
+                  tab === 'USUARIOS_ATIVOS' ? "border-slate-900 text-slate-900" : "border-transparent text-slate-400 hover:text-slate-600"
+               )}
+            >
+               {tab.replace('_', ' ')}
+            </button>
+         ))}
+      </div>
 
       {/* Invitation Modal */}
       <AnimatePresence>

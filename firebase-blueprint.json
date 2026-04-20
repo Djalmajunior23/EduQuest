@@ -1,5 +1,97 @@
 {
   "entities": {
+    "ClassGroup": {
+      "title": "Turma",
+      "type": "object",
+      "properties": {
+        "courseId": { "type": "string" },
+        "codigo": { "type": "string" },
+        "nome": { "type": "string" },
+        "turno": { "type": "string", "enum": ["MANHA", "TARDE", "NOITE", "INTEGRAL"] },
+        "dataInicio": { "type": "string", "format": "date-time" },
+        "dataFim": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["ATIVA", "CONCLUIDA", "CANCELADA"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "createdBy": { "type": "string" }
+      },
+      "required": ["courseId", "codigo", "nome", "status"]
+    },
+    "Course": {
+      "title": "Curso",
+      "type": "object",
+      "properties": {
+        "codigo": { "type": "string" },
+        "nome": { "type": "string" },
+        "eixoTecnologico": { "type": "string" },
+        "modalidade": { "type": "string", "enum": ["APRENDIZAGEM", "TECNICO", "QUALIFICACAO", "GRADUACAO", "POS"] },
+        "cargaHoraria": { "type": "number" },
+        "status": { "type": "string", "enum": ["ATIVO", "INATIVO"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "createdBy": { "type": "string" }
+      },
+      "required": ["codigo", "nome", "modalidade", "status"]
+    },
+    "CurricularUnit": {
+      "title": "Unidade Curricular",
+      "type": "object",
+      "properties": {
+        "courseId": { "type": "string" },
+        "nome": { "type": "string" },
+        "cargaHoraria": { "type": "number" },
+        "conhecimentos": { "type": "array", "items": { "type": "string" } },
+        "capacidades": { "type": "array", "items": { "type": "string" } },
+        "status": { "type": "string", "enum": ["ATIVO", "INATIVO"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "createdBy": { "type": "string" }
+      },
+      "required": ["courseId", "nome", "status"]
+    },
+    "AcademicLink": {
+      "title": "Vínculo Acadêmico",
+      "type": "object",
+      "description": "Tabela de junção para vínculo N:M entre Usuários e Turmas/UCs",
+      "properties": {
+        "userId": { "type": "string" },
+        "targetType": { "type": "string", "enum": ["TURMA", "CURSO", "CURRICULAR_UNIT"] },
+        "targetId": { "type": "string" },
+        "roleInContext": { "type": "string", "enum": ["ALUNO", "PROFESSOR", "COORDENADOR"] },
+        "status": { "type": "string", "enum": ["ATIVO", "INATIVO"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "createdBy": { "type": "string" },
+        "inactivatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "targetType", "targetId", "status", "roleInContext"]
+    },
+    "Notification": {
+      "title": "Notificação",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "body": { "type": "string" },
+        "type": { "type": "string", "enum": ["INFO", "ALERT", "REMINDER", "ACHIEVEMENT", "ADMIN", "PEDAGOGICAL", "WELCOME"] },
+        "read": { "type": "boolean" },
+        "actionUrl": { "type": "string", "description": "Deep link for actionable notifications" },
+        "senderId": { "type": "string", "description": "System or an Admin/Professor ID" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "title", "body", "type", "read"]
+    },
+    "BroadcastMessage": {
+      "title": "Mensagem Interna/Aviso",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "targetRoles": { "type": "array", "items": { "type": "string" } },
+        "targetTurmaIds": { "type": "array", "items": { "type": "string" } },
+        "priority": { "type": "string", "enum": ["LOW", "NORMAL", "HIGH", "URGENT"] },
+        "authorId": { "type": "string" },
+        "status": { "type": "string", "enum": ["DRAFT", "PUBLISHED", "ARCHIVED"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "content", "priority", "authorId", "status"]
+    },
     "User": {
       "title": "User",
       "description": "Comprehensive user profile",
@@ -19,9 +111,36 @@
         "updatedAt": { "type": "string", "format": "date-time" },
         "createdBy": { "type": "string" },
         "updatedBy": { "type": "string" },
-        "observacoes": { "type": "string" }
+        "observacoes": { "type": "string" },
+        "termosAceitosEm": { "type": "string", "format": "date-time" },
+        "primeiroAcessoCompleto": { "type": "boolean" },
+        "permissoesGranulares": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Permissões de exceção além do perfil base"
+        },
+        "preferencias": {
+          "type": "object",
+          "properties": {
+            "tema": { "type": "string" },
+            "notificacoesEmail": { "type": "boolean" },
+            "notificacoesPush": { "type": "boolean" }
+          }
+        }
       },
       "required": ["nome", "email", "perfil", "status"]
+    },
+    "UserSession": {
+       "title": "User Session",
+       "type": "object",
+       "properties": {
+         "userId": { "type": "string" },
+         "dispositivo": { "type": "string" },
+         "ip": { "type": "string" },
+         "browser": { "type": "string" },
+         "lastActive": { "type": "string", "format": "date-time" },
+         "isRevoked": { "type": "boolean" }
+       }
     },
     "UserProfile": {
       "title": "Role Definition",
@@ -205,9 +324,10 @@
       "schema": "SituationLearning",
       "description": "Situations of Learning created by professors"
     },
-    "cursos": { "schema": "object", "description": "Educational courses" },
-    "turmas": { "schema": "object", "description": "Class groups" },
-    "unidades_curriculares": { "schema": "object", "description": "Curricular units" },
+    "cursos": { "schema": "Course", "description": "Educational courses" },
+    "turmas": { "schema": "ClassGroup", "description": "Class groups" },
+    "unidades_curriculares": { "schema": "CurricularUnit", "description": "Curricular units" },
+    "vinculos_academicos": { "schema": "AcademicLink", "description": "Relacionamentos Pedagógicos" },
     "conhecimentos_tecnicos": { "schema": "object", "description": "Technical knowledge definitions" },
     "capacidades_tecnicas": { "schema": "object", "description": "Technical capability definitions" },
     "simulados": { "schema": "object", "description": "Simulations sessions" },
@@ -219,8 +339,10 @@
     "resultados": { "schema": "object", "description": "Consolidated results" },
     "indicadores_bi": { "schema": "BIIndicator", "description": "Statistical indicators for BI" },
     "planos_estudo": { "schema": "object", "description": "A-generated study plans" },
-    "recomendacoes": { "schema": "object", "description": "Personalized AI recommendations" },
-    "notificacoes": { "schema": "object", "description": "User notifications" },
+    "recomendacoes": { "schema": "Recommendation", "description": "Personalized AI recommendations" },
+    "notificacoes": { "schema": "Notification", "description": "Eventos isolados disparados para um unico usuario" },
+    "mensagens_internas": { "schema": "BroadcastMessage", "description": "Avisos globais emitidos em massa para paineis/dashboards" },
+    "preferencias_notificacao": { "schema": "object", "description": "Deprecated - Preferencias agora vivem em usuarios/{id}/preferencias" },
     "gamificacao": { "schema": "object", "description": "User points and streak data" },
     "conquistas": { "schema": "object", "description": "User achievements" },
     "ranking": { "schema": "object", "description": "Global and class rankings" },

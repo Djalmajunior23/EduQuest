@@ -1,4 +1,4 @@
-import { collection, addDoc, serverTimestamp, updateDoc, doc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, updateDoc, doc, writeBatch } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
 export interface AuditLog {
@@ -99,4 +99,64 @@ export async function inviteUser(data: { nome: string; email: string; perfil: st
   console.log(`[SIMULADO] Enviando email para ${data.email} com o token ${invitationToken}`);
   
   return invitationRef.id;
+}
+
+/**
+ * Blocks or Unblocks a user account (Admin only logic)
+ */
+export async function setBlockAccount(userId: string, isBlocked: boolean, responsibleId: string, reason: string) {
+  const newStatus = isBlocked ? 'BLOQUEADO' : 'ATIVO';
+  const userRef = doc(db, 'usuarios', userId);
+  await updateDoc(userRef, { 
+    status: newStatus,
+    observacoes: `[${new Date().toLocaleDateString()}] ${reason}`,
+    updatedAt: serverTimestamp(),
+    updatedBy: responsibleId
+  });
+
+  await logAction({
+    acao: isBlocked ? 'ACCOUNT_BLOCKED' : 'ACCOUNT_UNBLOCKED',
+    usuarioAfetadoId: userId,
+    usuarioResponsavelId: responsibleId,
+    descricao: isBlocked ? `Conta bloqueada: ${reason}` : `Conta desbloqueada: ${reason}`,
+    detalhes: { reason }
+  });
+}
+
+/**
+ * Batch import users from CSV/JSON (Concept Architecture)
+ */
+export async function importUsersBatch(users: any[], responsibleId: string) {
+  const batch = writeBatch(db);
+  const results = { success: 0, failed: 0 };
+  
+  for (const user of users) {
+    try {
+      const newUserRef = doc(collection(db, 'usuarios'));
+      batch.set(newUserRef, {
+        ...user,
+        status: 'PENDENTE',
+        createdAt: serverTimestamp(),
+        createdBy: responsibleId
+      });
+      results.success++;
+    } catch {
+      results.failed++;
+    }
+  }
+
+  await batch.commit();
+
+  await logAction({
+    acao: 'BATCH_IMPORT',
+    usuarioAfetadoId: 'MULTIPLE',
+    usuarioResponsavelId: responsibleId,
+    descricao: `Importação em lote concluída: ${results.success} registros`,
+    detalhes: { importedCount: results.success }
+  });
+
+  // Hypothetical n8n Trigger for batch welcome emails
+  console.log('[SIMULADO] n8n Webhook disparado para processar fila de e-mails em lote.');
+
+  return results;
 }

@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
-import { generateQuestions } from '../services/aiAssistantService';
+import { generateQuestions, suggestQuestionMetadata } from '../services/aiAssistantService';
 
 export default function QuestionBank() {
   const { profile } = useAuth();
@@ -56,9 +56,11 @@ export default function QuestionBank() {
     tags: '',
     competence: '',
     discipline: '',
-    bloomTaxonomy: 'understand',
+    bloomTaxonomy: 'Entender',
     explanation: ''
   });
+
+  const [metadataLoading, setMetadataLoading] = useState(false);
 
   useEffect(() => {
     async function fetchQuestions() {
@@ -111,9 +113,34 @@ export default function QuestionBank() {
       tags: '',
       competence: '',
       discipline: '',
-      bloomTaxonomy: 'understand',
+      bloomTaxonomy: 'Entender',
       explanation: ''
     });
+  };
+
+  const handleSuggestMetadata = async () => {
+    if (!formData.text || formData.options.some(opt => !opt.trim())) {
+      alert('Preencha o enunciado e as opções antes de sugerir os metadados.');
+      return;
+    }
+    setMetadataLoading(true);
+    try {
+      const suggestion = await suggestQuestionMetadata({
+        text: formData.text,
+        options: formData.options,
+        correctIndex: formData.correctOptionIndex
+      });
+      setFormData(prev => ({
+        ...prev,
+        bloomTaxonomy: suggestion.bloomTaxonomy,
+        explanation: suggestion.explanation
+      }));
+    } catch (error) {
+      console.error('Error suggesting metadata:', error);
+      alert('Erro ao sugerir metadados via IA.');
+    } finally {
+      setMetadataLoading(false);
+    }
   };
 
   const handleAIGenerate = async () => {
@@ -303,12 +330,12 @@ export default function QuestionBank() {
             className="p-2 border rounded-xl border-slate-200"
           >
             <option value="all">Filtro: Bloom (Todos)</option>
-            <option value="remember">Lembrar</option>
-            <option value="understand">Entender</option>
-            <option value="apply">Aplicar</option>
-            <option value="analyze">Analisar</option>
-            <option value="evaluate">Avaliar</option>
-            <option value="create">Criar</option>
+            <option value="Lembrar">Lembrar</option>
+            <option value="Entender">Entender</option>
+            <option value="Aplicar">Aplicar</option>
+            <option value="Analisar">Analisar</option>
+            <option value="Avaliar">Avaliar</option>
+            <option value="Criar">Criar</option>
           </select>
           <input 
             value={filterTag}
@@ -519,7 +546,18 @@ export default function QuestionBank() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-bold text-slate-700 mb-2">Explicação Detalhada (Correção)</label>
+                      <div className="flex justify-between items-center mb-2">
+                        <label className="block text-sm font-bold text-slate-700">Explicação Detalhada (Correção)</label>
+                        <button 
+                          type="button"
+                          onClick={handleSuggestMetadata}
+                          disabled={metadataLoading}
+                          className="text-[10px] font-black uppercase text-indigo-600 flex items-center gap-1 hover:text-indigo-700 disabled:opacity-50"
+                        >
+                          {metadataLoading ? <Loader2 className="w-3 h-3 animate-spin"/> : <Sparkles className="w-3 h-3" />}
+                          Sugerir via IA
+                        </button>
+                      </div>
                       <textarea 
                         value={formData.explanation}
                         onChange={e => setFormData({...formData, explanation: e.target.value})}
@@ -587,14 +625,14 @@ export default function QuestionBank() {
                           <select 
                             value={formData.bloomTaxonomy}
                             onChange={e => setFormData({...formData, bloomTaxonomy: e.target.value})}
-                            className="w-full p-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none"
+                            className="w-full p-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none uppercase tracking-widest text-[10px] font-black"
                           >
-                            <option value="remember">Lembrar</option>
-                            <option value="understand">Entender</option>
-                            <option value="apply">Aplicar</option>
-                            <option value="analyze">Analisar</option>
-                            <option value="evaluate">Avaliar</option>
-                            <option value="create">Criar</option>
+                            <option value="Lembrar">Lembrar</option>
+                            <option value="Entender">Entender</option>
+                            <option value="Aplicar">Aplicar</option>
+                            <option value="Analisar">Analisar</option>
+                            <option value="Avaliar">Avaliar</option>
+                            <option value="Criar">Criar</option>
                           </select>
                         </div>
                       </div>

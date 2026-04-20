@@ -20,6 +20,7 @@ import {
 import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { cn } from '../lib/utils';
+import { AdminDashboardPanel } from '../modules/admin/AdminDashboard';
 
 export default function Dashboard() {
   const { profile } = useAuth();
@@ -62,6 +63,12 @@ export default function Dashboard() {
      </div>
   );
 
+  // --- Dynamic Dashboard Routing based on Profile Role ---
+  if (profile?.perfil === 'ADMIN') {
+     return <AdminDashboardPanel />;
+  }
+
+  // Fallback / Student Dashboard
   return (
     <div className="space-y-12">
       {/* Dynamic Header */}

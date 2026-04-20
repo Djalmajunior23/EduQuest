@@ -1,7 +1,30 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
 import { auth, db } from './firebase';
+
+const DEFAULT_PERMISSIONS: Record<string, string[]> = {
+  ADMIN: [
+    'gerenciar_usuarios', 'cadastrar_usuario', 'editar_usuario', 'alterar_perfil_usuario', 'redefinir_senha', 'bloquear_usuario', 'gerenciar_permissoes',
+    'gerenciar_turmas', 'gerenciar_cursos', 'gerenciar_conhecimentos_tecnicos', 'gerenciar_capacidades_tecnicas',
+    'criar_simulado', 'editar_simulado', 'excluir_simulado', 'criar_atividade', 
+    'usar_ia_professor', 'visualizar_bi_turma', 'visualizar_relatorios_institucionais', 
+    'gerenciar_tokens', 'gerenciar_gamificacao', 'gerenciar_configuracoes', 'acessar_logs'
+  ],
+  PROFESSOR: [
+    'criar_simulado', 'editar_simulado', 'excluir_simulado', 'criar_atividade',
+    'usar_ia_professor', 'visualizar_bi_turma'
+  ],
+  ALUNO: [
+    'fazer_simulado'
+  ],
+  COORDINATOR: [
+    'visualizar_bi_turma', 'visualizar_relatorios_institucionais', 'gerenciar_turmas', 'gerenciar_cursos', 'acessar_logs'
+  ],
+  SUPPORT: [
+    'redefinir_senha', 'visualizar_relatorios_institucionais'
+  ]
+};
 
 interface AuthContextType {
   user: User | null;
@@ -9,6 +32,7 @@ interface AuthContextType {
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
+  hasPermission: (permissionName: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -17,6 +41,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const hasPermission = (permissionName: string): boolean => {
+    if (!profile) return false;
+    // 1. Checa as permissões granulares de exceção do usuário
+    if (profile.permissoesGranulares && profile.permissoesGranulares.includes(permissionName)) {
+       return true;
+    }
+    // 2. Checa as permissões padrão do cargo associado
+    const defaultRolePerms = DEFAULT_PERMISSIONS[profile.perfil] || [];
+    if (defaultRolePerms.includes(permissionName)) {
+       return true;
+    }
+    return false;
+  };
 
   useEffect(() => {
     let unsubscribeProfile: (() => void) | null = null;
@@ -88,7 +126,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signInWithGoogle, logout }}>
+    <AuthContext.Provider value={{ user, profile, loading, signInWithGoogle, logout, hasPermission }}>
       {children}
     </AuthContext.Provider>
   );

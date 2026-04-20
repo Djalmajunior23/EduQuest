@@ -10,10 +10,22 @@ service cloud.firestore {
     // --- Helpers ---
     function isSignedIn() { return request.auth != null; }
     function isVerified() { return request.auth.token.email_verified == true; }
-    function getUserData() { return get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data; }
-    function isAdmin() { return isSignedIn() && getUserData().perfil == 'ADMIN'; }
-    function isProfessor() { return isSignedIn() && getUserData().perfil == 'PROFESSOR'; }
-    function isStudent() { return isSignedIn() && getUserData().perfil == 'ALUNO'; }
+    
+    function getUserData() { 
+      return exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) 
+        ? get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data 
+        : null; 
+    }
+    
+    function isAdmin() { return isSignedIn() && getUserData() != null && getUserData().perfil == 'ADMIN'; }
+    function isProfessor() { return isSignedIn() && getUserData() != null && getUserData().perfil == 'PROFESSOR'; }
+    function isStudent() { return isSignedIn() && getUserData() != null && getUserData().perfil == 'ALUNO'; }
+    function isCoordinator() { return isSignedIn() && getUserData() != null && getUserData().perfil == 'COORDINATOR'; }
+    
+    function hasPermission(perm) {
+      let data = getUserData();
+      return (data != null && data.permissoesGranulares != null && data.permissoesGranulares.hasAny([perm]));
+    }
     function isOwner(userId) { return request.auth.uid == userId; }
     function incoming() { return request.resource.data; }
     function existing() { return resource.data; }
@@ -36,7 +48,7 @@ service cloud.firestore {
 
     // USERS
     match /usuarios/{userId} {
-      allow read: if isSignedIn() && (isOwner(userId) || isAdmin() || isProfessor());
+      allow read: if isSignedIn();
       allow create: if (isOwner(userId) && isVerified() && isValidUser(incoming())) || isAdmin();
       allow update: if isSignedIn() && (
         (isAdmin() && isValidUser(incoming())) ||
@@ -79,12 +91,6 @@ service cloud.firestore {
       allow delete: if (isProfessor() && existing().createdBy == request.auth.uid) || isAdmin();
     }
 
-    // AI TUTOR & TOKENS
-    match /uso_ia/{logId} {
-      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isProfessor() || isAdmin());
-      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
-    }
-
     match /recomendacoes/{recId} {
       allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isProfessor() || isAdmin());
       allow update: if (isSignedIn() && resource.data.userId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['read'])) || isAdmin();
@@ -111,14 +117,21 @@ service cloud.firestore {
 
     // TOKENS IA (Strict control)
     match /uso_ia/{usageId} {
-      allow read: if isOwner(incoming().alunoId) || isAdmin() || isProfessor();
-      allow create: if isSignedIn() && incoming().alunoId == request.auth.uid; // Student logs their attempt, n8n verifies
+      // Allow read if user is the owner, or if admin/professor
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin() || isProfessor());
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid; 
     }
 
-    // NOTIFICATIONS
+    // NOTIFICATIONS & INTERNAL MESSAGES
     match /notificacoes/{notifId} {
-      allow read: if isOwner(resource.data.userId);
-      allow update: if isOwner(resource.data.userId) && incoming().diff(existing()).affectedKeys().hasOnly(['read']);
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && (isAdmin() || isCoordinator() || isProfessor());
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['read']);
+    }
+
+    match /mensagens_internas/{msgId} {
+      allow read: if isSignedIn(); // Filtering happens on client via Queries (targetTurmaIds, targetRoles)
+      allow write: if isAdmin() || isCoordinator() || isProfessor();
     }
 
     // MISSIONS & PROGRESS
@@ -138,9 +151,55 @@ service cloud.firestore {
     }
 
     // DEFAULT BLANKET RULES FOR OTHER COLLECTIONS (Restricted to Sign-In)
-    match /unidades_curriculares/{id} { allow read: if isSignedIn(); allow write: if isAdmin(); }
-    match /cursos/{id} { allow read: if isSignedIn(); allow write: if isAdmin(); }
-    match /turmas/{id} { allow read: if isSignedIn(); allow write: if isAdmin() || isProfessor(); }
+    // ARQUITETURA PEDAGÓGICA AVANÇADA (CURSOS, TURMAS, UCs, VÍNCULOS)
+    match /cursos/{id} { 
+      allow read: if isSignedIn(); 
+      allow write: if isAdmin() || isCoordinator() || hasPermission('gerenciar_cursos'); 
+    }
+    match /turmas/{id} { 
+      allow read: if isSignedIn(); 
+      allow write: if isAdmin() || isCoordinator() || hasPermission('gerenciar_turmas'); 
+    }
+    match /unidades_curriculares/{id} { 
+      allow read: if isSignedIn(); 
+      allow write: if isAdmin() || isCoordinator() || hasPermission('gerenciar_cursos'); 
+    }
+    match /vinculos_academicos/{id} { 
+      allow read: if isSignedIn(); 
+      allow write: if isAdmin() || isCoordinator() || hasPermission('gerenciar_turmas'); 
+    }
+    
+    match /capacidades_tecnicas/{id} { 
+      allow read: if isSignedIn(); 
+      allow write: if isAdmin() || isCoordinator() || hasPermission('gerenciar_pedagogico'); 
+    }
+    
+    // BUSINESS INTELLIGENCE (N8N Dashboards)
+    match /indicadores_bi/{id} {
+      allow read: if isAdmin() || isCoordinator();
+      allow write: if false; // Written by Cloud Worker / N8n
+    }
+    
+    // MOTOR INTELIGENTE DE APRENDIZAGEM & ADAPTAÇÃO
+    match /perfil_aluno/{id} {
+      allow read: if isSignedIn() && (id == request.auth.uid || isProfessor() || isAdmin() || isCoordinator());
+      allow write: if isAdmin() || isCoordinator(); // Escrita automatizada por backend
+    }
+    
+    match /planos_estudo/{id} {
+      allow read: if isSignedIn() && (resource.data.studentId == request.auth.uid || isProfessor() || isAdmin() || isCoordinator());
+      allow write: if isProfessor() || isAdmin() || isCoordinator();
+    }
+    
+    match /alertas_pedagogicos/{id} {
+      allow read: if isSignedIn() && (resource.data.targetProfessorId == request.auth.uid || isAdmin() || isCoordinator());
+      allow write: if isAdmin() || isCoordinator(); 
+    }
+    
+    match /historico_decisoes_motor/{id} {
+      allow read: if isAdmin() || isCoordinator();
+      allow write: if isAdmin() || isCoordinator();
+    }
     
   }
 }

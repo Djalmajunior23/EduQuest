@@ -21,15 +21,27 @@ export async function generateQuestions(prompt: string) {
     Você é um assistente pedagógico especializado em Taxonomia de Bloom para alunos do SENAI.
     Gere 5 questões de múltipla escolha baseadas no seguinte tema ou competência: "${prompt}".
     
+    É OBRIGATÓRIO que as 5 questões abordem níveis DIFERENTES da Taxonomia de Bloom. Distribua as questões garantindo variedade entre os níveis: Lembrar, Entender, Aplicar, Analisar, Avaliar e Criar.
+    
     Para cada questão, forneça:
     1. O enunciado.
     2. 4 opções (A, B, C, D).
     3. O índice da opção correta (0-3).
-    4. Uma explicação pedagógica.
-    5. O nível da Taxonomia de Bloom.
+    4. Uma explicação pedagógica detalhada.
+    5. O nível da Taxonomia de Bloom (deve ser um dos 6 níveis, variando entre as questões).
     6. A dificuldade (easy, medium, hard).
 
-    Retorne APENAS um array JSON válido no formato especificado.
+    Retorne APENAS um array JSON válido no formato:
+    [
+      {
+        "text": "...",
+        "options": ["...", "...", "...", "..."],
+        "correctOptionIndex": 0,
+        "explanation": "...",
+        "bloomTaxonomy": "Lembrar",
+        "difficulty": "easy"
+      }
+    ]
   `;
 
   try {
@@ -120,5 +132,39 @@ export async function analyzePedagogicalResults(results: any) {
   } catch (error) {
     console.error("Error analyzing results:", error);
     throw new Error("Failed to analyze pedagogical results.");
+  }
+}
+
+export async function suggestQuestionMetadata(questionData: { text: string; options: string[]; correctIndex: number }) {
+  const ai = getAiClient();
+  const prompt = `
+    Analise a seguinte questão de múltipla escolha e sugira:
+    1. O nível da Taxonomia de Bloom (Lembrar, Entender, Aplicar, Analisar, Avaliar, Criar).
+    2. Uma explicação pedagógica clara de por que a alternativa correta é a certa.
+
+    Questão: ${questionData.text}
+    Opções:
+    ${questionData.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')}
+    Alternativa Correta: ${String.fromCharCode(65 + questionData.correctIndex)}
+
+    Retorne APENAS um objeto JSON válido no formato:
+    {
+      "bloomTaxonomy": "Lembrar|Entender|Aplicar|Analisar|Avaliar|Criar",
+      "explanation": "..."
+    }
+  `;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: MODEL_NAME,
+      contents: prompt
+    });
+    
+    const text = response.text || "";
+    const jsonText = text.replace(/```json|```/g, "").trim();
+    return JSON.parse(jsonText);
+  } catch (error) {
+    console.error("Error suggesting metadata:", error);
+    throw new Error("Failed to suggest metadata.");
   }
 }
