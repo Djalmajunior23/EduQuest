@@ -23,6 +23,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../../lib/utils';
 import { inviteUser } from '../../services/userManagementService';
 
+import { BulkImportModal } from '../../components/admin/BulkImportModal';
+
 export default function UserManager() {
   const { profile: currentUser } = useAuth();
   const [users, setUsers] = useState<any[]>([]);
@@ -32,6 +34,7 @@ export default function UserManager() {
   
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [inviteData, setInviteData] = useState({ nome: '', email: '', perfil: 'ALUNO', turmaId: '' });
   const [isInviting, setIsInviting] = useState(false);
 
@@ -82,7 +85,10 @@ export default function UserManager() {
           <p className="text-slate-500 font-medium mt-1">Administre as contas e permissões de alunos e professores.</p>
         </div>
         <div className="flex gap-3">
-           <button className="flex items-center gap-2 px-6 py-4 bg-slate-100 text-slate-600 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-200 transition-all">
+           <button 
+             onClick={() => setIsImportModalOpen(true)}
+             className="flex items-center gap-2 px-6 py-4 bg-slate-100 text-slate-600 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-200 transition-all"
+           >
              Importar Lote
            </button>
            <button className="flex items-center gap-2 px-6 py-4 bg-slate-100 text-slate-600 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-200 transition-all">
@@ -148,7 +154,7 @@ export default function UserManager() {
                     <input 
                       type="email" 
                       required
-                      placeholder="exemplo@senai.com.br"
+                      placeholder="exemplo@instituicao.com.br"
                       className="w-full px-6 py-4 bg-slate-50 border border-transparent rounded-2xl text-sm font-medium focus:bg-white focus:border-slate-200 focus:ring-4 focus:ring-slate-50 transition-all"
                       value={inviteData.email}
                       onChange={(e) => setInviteData({...inviteData, email: e.target.value})}
@@ -321,6 +327,12 @@ export default function UserManager() {
             </div>
          </div>
       </section>
+
+      <BulkImportModal 
+        isOpen={isImportModalOpen} 
+        onClose={() => setIsImportModalOpen(false)} 
+        onSuccess={fetchUsers} 
+      />
     </div>
   );
 }

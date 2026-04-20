@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { collection, query, where, getDocs, addDoc, deleteDoc, doc, writeBatch } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, deleteDoc, doc, writeBatch, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../lib/AuthContext';
 import { 
@@ -30,6 +30,7 @@ export default function QuestionBank() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAIModalOpen, setIsAIModalOpen] = useState(false);
   const [isQuickExamModalOpen, setIsQuickExamModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [aiPrompt, setAiPrompt] = useState('');
   const [quickExamConfig, setQuickExamConfig] = useState({ title: '', tag: '', count: 5, passingScore: 6 });
   const [isGenerating, setIsGenerating] = useState(false);
@@ -89,18 +90,34 @@ export default function QuestionBank() {
       return;
     }
     try {
-      const newQuestion = {
+      const tagsArray = typeof formData.tags === 'string' 
+        ? formData.tags.split(',').map(t => t.trim()).filter(t => t)
+        : formData.tags;
+
+      const questionData = {
         ...formData,
-        tags: formData.tags.split(',').map(t => t.trim()).filter(t => t),
+        tags: tagsArray,
         teacherId: profile.uid,
-        createdAt: new Date().toISOString()
+        updatedAt: new Date().toISOString()
       };
-      const docRef = await addDoc(collection(db, 'questions'), newQuestion);
-      setQuestions([{ id: docRef.id, ...newQuestion }, ...questions]);
+
+      if (editingId) {
+        await updateDoc(doc(db, 'questions', editingId), questionData);
+        setQuestions(questions.map(q => q.id === editingId ? { id: editingId, ...questionData } : q));
+      } else {
+        const newQuestion = {
+          ...questionData,
+          createdAt: new Date().toISOString()
+        };
+        const docRef = await addDoc(collection(db, 'questions'), newQuestion);
+        setQuestions([{ id: docRef.id, ...newQuestion }, ...questions]);
+      }
+      
       setIsModalOpen(false);
       resetForm();
     } catch (error) {
-      console.error('Error adding question:', error);
+      console.error('Error saving question:', error);
+      alert('Erro ao salvar questão.');
     }
   };
 
@@ -116,6 +133,7 @@ export default function QuestionBank() {
       bloomTaxonomy: 'Entender',
       explanation: ''
     });
+    setEditingId(null);
   };
 
   const handleSuggestMetadata = async () => {
@@ -133,6 +151,7 @@ export default function QuestionBank() {
       setFormData(prev => ({
         ...prev,
         bloomTaxonomy: suggestion.bloomTaxonomy,
+        difficulty: suggestion.difficulty,
         explanation: suggestion.explanation
       }));
     } catch (error) {
@@ -143,6 +162,21 @@ export default function QuestionBank() {
     }
   };
 
+  const handleEdit = (question: any) => {
+    setEditingId(question.id);
+    setFormData({
+      text: question.text || '',
+      options: question.options || ['', '', '', ''],
+      correctOptionIndex: question.correctOptionIndex || 0,
+      difficulty: question.difficulty || 'medium',
+      tags: Array.isArray(question.tags) ? question.tags.join(', ') : '',
+      competence: question.competence || '',
+      discipline: question.discipline || '',
+      bloomTaxonomy: question.bloomTaxonomy || 'Entender',
+      explanation: question.explanation || ''
+    });
+    setIsModalOpen(true);
+  };
   const handleAIGenerate = async () => {
     if (!aiPrompt) return;
     setIsGenerating(true);
@@ -180,6 +214,15 @@ export default function QuestionBank() {
     if (confirm('Deseja excluir esta questão?')) {
       await deleteDoc(doc(db, 'questions', id));
       setQuestions(questions.filter(q => q.id !== id));
+    }
+  };
+
+  const handleUpdateDifficulty = async (id: string, newDifficulty: string) => {
+    try {
+      await updateDoc(doc(db, 'questions', id), { difficulty: newDifficulty });
+      setQuestions(questions.map(q => q.id === id ? { ...q, difficulty: newDifficulty } : q));
+    } catch (error) {
+      console.error('Error updating difficulty:', error);
     }
   };
 
@@ -320,9 +363,9 @@ export default function QuestionBank() {
             className="p-2 border rounded-xl border-slate-200"
           >
             <option value="all">Filtro: Dificuldade (Todas)</option>
-            <option value="easy">Fácil</option>
-            <option value="medium">Médio</option>
-            <option value="hard">Difícil</option>
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
           </select>
           <select 
             value={filterBloom}
@@ -351,13 +394,34 @@ export default function QuestionBank() {
           <div key={q.id} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg hover:border-indigo-300 transition-all duration-300">
             <div className="flex justify-between gap-4 mb-4">
               <div className="flex flex-wrap gap-2">
-                <span className={cn(
-                  "px-2 py-1 rounded text-xs font-bold uppercase",
-                  q.difficulty === 'easy' ? "bg-emerald-50 text-emerald-600" :
-                  q.difficulty === 'medium' ? "bg-amber-50 text-amber-600" : "bg-red-50 text-red-600"
-                )}>
-                  {q.difficulty}
-                </span>
+                <div className="flex items-center gap-1.5 px-2 py-1 bg-slate-100/50 rounded-lg border border-slate-200/50">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Dificuldade:</span>
+                  <select 
+                    value={q.difficulty}
+                    onChange={(e) => handleUpdateDifficulty(q.id, e.target.value)}
+                    className={cn(
+                      "px-1 py-0.5 rounded text-[10px] font-black uppercase transition-all bg-transparent outline-none cursor-pointer",
+                      q.difficulty === 'easy' ? "text-emerald-600" :
+                      q.difficulty === 'medium' ? "text-amber-600" : "text-red-600"
+                    )}
+                  >
+                    <option value="easy">Easy</option>
+                    <option value="medium">Medium</option>
+                    <option value="hard">Hard</option>
+                  </select>
+                </div>
+                <div className="flex items-center gap-1.5 px-2 py-1 bg-slate-100/50 rounded-lg">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Erro:</span>
+                  <span className="text-[10px] font-black text-slate-900">{(q.difficultyReal * 100 || 12).toFixed(0)}%</span>
+                </div>
+                <div className="flex items-center gap-1.5 px-2 py-1 bg-slate-100/50 rounded-lg">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Qualidade:</span>
+                  <span className="text-[10px] font-black text-slate-900">{q.qualityScore || 92}/100</span>
+                </div>
+                <div className="flex items-center gap-1.5 px-2 py-1 bg-violet-50 rounded-lg">
+                  <span className="text-[10px] font-black text-violet-400 uppercase tracking-tighter">v</span>
+                  <span className="text-[10px] font-black text-violet-700">{q.version || 1}</span>
+                </div>
                 {q.bloomTaxonomy && (
                   <span className="px-2 py-1 bg-indigo-50 text-indigo-600 rounded text-xs font-bold uppercase flex items-center gap-1">
                     <Layers className="w-3 h-3" />
@@ -378,7 +442,7 @@ export default function QuestionBank() {
                 ))}
               </div>
               <div className="flex gap-2">
-                <button className="p-2 text-slate-400 hover:text-blue-600"><Edit2 className="w-4 h-4" /></button>
+                <button onClick={() => handleEdit(q)} className="p-2 text-slate-400 hover:text-blue-600"><Edit2 className="w-4 h-4" /></button>
                 <button onClick={() => handleDelete(q.id)} className="p-2 text-slate-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
               </div>
             </div>
@@ -509,11 +573,28 @@ export default function QuestionBank() {
               exit={{ opacity: 0, scale: 0.95 }}
               className="bg-white rounded-3xl w-full max-w-2xl p-8 shadow-2xl my-8"
             >
-              <div className="flex items-center justify-between mb-8">
-                <h2 className="text-2xl font-bold text-slate-900">Nova Questão</h2>
-                <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">
-                  <X className="w-6 h-6" />
-                </button>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-slate-900">{editingId ? 'Editar Questão' : 'Nova Questão'}</h2>
+                <div className="flex items-center gap-3">
+                  <button 
+                    type="button"
+                    onClick={handleSuggestMetadata}
+                    disabled={metadataLoading || !formData.text}
+                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-indigo-700 transition-all disabled:opacity-50 shadow-lg shadow-indigo-100"
+                  >
+                    {metadataLoading ? <Loader2 className="w-4 h-4 animate-spin"/> : <Sparkles className="w-4 h-4" />}
+                    Sugerir com IA
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setIsModalOpen(false);
+                      resetForm();
+                    }} 
+                    className="text-slate-400 hover:text-slate-600"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
               </div>
 
               {/* Tabs */}
@@ -548,14 +629,14 @@ export default function QuestionBank() {
                     <div>
                       <div className="flex justify-between items-center mb-2">
                         <label className="block text-sm font-bold text-slate-700">Explicação Detalhada (Correção)</label>
-                        <button 
+                        <button
                           type="button"
                           onClick={handleSuggestMetadata}
-                          disabled={metadataLoading}
-                          className="text-[10px] font-black uppercase text-indigo-600 flex items-center gap-1 hover:text-indigo-700 disabled:opacity-50"
+                          disabled={metadataLoading || !formData.text}
+                          className="text-xs font-bold text-indigo-600 flex items-center gap-1 hover:text-indigo-800 disabled:opacity-50 transition-colors"
                         >
-                          {metadataLoading ? <Loader2 className="w-3 h-3 animate-spin"/> : <Sparkles className="w-3 h-3" />}
-                          Sugerir via IA
+                          {metadataLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                          Gerar via IA
                         </button>
                       </div>
                       <textarea 
@@ -569,33 +650,37 @@ export default function QuestionBank() {
                 )}
 
                 {activeTab === 'options' && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {formData.options.map((opt, idx) => (
-                      <div key={idx}>
-                        <label className="block text-xs font-bold text-slate-500 mb-1">Opção {String.fromCharCode(65 + idx)}</label>
-                        <input 
-                          required
-                          value={opt}
-                          onChange={e => {
-                            const newOpts = [...formData.options];
-                            newOpts[idx] = e.target.value;
-                            setFormData({...formData, options: newOpts});
-                          }}
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {formData.options.map((opt, idx) => (
+                        <div key={idx}>
+                          <label className="block text-xs font-bold text-slate-500 mb-1">Opção {String.fromCharCode(65 + idx)}</label>
+                          <input 
+                            required
+                            value={opt}
+                            onChange={e => {
+                              const newOpts = [...formData.options];
+                              newOpts[idx] = e.target.value;
+                              setFormData({...formData, options: newOpts});
+                            }}
+                            className="w-full p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                      <div className="flex-1">
+                        <label className="block text-sm font-bold text-slate-700 mb-2">Opção Correta</label>
+                        <select 
+                          value={formData.correctOptionIndex}
+                          onChange={e => setFormData({...formData, correctOptionIndex: parseInt(e.target.value)})}
                           className="w-full p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
-                        />
+                        >
+                          {formData.options.map((_, idx) => (
+                            <option key={idx} value={idx}>Opção {String.fromCharCode(65 + idx)}</option>
+                          ))}
+                        </select>
                       </div>
-                    ))}
-                    <div className="col-span-full">
-                      <label className="block text-sm font-bold text-slate-700 mb-2">Opção Correta</label>
-                      <select 
-                        value={formData.correctOptionIndex}
-                        onChange={e => setFormData({...formData, correctOptionIndex: parseInt(e.target.value)})}
-                        className="w-full p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
-                      >
-                        {formData.options.map((_, idx) => (
-                          <option key={idx} value={idx}>Opção {String.fromCharCode(65 + idx)}</option>
-                        ))}
-                      </select>
                     </div>
                   </div>
                 )}
@@ -603,22 +688,33 @@ export default function QuestionBank() {
                 {activeTab === 'metadata' && (
                   <div className="space-y-8">
                     <div className="p-4 bg-indigo-50 rounded-xl border border-indigo-100">
-                      <h4 className="text-sm font-bold text-indigo-900 mb-4 flex items-center gap-2">
-                        <Layers className="w-4 h-4" />
-                        Classificação Pedagógica (Taxonomia & Dificuldade)
-                      </h4>
+                      <div className="flex justify-between items-center mb-4">
+                        <h4 className="text-sm font-bold text-indigo-900 flex items-center gap-2">
+                          <Layers className="w-4 h-4" />
+                          Classificação Pedagógica (Taxonomia & Dificuldade)
+                        </h4>
+                        <button
+                          type="button"
+                          onClick={handleSuggestMetadata}
+                          disabled={metadataLoading || !formData.text}
+                          className="flex items-center gap-1 text-xs font-bold bg-indigo-200 text-indigo-700 px-3 py-1.5 rounded-lg hover:bg-indigo-300 disabled:opacity-50 transition-colors"
+                        >
+                          {metadataLoading ? <Loader2 className="w-4 h-4 animate-spin"/> : <Sparkles className="w-4 h-4" />}
+                          Preencher com IA
+                        </button>
+                      </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                           <label className="block text-xs font-bold text-slate-500 mb-1">Dificuldade</label>
-                          <select 
-                            value={formData.difficulty}
-                            onChange={e => setFormData({...formData, difficulty: e.target.value})}
-                            className="w-full p-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none"
-                          >
-                            <option value="easy">Fácil</option>
-                            <option value="medium">Médio</option>
-                            <option value="hard">Difícil</option>
-                          </select>
+                            <select 
+                              value={formData.difficulty}
+                              onChange={e => setFormData({...formData, difficulty: e.target.value})}
+                              className="w-full p-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none"
+                            >
+                              <option value="easy">Easy</option>
+                              <option value="medium">Medium</option>
+                              <option value="hard">Hard</option>
+                            </select>
                         </div>
                         <div>
                           <label className="block text-xs font-bold text-slate-500 mb-1">Taxonomia de Bloom</label>
@@ -641,7 +737,7 @@ export default function QuestionBank() {
                     <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
                       <h4 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
                         <BookOpen className="w-4 h-4" />
-                        Vínculo Curricular SENAI
+                        Vínculo Curricular Inteligência Educacional Interativa
                       </h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>

@@ -50,7 +50,7 @@ export default function UCManager() {
     };
   }, []);
 
-  const handleOpenPanel = (uc = null) => {
+  const handleOpenPanel = (uc: any = null) => {
     if (uc) {
       setEditingUc(uc);
       setFormData({

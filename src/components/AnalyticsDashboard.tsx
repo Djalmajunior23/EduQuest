@@ -22,36 +22,18 @@ export default function AnalyticsDashboard() {
      async function fetchBIData() {
        try {
          // In a real scenario, these would be fetched from 'indicadores_bi'
-         // Mocking for the first turn to show the vision
-         const mockData = {
-           performance: [
-             { name: 'Sem 1', score: 65, avg: 60 },
-             { name: 'Sem 2', score: 72, avg: 62 },
-             { name: 'Sem 3', score: 68, avg: 65 },
-             { name: 'Sem 4', score: 85, avg: 68 },
-           ],
-           mastery: [
-             { subject: 'Front-end', value: 85 },
-             { subject: 'Back-end', value: 45 },
-             { subject: 'Mobile', value: 60 },
-             { subject: 'DevOps', value: 30 },
-             { subject: 'Soft Skills', value: 90 },
-           ],
-           engagement: [
-             { name: 'Seg', hours: 2 },
-             { name: 'Ter', hours: 4 },
-             { name: 'Qua', hours: 3 },
-             { name: 'Qui', hours: 5 },
-             { name: 'Sex', hours: 2 },
-           ],
+         // Loading empty dataset to reflect real logic
+         setData({
+           performance: [],
+           mastery: [],
+           engagement: [],
            stats: {
-             avgGrade: 7.8,
-             completion: 82,
-             tokens: 450,
-             rank: 12
+             avgGrade: 0,
+             completion: 0,
+             tokens: 0,
+             rank: 0
            }
-         };
-         setData(mockData);
+         });
        } catch (error) {
          console.error(error);
        } finally {

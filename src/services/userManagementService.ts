@@ -96,7 +96,7 @@ export async function inviteUser(data: { nome: string; email: string; perfil: st
 
   // 5. Trigger n8n integration (Hypothetical)
   // For this environment, we simulate the fetch
-  console.log(`[SIMULADO] Enviando email para ${data.email} com o token ${invitationToken}`);
+  // Email sending mocked out
   
   return invitationRef.id;
 }
@@ -156,7 +156,7 @@ export async function importUsersBatch(users: any[], responsibleId: string) {
   });
 
   // Hypothetical n8n Trigger for batch welcome emails
-  console.log('[SIMULADO] n8n Webhook disparado para processar fila de e-mails em lote.');
+  // Trigger hypotetical n8n webhook (mocked)
 
   return results;
 }

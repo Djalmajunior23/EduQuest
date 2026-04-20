@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../lib/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { GraduationCap, Chrome, Mail, Lock, AlertCircle } from 'lucide-react';
@@ -8,14 +8,14 @@ export default function Login() {
   const { signInWithGoogle, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [loading, setLoading] = React.useState(false);
-  const [email, setEmail] = React.useState('');
-  const [password, setPassword] = React.useState('');
-  const [emailError, setEmailError] = React.useState('');
+  const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [emailError, setEmailError] = useState('');
 
   const from = location.state?.from?.pathname || "/";
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (user) {
       navigate(from, { replace: true });
     }

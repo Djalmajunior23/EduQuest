@@ -49,7 +49,7 @@ export default function CapacidadesManager() {
     };
   }, []);
 
-  const handleOpenPanel = (capacidade = null) => {
+  const handleOpenPanel = (capacidade: any = null) => {
     if (capacidade) {
       setEditingCapacidade(capacidade);
       setFormData({

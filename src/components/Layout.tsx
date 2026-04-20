@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/AuthContext';
 import { 
@@ -18,7 +18,17 @@ import {
   X,
   Trophy,
   Bot,
-  Brain
+  Brain,
+  FileCheck,
+  Briefcase,
+  Users2,
+  CalendarDays,
+  History,
+  Medal,
+  Settings2,
+  Lock,
+  Star,
+  Zap
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
@@ -29,28 +39,37 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const { profile, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const menuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/', roles: ['ALUNO', 'PROFESSOR', 'ADMIN'] },
+    { icon: Bot, label: 'Mentor Virtual', path: '/mentor', roles: ['ALUNO', 'ADMIN'] },
+    { icon: Star, label: 'Planos e Assinatura', path: '/plans', roles: ['ALUNO', 'PROFESSOR', 'ADMIN'] },
     { icon: Compass, label: 'Jornada Adaptativa', path: '/student/journey', roles: ['ALUNO', 'ADMIN'] },
-    { icon: BrainCircuit, label: 'Insights (BI IA)', path: '/professor/insights', roles: ['PROFESSOR', 'ADMIN', 'COORDINATOR'] },
-    { icon: BookOpen, label: 'Simulados', path: '/exams', roles: ['ALUNO', 'PROFESSOR', 'ADMIN'] },
-    { icon: Trophy, label: 'Gamificação', path: '/gamification', roles: ['ALUNO', 'ADMIN'] },
-    { icon: Bot, label: 'Tutor IA', path: '/tutor-ia', roles: ['ALUNO', 'ADMIN'] },
-    { icon: Brain, label: 'Cérebro IA', path: '/ai-hub', roles: ['PROFESSOR', 'ADMIN'] },
-    { icon: BookOpen, label: 'Produção de SA', path: '/sa', roles: ['PROFESSOR', 'ADMIN'] },
-    { icon: FileText, label: 'Questões', path: '/questions', roles: ['PROFESSOR', 'ADMIN'] },
-    { icon: Users, label: 'Turmas', path: '/classes', roles: ['PROFESSOR', 'ADMIN'] },
-    { icon: BarChart3, label: 'Relatórios', path: '/reports', roles: ['ALUNO', 'PROFESSOR', 'ADMIN'] },
+    { icon: BrainCircuit, label: 'Planejamento Docente', path: '/planning', roles: ['PROFESSOR', 'ADMIN'] },
+    { icon: Target, label: 'IA Planner (SA)', path: '/professor/planner', roles: ['PROFESSOR', 'ADMIN'] },
+    { icon: Briefcase, label: 'Projetos ABP', path: '/abp', roles: ['ALUNO', 'PROFESSOR', 'ADMIN'] },
+    { icon: Users2, label: 'Trabalho em Grupo', path: '/collaboration', roles: ['ALUNO', 'PROFESSOR', 'ADMIN'] },
+    { icon: History, label: 'Revisão Espaçada', path: '/spaced-learning', roles: ['ALUNO', 'ADMIN'] },
+    { icon: Medal, label: 'Conquistas', path: '/certifications', roles: ['ALUNO', 'ADMIN'] },
+    { icon: FileCheck, label: 'Avaliações', path: '/evaluations', roles: ['ALUNO', 'PROFESSOR', 'ADMIN'] },
+    {icon: Trophy, label: 'Gamificação', path: '/gamification', roles: ['ALUNO'] },
+    { icon: Trophy, label: 'Gamificação Turma', path: '/gamification-professor', roles: ['PROFESSOR'] },
+    { icon: Brain, label: 'Curadoria IA', path: '/ai-hub', roles: ['PROFESSOR', 'ADMIN'] },
+    { icon: BookOpen, label: 'Recursos e SA', path: '/sa', roles: ['PROFESSOR', 'ADMIN'] },
+    { icon: FileText, label: 'Banco de Questões', path: '/questions', roles: ['PROFESSOR', 'ADMIN'] },
+    { icon: BarChart3, label: 'BI e Relatórios', path: '/reports', roles: ['PROFESSOR', 'ADMIN'] },
   ];
 
   const adminMenuItems = [
+    { icon: Settings2, label: 'Instucional Avançado', path: '/admin/institutional' },
+    { icon: Trophy, label: 'Gestão Gamificação', path: '/admin/gamification' },
+    { icon: Lock, label: 'Auditoria e Logs', path: '/admin/audit' },
     { icon: Users, label: 'Usuários', path: '/admin/users' },
     { icon: GraduationCap, label: 'Cursos (Grades)', path: '/admin/courses' },
     { icon: Library, label: 'Disciplinas (UCs)', path: '/admin/ucs' },
     { icon: Target, label: 'Capacidades (Habilidades)', path: '/admin/capacidades' },
-    { icon: FileText, label: 'Configurações', path: '/admin/settings' },
+    { icon: FileText, label: 'Configurações Base', path: '/admin/settings' },
   ];
 
   const filteredMenuItems = menuItems.filter(item => 
@@ -68,12 +87,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex flex-col w-72 bg-white border-r border-slate-200">
         <div className="p-8 flex items-center gap-4 border-b border-slate-100">
-          <div className="bg-slate-900 p-3 rounded-2xl shadow-xl shadow-slate-200">
-            <GraduationCap className="w-6 h-6 text-indigo-400" />
+          <div className="bg-slate-900 p-3 rounded-2xl shadow-xl shadow-indigo-500/20 ring-1 ring-white/10">
+            <Zap className="w-6 h-6 text-indigo-400 animate-pulse" />
           </div>
           <div className="flex flex-col">
-            <span className="text-xl font-black italic uppercase tracking-tighter text-slate-900 leading-none">EduQuest</span>
-            <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-1">Portal SENAI</span>
+            <span className="text-2xl font-black italic uppercase tracking-tighter text-slate-900 leading-none">NEXUS<span className="text-indigo-600">INTAI</span></span>
+            <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">Plataforma Inteligente</span>
           </div>
         </div>
 
@@ -153,8 +172,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <div className="flex flex-col flex-1 overflow-hidden">
         <header className="md:hidden flex items-center justify-between p-4 bg-white border-b border-slate-200">
           <div className="flex items-center gap-2">
-            <GraduationCap className="w-6 h-6 text-blue-600" />
-            <span className="text-lg font-bold text-slate-900">EduQuest</span>
+            <Zap className="w-6 h-6 text-indigo-600" />
+            <span className="text-lg font-black italic uppercase tracking-tighter text-slate-900">NEXUS<span className="text-indigo-600">INTAI</span></span>
           </div>
           <div className="flex items-center gap-2">
             <NotificationBell />

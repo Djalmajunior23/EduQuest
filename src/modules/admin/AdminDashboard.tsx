@@ -7,14 +7,7 @@ import { db } from '../../lib/firebase';
 import { cn } from '../../lib/utils';
 import { Link } from 'react-router-dom';
 
-const MOCK_GROWTH_DATA = [
-  { name: 'Jan', total: 100, active: 80 },
-  { name: 'Fev', total: 150, active: 110 },
-  { name: 'Mar', total: 240, active: 180 },
-  { name: 'Abr', total: 320, active: 250 },
-  { name: 'Mai', total: 450, active: 380 },
-  { name: 'Jun', total: 450, active: 400 },
-];
+const MOCK_GROWTH_DATA: any[] = [];
 
 const COLORS = ['#4f46e5', '#3b82f6', '#f59e0b', '#ef4444'];
 

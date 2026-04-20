@@ -15,7 +15,8 @@ import {
   Brain,
   Target,
   Sparkles,
-  Loader2
+  Loader2,
+  Star
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
@@ -97,11 +98,22 @@ export default function Dashboard() {
          {/* Sidebar Controls */}
          <aside className="lg:col-span-1 space-y-6">
             <section className="bg-white border border-slate-200 rounded-[2rem] p-8 shadow-sm">
+               <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Plano Atual</h3>
+                  <Link to="/plans" className="text-[10px] font-black text-indigo-600 uppercase tracking-widest hover:underline">Alterar</Link>
+               </div>
+               <div className="bg-slate-900 rounded-2xl p-6 text-white mb-8 border border-white/5 shadow-xl">
+                  <div className="flex items-center gap-3 mb-2">
+                     <Star className="w-4 h-4 text-indigo-400 fill-indigo-400" />
+                     <span className="font-black italic uppercase tracking-tighter text-lg">{profile?.plano || 'FREE'}</span>
+                  </div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Status: Ativo</p>
+               </div>
                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6">Status da Missão</h3>
                <div className="space-y-8">
                   <StatItem label="Nível Acadêmico" value="08" sub="Sênior" color="blue" />
                   <StatItem label="Conquistas" value="32" sub="+04 hoje" color="indigo" />
-                  <StatItem label="Racha de XP" value="1.2k" sub="Semanas" color="amber" />
+                  <StatItem label="Tokens IA" value={profile?.saldoTokensIA || 0} sub="Disponíveis" color="amber" />
                </div>
             </section>
 

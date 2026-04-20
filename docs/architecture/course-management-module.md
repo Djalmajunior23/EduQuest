@@ -48,7 +48,7 @@ A UI foca no "Administrador" e "Coordenador", utilizando o conceito de Master-De
 - **Acesso Limitado**: Somente ADM ou usuários com `permissoesGranulares.hasAny(['gerenciar_cursos'])` (RBAC) podem gravar novas matrizes curriculares.
 
 ## 5. INTEGRAÇÃO N8N (WORKFLOWS PEDAGÓGICOS)
-Como o Catálogo de Cursos do SENAI é governado também pela Administração Regional através do SAP, os workflows n8n estarão configurados como:
+Como o Catálogo de Cursos do Inteligência Educacional Interativa é governado também pela Administração Regional através do SAP, os workflows n8n estarão configurados como:
 - **Catálogo Sync (Nightly Sync)**: Uma trigger N8n de CRON roda à noite enviando um HTTP Request à plataforma legada da Escola, e sincroniza os Cursos com o Firebase puxando via API usando `updateDoc` e `addDoc`.
 
 ## 6. ROADMAP DE IMPLEMENTAÇÃO

@@ -65,7 +65,7 @@ export const saService = {
   },
 
   async generateSAWithIA(prompt: string, ucInfo?: string): Promise<Partial<LearningSituation>> {
-    const fullPrompt = `Você é um especialista em Design Pedagógico do SENAI. 
+    const fullPrompt = `Você é um especialista em Design Pedagógico do Inteligência Educacional Interativa. 
     Gere uma Situação de Aprendizagem (SA) detalhada baseada no seguinte prompt: "${prompt}".
     Considere estas informações da Unidade Curricular: ${ucInfo || 'Área de TI/Desenvolvimento de Sistemas'}.
     Retorne EXCLUSIVAMENTE um objeto JSON com as seguintes chaves:
@@ -77,7 +77,7 @@ export const saService = {
       contents: fullPrompt,
     });
     
-    const text = response.text;
+    const text = response.text || "{}";
     
     try {
       // Basic cleanup in case Gemini returns markdown blocks
@@ -107,7 +107,7 @@ export const saService = {
       contents: fullPrompt,
     });
     
-    const text = response.text;
+    const text = response.text || "[]";
     
     try {
       const cleanJson = text.replace(/```json|```/g, '').trim();

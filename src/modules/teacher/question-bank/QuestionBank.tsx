@@ -12,6 +12,7 @@ interface Question {
   bloomTaxonomy: string;
   difficulty: string;
   ucId: string;
+  tags?: string[];
 }
 
 export default function QuestionBank() {
@@ -22,6 +23,10 @@ export default function QuestionBank() {
   const [generating, setGenerating] = useState(false);
   const [suggestedQuestions, setSuggestedQuestions] = useState<Question[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [filterDifficulty, setFilterDifficulty] = useState('');
+  const [filterBloom, setFilterBloom] = useState('');
+  const [filterTag, setFilterTag] = useState('');
 
   useEffect(() => {
     fetchQuestions();
@@ -51,7 +56,7 @@ export default function QuestionBank() {
       const data = await response.json();
       setSuggestedQuestions(data.map((q: any) => ({
         ...q,
-        ucId: 'UC-SENAI-001'
+        ucId: 'UC-Inteligência Educacional Interativa-001'
       })));
     } catch (error) {
       console.error(error);
@@ -81,9 +86,13 @@ export default function QuestionBank() {
     setSuggestedQuestions(prev => prev.filter((_, i) => i !== index));
   };
 
-  const filteredQuestions = questions.filter(q => 
-    q.text.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredQuestions = questions.filter(q => {
+    const matchesSearch = q.text.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesDifficulty = !filterDifficulty || q.difficulty === filterDifficulty;
+    const matchesBloom = !filterBloom || q.bloomTaxonomy === filterBloom;
+    const matchesTags = !filterTag || (q.tags && q.tags.some(t => t.toLowerCase().includes(filterTag.toLowerCase())));
+    return matchesSearch && matchesDifficulty && matchesBloom && matchesTags;
+  });
 
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-8" id="question-bank-container">
@@ -212,21 +221,95 @@ export default function QuestionBank() {
       </AnimatePresence>
 
       {/* Main List Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
-         <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input 
-              type="text" 
-              placeholder="Pesquisar por enunciado..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 bg-white border-none rounded-2xl shadow-sm focus:ring-2 focus:ring-indigo-600 font-medium"
-            />
-         </div>
-         <button className="flex items-center gap-2 px-6 py-3 bg-white text-gray-600 rounded-2xl shadow-sm font-bold hover:bg-gray-50 border border-gray-100">
-            <Filter className="w-5 h-5" />
-            Filtros
-         </button>
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row gap-4">
+           <div className="relative flex-1">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input 
+                type="text" 
+                placeholder="Pesquisar por enunciado..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-12 pr-4 py-3 bg-white border-none rounded-2xl shadow-sm focus:ring-2 focus:ring-indigo-600 font-medium"
+              />
+           </div>
+           <button 
+            onClick={() => setShowFilters(!showFilters)}
+            className={`flex items-center gap-2 px-6 py-3 rounded-2xl shadow-sm font-bold border transition-all ${
+              showFilters ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-600 border-gray-100 hover:bg-gray-50'
+            }`}
+           >
+              <Filter className="w-5 h-5" />
+              Filtros
+           </button>
+        </div>
+
+        <AnimatePresence>
+          {showFilters && (
+            <motion.div 
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-50 p-6 rounded-2xl border border-gray-100">
+                <div>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Dificuldade</label>
+                  <select 
+                    value={filterDifficulty}
+                    onChange={(e) => setFilterDifficulty(e.target.value)}
+                    className="w-full bg-white border-none rounded-xl py-2.5 px-4 shadow-sm focus:ring-2 focus:ring-indigo-600 font-bold text-sm"
+                  >
+                    <option value="">Todas</option>
+                    <option value="easy">Fácil</option>
+                    <option value="medium">Médio</option>
+                    <option value="hard">Difícil</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Taxonomia de Bloom</label>
+                  <select 
+                    value={filterBloom}
+                    onChange={(e) => setFilterBloom(e.target.value)}
+                    className="w-full bg-white border-none rounded-xl py-2.5 px-4 shadow-sm focus:ring-2 focus:ring-indigo-600 font-bold text-sm"
+                  >
+                    <option value="">Todas</option>
+                    <option value="Lembrar">Lembrar</option>
+                    <option value="Entender">Entender</option>
+                    <option value="Aplicar">Aplicar</option>
+                    <option value="Analisar">Analisar</option>
+                    <option value="Avaliar">Avaliar</option>
+                    <option value="Criar">Criar</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Tag</label>
+                  <input 
+                    type="text" 
+                    placeholder="Filtrar por tag..." 
+                    value={filterTag}
+                    onChange={(e) => setFilterTag(e.target.value)}
+                    className="w-full bg-white border-none rounded-xl py-2.5 px-4 shadow-sm focus:ring-2 focus:ring-indigo-600 font-bold text-sm"
+                  />
+                </div>
+                {(filterDifficulty || filterBloom || filterTag) && (
+                  <div className="md:col-span-3 flex justify-end">
+                    <button 
+                      onClick={() => {
+                        setFilterDifficulty('');
+                        setFilterBloom('');
+                        setFilterTag('');
+                      }}
+                      className="text-xs font-black text-indigo-600 hover:text-indigo-800 uppercase tracking-widest"
+                    >
+                      Limpar Filtros
+                    </button>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {loading ? (
@@ -320,7 +403,7 @@ export default function QuestionBank() {
                    Gerador Pedagógico<br />
                    Inteligente
                  </h2>
-                 <p className="text-indigo-100 text-sm mt-2 font-medium opacity-80 italic">O algoritmo Gemini 1.5 estruturará questões de múltipla escolha com base no seu tema.</p>
+                 <p className="text-indigo-100 text-sm mt-3 font-medium opacity-80 italic">Descreva o tema ou competência para gerar questões automaticamente com Taxonomia de Bloom.</p>
               </div>
               
               <div className="p-8 space-y-6">

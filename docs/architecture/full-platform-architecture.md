@@ -1,4 +1,4 @@
-# ARQUITETURA MESTRA — PLATAFORMA EDUCACIONAL INTELIGENTE (SENAI)
+# ARQUITETURA MESTRA — PLATAFORMA EDUCACIONAL INTELIGENTE (Inteligência Educacional Interativa)
 
 ## 1. VISÃO DO PROJETO
 Esta plataforma é um ecossistema **SaaS Educacional Orientado a Eventos**. O core transacional reside no **Firebase**, enquanto a inteligência lógica e pedagógica é orquestrada por **Workflows no n8n**. O objetivo é personalizar a aprendizagem de forma adaptativa, utilizando IA para reduzir a carga do professor e aumentar o engajamento do aluno.

@@ -93,7 +93,7 @@ export default function SAPanel() {
             <span className="text-sm font-bold bg-blue-100 text-blue-700 px-3 py-1 rounded-full not-italic tracking-normal">Beta</span>
           </h1>
           <p className="text-slate-500 font-medium mt-1 uppercase text-xs tracking-widest">
-            Metodologia SENAI de Ensino por Competências
+            Metodologia Inteligência Educacional Interativa de Ensino por Competências
           </p>
         </div>
 
@@ -102,7 +102,7 @@ export default function SAPanel() {
             onClick={seedModelSA}
             className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-indigo-50 text-indigo-600 px-6 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-indigo-100 transition-all border border-indigo-100"
           >
-            Seed Modelo SENAI
+            Seed Modelo Inteligência Educacional Interativa
           </button>
           <button 
             onClick={() => navigate('/sa/create')}

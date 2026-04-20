@@ -103,7 +103,7 @@ export default function ExamTake() {
       });
 
       if (completedMissions.length > 0) {
-        console.log("Missões completadas:", completedMissions);
+        // Múltiplas missões puderam ser concluídas
       }
       
       // Trigger n8n webhook if score is low

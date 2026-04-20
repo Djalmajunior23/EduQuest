@@ -195,7 +195,7 @@ export default function SAView() {
       </main>
 
       <footer className="pt-10 border-t border-slate-100 opacity-30 text-[10px] font-black uppercase tracking-[0.3em] flex justify-between">
-         <span>© 2026 SENAI EduQuest Ecosystem</span>
+         <span>© 2026 Inteligência Educacional Interativa EduQuest Ecosystem</span>
          <span>Gerado via IA Assistida por Especialista</span>
       </footer>
     </div>

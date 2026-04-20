@@ -162,7 +162,7 @@ export default function ActivateAccount() {
                   Acesso Liberado
                 </h1>
                 <p className="text-slate-500 font-medium">
-                  Sua conta foi ativada com sucesso. Você já pode acessar a plataforma SENAI com sua nova senha.
+                  Sua conta foi ativada com sucesso. Você já pode acessar a plataforma Inteligência Educacional Interativa com sua nova senha.
                 </p>
                 <Link 
                   to="/login"

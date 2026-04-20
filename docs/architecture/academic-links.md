@@ -23,7 +23,7 @@ O módulo é altamente escalável não relacional, desenvolvido puramente em **N
 |---|---|---|---|
 | `cursos` | **Course** | Grade Central (Técnico, Aperfeiçoamento...) | Read: `isSignedIn()` Write: `ADMIN \| COORD` |
 | `turmas` | **ClassGroup** | Grupo Físico de Aula (Ex: TDS-Noite-01) | Read: `isSignedIn()` Write: `ADMIN \| COORD` |
-| `unidades_curriculares` | **CurricularUnit** | As matérias do SENAI | Read: `isSignedIn()` Write: `ADMIN \| COORD` |
+| `unidades_curriculares` | **CurricularUnit** | As matérias do Inteligência Educacional Interativa | Read: `isSignedIn()` Write: `ADMIN \| COORD` |
 | `vinculos` | **AcademicLink** | Liga `[User]` a `[Turma]` no papel `Aluno/Prof` | Read: `isSignedIn()` Write: `ADMIN \| COORD` |
 
 ### Exemplo do Documento em `vinculos_academicos`

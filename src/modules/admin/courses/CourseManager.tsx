@@ -39,7 +39,7 @@ export default function CourseManager() {
     return () => unsubscribe();
   }, []);
 
-  const handleOpenPanel = (course = null) => {
+  const handleOpenPanel = (course: any = null) => {
     if (course) {
       setEditingCourse(course);
       setFormData({

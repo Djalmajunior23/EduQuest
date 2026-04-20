@@ -66,7 +66,7 @@ export default function ProfessorAIHub() {
               </div>
             </div>
             <p className="max-w-xl text-slate-400 text-sm font-medium leading-relaxed">
-              Otimize seu planejamento, analise turmas em segundos e gere instrumentos avaliativos alinhados à metodologia SENAI.
+              Otimize seu planejamento, analise turmas em segundos e gere instrumentos avaliativos alinhados à metodologia Inteligência Educacional Interativa.
             </p>
           </div>
           

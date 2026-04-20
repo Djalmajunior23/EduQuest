@@ -1,0 +1,4 @@
+nome,email,perfil,status,turmaId
+Joao Silva,joao@exemplo.com.br,ALUNO,ATIVO,TURMA-DS-2024
+Maria Oliveira,maria@exemplo.com.br,ALUNO,ATIVO,TURMA-DS-2024
+Carlos Garcia,carlos@exemplo.com.br,ALUNO,PENDENTE,TURMA-CYBER-2024

@@ -29,7 +29,7 @@ export const missionService = {
   async checkMissions(userId: string, action: 'COMPLETE_EXAM', metadata: { score?: number, examId?: string }) {
     try {
       // 1. Buscar missões ativas do tipo correspondente
-      const missionsQuery = query(collection(db, 'metas'), where('type', '==', action));
+      const missionsQuery = query(collection(db, 'gamificacao_missoes'), where('type', '==', action));
       const missionsSnap = await getDocs(missionsQuery);
       
       const results = [];
@@ -37,7 +37,7 @@ export const missionService = {
       for (const missionDoc of missionsSnap.docs) {
         const mission = { id: missionDoc.id, ...missionDoc.data() } as Mission;
         const progressId = `${userId}_${mission.id}`;
-        const progressRef = doc(db, 'progresso_missoes', progressId);
+        const progressRef = doc(db, 'gamificacao_progresso_missoes', progressId);
         const progressSnap = await getDoc(progressRef);
         
         let progressData: MissionProgress;
@@ -84,7 +84,7 @@ export const missionService = {
           });
           
           // Registrar conquista
-          await addDoc(collection(db, 'conquistas_aluno'), {
+          await addDoc(collection(db, 'gamificacao_conquistas_aluno'), {
             userId,
             missionId: mission.id,
             title: mission.title,
@@ -109,10 +109,10 @@ export const missionService = {
    */
   async getMissionsWithProgress(userId: string) {
     try {
-      const missionsSnap = await getDocs(collection(db, 'metas'));
+      const missionsSnap = await getDocs(collection(db, 'gamificacao_missoes'));
       const missions = missionsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Mission));
       
-      const progressQuery = query(collection(db, 'progresso_missoes'), where('userId', '==', userId));
+      const progressQuery = query(collection(db, 'gamificacao_progresso_missoes'), where('userId', '==', userId));
       const progressSnap = await getDocs(progressQuery);
       const progressMap = new Map(progressSnap.docs.map(doc => [doc.data().missionId, doc.data()]));
       

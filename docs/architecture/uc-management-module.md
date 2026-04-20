@@ -37,7 +37,7 @@ Mais adiante na plataforma, coleções estendidas se relacionarão com UCs:
 - **Interação**: Seleção mandatória do "Curso" no momento de Criação da UC para garantir integridade referencial.
 
 ## 4. REGRAS DE NEGÓCIO DA ARQUITETURA
-- **Pertencimento Único**: No SENAI convencional, uma UC pode ser reaproveitada. Nesta arquitetura inicial, para garantir o tracking de performance rigoroso isolado, criamos 1 documento UC por Curso.
+- **Pertencimento Único**: No Inteligência Educacional Interativa convencional, uma UC pode ser reaproveitada. Nesta arquitetura inicial, para garantir o tracking de performance rigoroso isolado, criamos 1 documento UC por Curso.
 - **Segurança (Firestore Rules)**: Escrita protegida. Somente perfis habilitados com cargo `ADMIN` ou com permissão granular `gerenciar_cursos` possuem autoridade de alteração das UCs.
 - **Base Pedagógica**: O delete de Unidades Curriculares é desativado via regra se existirem "Questões" (QuestionBank) linkadas ao seu `ucId`.
 

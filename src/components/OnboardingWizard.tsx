@@ -99,7 +99,7 @@ export function OnboardingWizard() {
                 </div>
                 <div className="h-48 overflow-y-auto p-4 bg-slate-50 rounded-xl text-sm text-slate-600 mb-6 border border-slate-100">
                   <p className="font-bold mb-2">1. Aceite e Consentimento (LGPD)</p>
-                  <p className="mb-4">Ao continuar, você concorda que o SENAI pode coletar e tratar seus dados acadêmicos para fins estritamente pedagógicos...</p>
+                  <p className="mb-4">Ao continuar, você concorda que o Inteligência Educacional Interativa pode coletar e tratar seus dados acadêmicos para fins estritamente pedagógicos...</p>
                   <p className="font-bold mb-2">2. Uso da Plataforma</p>
                   <p>A plataforma EduQuest deve ser utilizada para atividades acadêmicas. O uso indevido pode acarretar em bloqueio da conta.</p>
                 </div>

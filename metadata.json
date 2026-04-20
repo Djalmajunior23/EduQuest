@@ -1,6 +1,10 @@
 {
-  "name": "EduQuest",
-  "description": "Plataforma educacional integrada para estudantes de TI com simulados, exercícios e automações n8n.",
-  "requestFramePermissions": [],
+  "name": "NEXUSINTAI - Plataforma Educacional SaaS",
+  "description": "Plataforma educacional inteligente e gamificada para ensino técnico e TI, com IA adaptativa e arquitetura SaaS.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ],
   "majorCapabilities": []
 }

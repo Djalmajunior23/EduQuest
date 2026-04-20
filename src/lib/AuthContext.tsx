@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
 import { auth, db } from './firebase';
+import { SAAS_PLANS } from '../constants/saas';
 
 const DEFAULT_PERMISSIONS: Record<string, string[]> = {
   ADMIN: [
@@ -33,6 +34,7 @@ interface AuthContextType {
   signInWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
   hasPermission: (permissionName: string) => boolean;
+  hasPlanFeature: (featureName: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -54,6 +56,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
        return true;
     }
     return false;
+  };
+
+  const hasPlanFeature = (featureName: string): boolean => {
+    if (!profile || !profile.plano) return false;
+    const plan = SAAS_PLANS[profile.plano as keyof typeof SAAS_PLANS];
+    return plan?.features.includes(featureName) || false;
   };
 
   useEffect(() => {
@@ -88,6 +96,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               email: user.email,
               nome: user.displayName || 'Usuário',
               perfil: isAdmin ? 'ADMIN' : 'ALUNO',
+              plano: 'FREE',
+              tenantId: isAdmin ? 'nexus_master' : 'nexus_default',
               status: 'ATIVO',
               saldoTokensIA: 50,
               xp: 0,
@@ -126,7 +136,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signInWithGoogle, logout, hasPermission }}>
+    <AuthContext.Provider value={{ user, profile, loading, signInWithGoogle, logout, hasPermission, hasPlanFeature }}>
       {children}
     </AuthContext.Provider>
   );
