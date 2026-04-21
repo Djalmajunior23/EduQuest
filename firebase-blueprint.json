@@ -1,801 +1,183 @@
 {
   "entities": {
-    "ClassGroup": {
-      "title": "Turma",
+    "Tenant": {
+      "title": "Tenant",
+      "description": "Uma instituição de ensino (SaaS Tenant).",
       "type": "object",
       "properties": {
-        "courseId": { "type": "string" },
-        "codigo": { "type": "string" },
+        "tenantId": { "type": "string" },
         "nome": { "type": "string" },
-        "turno": { "type": "string", "enum": ["MANHA", "TARDE", "NOITE", "INTEGRAL"] },
-        "dataInicio": { "type": "string", "format": "date-time" },
-        "dataFim": { "type": "string", "format": "date-time" },
-        "status": { "type": "string", "enum": ["ATIVA", "CONCLUIDA", "CANCELADA"] },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "createdBy": { "type": "string" }
-      },
-      "required": ["courseId", "codigo", "nome", "status"]
-    },
-    "Course": {
-      "title": "Curso",
-      "type": "object",
-      "properties": {
-        "codigo": { "type": "string" },
-        "nome": { "type": "string" },
-        "eixoTecnologico": { "type": "string" },
-        "modalidade": { "type": "string", "enum": ["APRENDIZAGEM", "TECNICO", "QUALIFICACAO", "GRADUACAO", "POS"] },
-        "cargaHoraria": { "type": "number" },
-        "status": { "type": "string", "enum": ["ATIVO", "INATIVO"] },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "createdBy": { "type": "string" }
-      },
-      "required": ["codigo", "nome", "modalidade", "status"]
-    },
-    "CurricularUnit": {
-      "title": "Unidade Curricular",
-      "type": "object",
-      "properties": {
-        "courseId": { "type": "string" },
-        "nome": { "type": "string" },
-        "cargaHoraria": { "type": "number" },
-        "conhecimentos": { "type": "array", "items": { "type": "string" } },
-        "capacidades": { "type": "array", "items": { "type": "string" } },
-        "status": { "type": "string", "enum": ["ATIVO", "INATIVO"] },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "createdBy": { "type": "string" }
-      },
-      "required": ["courseId", "nome", "status"]
-    },
-    "AcademicLink": {
-      "title": "Vínculo Acadêmico",
-      "type": "object",
-      "description": "Tabela de junção para vínculo N:M entre Usuários e Turmas/UCs",
-      "properties": {
-        "userId": { "type": "string" },
-        "targetType": { "type": "string", "enum": ["TURMA", "CURSO", "CURRICULAR_UNIT"] },
-        "targetId": { "type": "string" },
-        "roleInContext": { "type": "string", "enum": ["ALUNO", "PROFESSOR", "COORDENADOR"] },
-        "status": { "type": "string", "enum": ["ATIVO", "INATIVO"] },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "createdBy": { "type": "string" },
-        "inactivatedAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["userId", "targetType", "targetId", "status", "roleInContext"]
-    },
-    "Notification": {
-      "title": "Notificação",
-      "type": "object",
-      "properties": {
-        "userId": { "type": "string" },
-        "title": { "type": "string" },
-        "body": { "type": "string" },
-        "type": { "type": "string", "enum": ["INFO", "ALERT", "REMINDER", "ACHIEVEMENT", "ADMIN", "PEDAGOGICAL", "WELCOME"] },
-        "read": { "type": "boolean" },
-        "actionUrl": { "type": "string", "description": "Deep link for actionable notifications" },
-        "senderId": { "type": "string", "description": "System or an Admin/Professor ID" },
-        "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["userId", "title", "body", "type", "read"]
-    },
-    "BroadcastMessage": {
-      "title": "Mensagem Interna/Aviso",
-      "type": "object",
-      "properties": {
-        "title": { "type": "string" },
-        "content": { "type": "string" },
-        "targetRoles": { "type": "array", "items": { "type": "string" } },
-        "targetTurmaIds": { "type": "array", "items": { "type": "string" } },
-        "priority": { "type": "string", "enum": ["LOW", "NORMAL", "HIGH", "URGENT"] },
-        "authorId": { "type": "string" },
-        "status": { "type": "string", "enum": ["DRAFT", "PUBLISHED", "ARCHIVED"] },
-        "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["title", "content", "priority", "authorId", "status"]
-    },
-    "User": {
-      "title": "User",
-      "description": "Comprehensive user profile",
-      "type": "object",
-      "properties": {
-        "nome": { "type": "string" },
-        "email": { "type": "string", "format": "email" },
-        "perfil": { "type": "string", "enum": ["ADMIN", "PROFESSOR", "ALUNO", "COORDINATOR", "SUPPORT"] },
-        "plano": { "type": "string", "enum": ["FREE", "BASIC", "PRO", "INSTITUTIONAL"] },
-        "status": { "type": "string", "enum": ["ATIVO", "INATIVO", "BLOQUEADO", "PENDENTE"] },
-        "telefone": { "type": "string" },
-        "fotoUrl": { "type": "string" },
-        "turmaId": { "type": "string" },
-        "courseId": { "type": "string" },
-        "saldoTokensIA": { "type": "number" },
-        "ultimoLogin": { "type": "string", "format": "date-time" },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "updatedAt": { "type": "string", "format": "date-time" },
-        "createdBy": { "type": "string" },
-        "updatedBy": { "type": "string" },
-        "observacoes": { "type": "string" },
-        "termosAceitosEm": { "type": "string", "format": "date-time" },
-        "primeiroAcessoCompleto": { "type": "boolean" },
-        "permissoesGranulares": {
-          "type": "array",
-          "items": { "type": "string" },
-          "description": "Permissões de exceção além do perfil base"
-        },
-        "preferencias": {
-          "type": "object",
-          "properties": {
-            "tema": { "type": "string" },
-            "notificacoesEmail": { "type": "boolean" },
-            "notificacoesPush": { "type": "boolean" }
-          }
-        }
-      },
-      "required": ["nome", "email", "perfil", "status", "plano"]
-    },
-    "Subscription": {
-      "title": "SaaS Subscription",
-      "type": "object",
-      "properties": {
-        "userId": { "type": "string" },
-        "planId": { "type": "string" },
-        "status": { "type": "string", "enum": ["ACTIVE", "PAST_DUE", "CANCELED", "TRIALING"] },
-        "currentPeriodStart": { "type": "string", "format": "date-time" },
-        "currentPeriodEnd": { "type": "string", "format": "date-time" },
-        "cancelAtPeriodEnd": { "type": "boolean" },
-        "stripeSubscriptionId": { "type": "string" },
-        "stripeCustomerId": { "type": "string" },
-        "updatedAt": { "type": "string", "format": "date-time" }
-      }
-    },
-    "UserSession": {
-       "title": "User Session",
-       "type": "object",
-       "properties": {
-         "userId": { "type": "string" },
-         "dispositivo": { "type": "string" },
-         "ip": { "type": "string" },
-         "browser": { "type": "string" },
-         "lastActive": { "type": "string", "format": "date-time" },
-         "isRevoked": { "type": "boolean" }
-       }
-    },
-    "UserProfile": {
-      "title": "Role Definition",
-      "type": "object",
-      "properties": {
-        "nomePerfil": { "type": "string" },
-        "descricao": { "type": "string" },
-        "permissoes": { "type": "array", "items": { "type": "string" } },
-        "status": { "type": "string", "enum": ["ATIVO", "INATIVO"] },
-        "createdAt": { "type": "string", "format": "date-time" }
-      }
-    },
-    "AuditLog": {
-      "title": "System Audit Log",
-      "type": "object",
-      "properties": {
-        "acao": { "type": "string" },
-        "usuarioAfetadoId": { "type": "string" },
-        "usuarioResponsavelId": { "type": "string" },
-        "descricao": { "type": "string" },
-        "dataHora": { "type": "string", "format": "date-time" },
-        "detalhes": { "type": "object" }
-      }
-    },
-    "Invitation": {
-      "title": "User Invitation",
-      "type": "object",
-      "properties": {
-        "email": { "type": "string" },
-        "perfil": { "type": "string" },
-        "turmaId": { "type": "string" },
-        "token": { "type": "string" },
-        "status": { "type": "string", "enum": ["ENVIADO", "ACEITO", "EXPIRADO"] },
-        "expiresAt": { "type": "string", "format": "date-time" },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "createdBy": { "type": "string" }
-      }
-    },
-    "Question": {
-      "title": "Question",
-      "description": "Pedagogical queston with versioning and quality metrics",
-      "type": "object",
-      "properties": {
-        "text": { "type": "string" },
-        "options": { "type": "array", "items": { "type": "string" } },
-        "correctOptionIndex": { "type": "number" },
-        "difficulty": { "type": "string", "enum": ["easy", "medium", "hard"] },
-        "difficultyReal": { "type": "number", "description": "Calculated difficulty based on hit rate" },
-        "bloomTaxonomy": { "type": "string" },
-        "qualityScore": { "type": "number", "description": "AI and Peer review score" },
-        "version": { "type": "number" },
-        "previousVersionId": { "type": "string" },
-        "ucId": { "type": "string" },
-        "conhecimentoTecnicoIds": { "type": "array", "items": { "type": "string" } },
-        "capacidadeTecnicaIds": { "type": "array", "items": { "type": "string" } },
-        "tags": { "type": "array", "items": { "type": "string" } },
-        "explanation": { "type": "string" },
-        "usageCount": { "type": "number" },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "createdBy": { "type": "string" }
-      }
-    },
-    "Evaluation": {
-      "title": "Avaliação",
-      "description": "Custom evaluations (Diagnostic, Formative, Summative)",
-      "type": "object",
-      "properties": {
-        "titulo": { "type": "string" },
-        "tipo": { "type": "string", "enum": ["DIAGNOSTICA", "FORMATIVA", "SOMATIVA", "PRATICA"] },
-        "status": { "type": "string", "enum": ["DRAFT", "PUBLISHED", "CLOSED"] },
-        "turmaIds": { "type": "array", "items": { "type": "string" } },
-        "questionIds": { "type": "array", "items": { "type": "string" } },
-        "saId": { "type": "string", "description": "Optional link to a Situation of Learning" },
-        "dataInicio": { "type": "string", "format": "date-time" },
-        "dataFim": { "type": "string", "format": "date-time" },
-        "gabaritoComentado": { "type": "boolean" },
-        "feedbackIndividual": { "type": "boolean" },
-        "config": {
-          "type": "object",
-          "properties": {
-            "embaralharQuestoes": { "type": "boolean" },
-            "tempoLimite": { "type": "number" },
-            "tentativasMax": { "type": "number" }
-          }
-        },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "createdBy": { "type": "string" }
-      }
-    },
-    "LessonPlan": {
-      "title": "Plano de Aula",
-      "type": "object",
-      "properties": {
-        "titulo": { "type": "string" },
-        "ucId": { "type": "string" },
-        "turmaId": { "type": "string" },
-        "objetivos": { "type": "string" },
-        "sequenciaDidatica": { "type": "array", "items": { "type": "object" } },
-        "atividadesPraticas": { "type": "array", "items": { "type": "string" } },
-        "saIds": { "type": "array", "items": { "type": "string" } },
-        "recursos": { "type": "array", "items": { "type": "string" } },
-        "dataPrevista": { "type": "string", "format": "date-time" },
-        "biInsights": { "type": "string", "description": "Context from BI that drove this plan" },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "createdBy": { "type": "string" }
-      }
-    },
-    "StudentDossier": {
-      "title": "Dossiê do Aluno",
-      "type": "object",
-      "properties": {
-        "studentId": { "type": "string" },
-        "perfilAprendizagem": { "type": "string" },
-        "currentStage": { "type": "string", "enum": ["INICIANTE", "EM_DESENVOLVIMENTO", "AVANCADO", "PROFICIENTE"] },
-        "riskLevel": { "type": "string", "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"] },
-        "nextDificultiesPrediction": { "type": "string" },
-        "competenceEvolution": { "type": "object", "description": "Map of competence IDs to proficiency level" },
-        "technicalKnowledgeEvolution": { "type": "object" },
-        "technicalCapacityEvolution": { "type": "object" },
-        "lastIntervention": { "type": "object" },
-        "updatedAt": { "type": "string", "format": "date-time" }
-      }
-    },
-    "SituationLearning": {
-      "title": "Situation of Learning (SA)",
-      "description": "Complex pedagogical challenge based on Inteligência Educacional Interativa methodology",
-      "type": "object",
-      "properties": {
-        "titulo": { "type": "string" },
-        "contexto": { "type": "string" },
-        "problema_desafio": { "type": "string" },
-        "objetivo_geral": { "type": "string" },
-        "objetivos_especificos": { "type": "array", "items": { "type": "string" } },
-        "entregas": { "type": "array", "items": { "type": "object", "properties": { "descricao": { "type": "string" }, "prazo": { "type": "string" } } } },
-        "criterios_avaliacao": { "type": "array", "items": { "type": "string" } },
-        "rubricas": { "type": "array", "items": { "$ref": "Rubric" } },
-        "evidencias": { "type": "array", "items": { "type": "string" } },
-        "ucId": { "type": "string" },
-        "conhecimentoTecnicoIds": { "type": "array", "items": { "type": "string" } },
-        "capacidadeTecnicaIds": { "type": "array", "items": { "type": "string" } },
-        "recursos_necessarios": { "type": "array", "items": { "type": "string" } },
-        "cronograma": { "type": "string" },
-        "orientacoes_aluno": { "type": "string" },
-        "orientacoes_professor": { "type": "string" },
-        "status": { "type": "string", "enum": ["DRAFT", "PUBLISHED", "ARCHIVED"] },
-        "isTemplate": { "type": "boolean" },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "createdBy": { "type": "string" },
-        "updatedAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["titulo", "contexto", "problema_desafio", "ucId", "status"]
-    },
-    "Rubric": {
-      "title": "Rubric",
-      "type": "object",
-      "properties": {
-        "criterio": { "type": "string" },
-        "niveis": { 
-          "type": "array", 
-          "items": { 
-            "type": "object", 
-            "properties": { 
-              "titulo": { "type": "string" }, 
-              "descricao": { "type": "string" }, 
-              "valor": { "type": "number" } 
-            } 
-          } 
-        }
-      }
-    },
-    "AIUsage": {
-      "title": "AI Usage Log",
-      "type": "object",
-      "properties": {
-        "userId": { "type": "string" },
-        "prompt": { "type": "string" },
-        "response": { "type": "string" },
-        "tokensConsumed": { "type": "number" },
-        "actionType": { "type": "string", "enum": ["EXPLANATION", "STUDY_GUIDE", "ERROR_HELP", "CONCEPT"] },
-        "createdAt": { "type": "string", "format": "date-time" }
-      }
-    },
-    "Recommendation": {
-      "title": "AI Recommendation",
-      "type": "object",
-      "properties": {
-        "userId": { "type": "string" },
-        "title": { "type": "string" },
-        "content": { "type": "string" },
-        "type": { "type": "string", "enum": ["REINFORCEMENT", "NEXT_STEP", "REVISION", "INTERVENTION"] },
-        "read": { "boolean": "boolean" },
-        "createdAt": { "type": "string", "format": "date-time" }
-      }
-    },
-    "PedagogicalMaterial": {
-      "title": "Pedagogical Material",
-      "type": "object",
-      "properties": {
-        "title": { "type": "string" },
-        "content": { "type": "string" },
-        "type": { "type": "string", "enum": ["LESSON_PLAN", "STUDY_GUIDE", "PRACTICAL_ACTIVITY", "CASE_STUDY"] },
-        "ucId": { "type": "string" },
-        "createdBy": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" }
-      }
-    },
-    "ClassAnalysis": {
-      "title": "Class Pedagogical Analysis",
-      "type": "object",
-      "properties": {
-        "turmaId": { "type": "string" },
-        "summary": { "type": "string" },
-        "criticalPoints": { "type": "array", "items": { "type": "string" } },
-        "suggestedActions": { "type": "array", "items": { "type": "string" } },
-        "analyzedAt": { "type": "string", "format": "date-time" },
-        "createdBy": { "type": "string" }
-      }
-    },
-    "BIIndicator": {
-      "title": "BI Indicator",
-      "type": "object",
-      "properties": {
-        "targetId": { "type": "string" },
-        "type": { "type": "string", "enum": ["STUDENT", "CLASS", "OVERALL"] },
-        "metrics": {
-          "type": "object",
-          "properties": {
-            "avgPerformance": { "type": "number" },
-            "completionRate": { "type": "number" },
-            "engagementScore": { "type": "number" },
-            "tokensConsumed": { "type": "number" },
-            "riskLevel": { "type": "string", "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"] }
-          }
-        },
-        "updatedAt": { "type": "string", "format": "date-time" }
-      }
-    },
-    "ProjectABP": {
-      "title": "Projeto ABP",
-      "type": "object",
-      "properties": {
-        "titulo": { "type": "string" },
-        "tema": { "type": "string" },
-        "descricao": { "type": "string" },
-        "objetivos": { "type": "array", "items": { "type": "string" } },
-        "turmaId": { "type": "string" },
-        "professorResponsavelId": { "type": "string" },
-        "fases": { "type": "array", "items": { "type": "object" } },
-        "status": { "type": "string", "enum": ["PLANEJAMENTO", "EM_CURSO", "FINALIZADO"] },
-        "createdAt": { "type": "string", "format": "date-time" }
-      }
-    },
-    "CollaborationGroup": {
-      "title": "Grupo de Colaboração",
-      "type": "object",
-      "properties": {
-        "nome": { "type": "string" },
-        "projetoId": { "type": "string" },
-        "turmaId": { "type": "string" },
-        "membrosIds": { "type": "array", "items": { "type": "string" } },
-        "liderId": { "type": "string" },
-        "status": { "type": "string", "enum": ["ATIVO", "DISSOLVIDO"] }
-      }
-    },
-    "SpacedLearningItem": {
-      "title": "Item de Revisão Espaçada",
-      "type": "object",
-      "properties": {
-        "userId": { "type": "string" },
-        "contentId": { "type": "string" },
-        "contentType": { "type": "string", "enum": ["QUESTION", "CONCEPT", "ACTIVITY"] },
-        "nextReviewDate": { "type": "string", "format": "date-time" },
-        "interval": { "type": "number", "description": "Current interval in days" },
-        "easeFactor": { "type": "number" },
-        "repetitionCount": { "type": "number" },
-        "lastPerformance": { "type": "number" }
-      }
-    },
-    "AcademicAchievement": {
-      "title": "Conquista Acadêmica",
-      "type": "object",
-      "properties": {
-        "userId": { "type": "string" },
-        "badgeId": { "type": "string" },
-        "titulo": { "type": "string" },
-        "descricao": { "type": "string" },
-        "unidadeCurricularId": { "type": "string" },
-        "nivel": { "type": "number" },
-        "conquistadoEm": { "type": "string", "format": "date-time" }
-      }
-    },
-    "InstitutionalConfig": {
-      "title": "Configuração Institucional",
-      "type": "object",
-      "properties": {
-        "nomeInstituicao": { "type": "string" },
-        "logoUrl": { "type": "string" },
-        "iaRules": { "type": "object", "description": "Global rules for AI tutoring" },
-        "moduloStatus": { "type": "object", "description": "Enable/disable specific modules" },
-        "backupPolicy": { "type": "string" },
-        "lastBackupAt": { "type": "string", "format": "date-time" }
-      }
-    },
-    "GamificationProfile": {
-      "title": "Perfil de Gamificação do Aluno",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "alunoId": { "type": "string" },
-        "cursoId": { "type": "string" },
-        "turmaId": { "type": "string" },
-        "nivelAtual": { "type": "number" },
-        "xpAtual": { "type": "number" },
-        "xpProxNivel": { "type": "number" },
-        "pontosTotais": { "type": "number" },
-        "saldoTokensIA": { "type": "number" },
-        "streakAtual": { "type": "number" },
-        "maiorStreak": { "type": "number" },
-        "conquistasIds": { "type": "array", "items": { "type": "string" } },
-        "badgesIds": { "type": "array", "items": { "type": "string" } },
-        "status": { "type": "string", "enum": ["ATIVO", "INATIVO"] },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "updatedAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["alunoId", "nivelAtual", "xpAtual"]
-    },
-    "GamificationTrack": {
-      "title": "Trilha Gamificada",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "nome": { "type": "string" },
-        "descricao": { "type": "string" },
-        "cursoId": { "type": "string" },
-        "nivelRecomendado": { "type": "number" },
-        "ordem": { "type": "number" },
-        "fasesCount": { "type": "number" },
-        "recompensaFinal": { "type": "object" },
-        "status": { "type": "string", "enum": ["ATIVO", "DRAFT"] },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "updatedAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["nome", "cursoId", "status"]
-    },
-    "TrackPhase": {
-      "title": "Fase da Trilha",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "trilhaId": { "type": "string" },
-        "nome": { "type": "string" },
-        "ordem": { "type": "number" },
-        "xpRequerido": { "type": "number" },
-        "status": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" }
-      }
-    },
-    "GamificationMission": {
-      "title": "Missão de Gamificação",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "titulo": { "type": "string" },
-        "descricao": { "type": "string" },
-        "tipo": { "type": "string", "enum": ["DIARIA", "SEMANAL", "ESPECIAL", "ADAPTATIVA"] },
-        "dificuldade": { "type": "string" },
-        "pontos": { "type": "number" },
-        "xp": { "type": "number" },
-        "bonusTokensIa": { "type": "number" },
-        "trilhaId": { "type": "string" },
-        "faseId": { "type": "string" },
-        "unidadeCurricularId": { "type": "string" },
-        "regraValidacao": { "type": "string" },
-        "status": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "updatedAt": { "type": "string", "format": "date-time" }
-      }
-    },
-    "GamificationChallenge": {
-      "title": "Desafio Prático Core",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "titulo": { "type": "string" },
-        "descricao": { "type": "string" },
-        "tipo": { "type": "string", "enum": ["CODIGO", "LOGICA", "SEGURANCA", "LINUX"] },
-        "complexidade": { "type": "number" },
-        "xp": { "type": "number" },
-        "pontos": { "type": "number" },
-        "corretoPattern": { "type": "string" },
-        "status": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" }
-      }
-    },
-    "BossChallenge": {
-      "title": "Desafio de Chefe",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "titulo": { "type": "string" },
-        "descricao": { "type": "string" },
-        "trilhaId": { "type": "string" },
-        "xpRecompensa": { "type": "number" },
-        "badgeId": { "type": "string" },
         "status": { "type": "string" }
-      }
+      },
+      "required": ["tenantId", "nome"]
     },
-    "GamificationAchievement": {
-      "title": "Catálogo de Conquistas",
+    "Usuario": {
+      "title": "Usuario",
+      "description": "Usuário da plataforma.",
       "type": "object",
       "properties": {
-        "id": { "type": "string" },
-        "titulo": { "type": "string" },
-        "descricao": { "type": "string" },
-        "categoria": { "type": "string" },
-        "icone": { "type": "string" },
-        "raridade": { "type": "string", "enum": ["COMUM", "RARO", "EPICO", "LENDARIO"] },
-        "xp": { "type": "number" },
-        "pontos": { "type": "number" }
-      }
+        "uid": { "type": "string" },
+        "tenantId": { "type": "string" },
+        "perfil": { "type": "string" },
+        "email": { "type": "string" }
+      },
+      "required": ["uid", "tenantId", "perfil"]
     },
-    "GamificationBadge": {
-      "title": "Badge de Reconhecimento",
+    "LaboratorioCategoria": {
+      "title": "LaboratorioCategoria",
+      "description": "Categoria organizacional de labs.",
       "type": "object",
       "properties": {
-        "id": { "type": "string" },
+        "tenantId": { "type": "string" },
         "nome": { "type": "string" },
-        "imagem": { "type": "string" },
-        "nivel": { "type": "number" }
-      }
+        "cursoId": { "type": "string" }
+      },
+      "required": ["tenantId", "nome"]
     },
-    "GamificationRanking": {
-      "title": "Snapshot de Ranking",
+    "IntegrationProviderConfig": {
+      "title": "IntegrationProviderConfig",
+      "description": "Configuração centralizada de integrações externas (AI, Payment, etc).",
       "type": "object",
       "properties": {
-        "id": { "type": "string" },
-        "tipo": { "type": "string", "enum": ["GLOBAL", "TURMA", "CURSO"] },
-        "contextoId": { "type": "string" },
-        "posicoes": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "alunoId": { "type": "string" },
-              "nome": { "type": "string" },
-              "xp": { "type": "number" },
-              "posicao": { "type": "number" }
-            }
-          }
-        },
-        "periodo": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" }
-      }
+        "tenantId": { "type": "string" },
+        "nomeProvedor": { "type": "string" },
+        "categoria": { "type": "string", "enum": ["AI", "PAYMENT", "ANALYTICS", "COMMUNICATION"] },
+        "subCategoria": { "type": "string", "enum": ["FREE", "HYBRID", "PREMIUM"] },
+        "ambiente": { "type": "string", "enum": ["sandbox", "producao"] },
+        "status": { "type": "string", "enum": ["ativo", "inativo", "standby"] },
+        "prioridade": { "type": "number" },
+        "fallbackPara": { "type": "string" },
+        "chavePublicaMasked": { "type": "string" },
+        "criadoPor": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["tenantId", "nomeProvedor", "categoria", "subCategoria"]
     },
-    "GamificationGoal": {
-      "title": "Meta Inteligente",
+    "IntegrationAuditLog": {
+      "title": "IntegrationAuditLog",
+      "description": "Log de auditoria absoluta para governança de integrações.",
       "type": "object",
       "properties": {
-        "id": { "type": "string" },
-        "alunoId": { "type": "string" },
+        "tenantId": { "type": "string" },
+        "acao": { "type": "string" }, // "CREATE", "UPDATE", "TOGGLE", "ROTATE"
+        "userId": { "type": "string" },
+        "timestamp": { "type": "string" }
+      }
+    }
+,
+    "Gamificacao": {
+      "title": "Gamificacao",
+      "description": "Configurações e estados de gamificação.",
+      "type": "object",
+      "properties": {
+        "tenantId": { "type": "string" },
+        "xpTotal": { "type": "number" },
+        "badges": { "type": "array" }
+      },
+      "required": ["tenantId"]
+    },
+    "PerfilAluno": {
+      "title": "PerfilAluno",
+      "description": "Dados pedagógicos e de jornada do aluno.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "nivel": { "type": "number" },
+        "xp": { "type": "number" }
+      },
+      "required": ["userId"]
+    },
+    "Simulador": {
+      "title": "Simulador",
+      "description": "Simulador educacional (lógica, código, decisão).",
+      "type": "object",
+      "properties": {
+        "tenantId": { "type": "string" },
         "titulo": { "type": "string" },
-        "tipoMeta": { "type": "string" },
-        "origem": { "type": "string", "enum": ["MANUAL", "IA", "MOTOR"] },
-        "progressoAtual": { "type": "number" },
-        "progressoMeta": { "type": "number" },
-        "recompensa": { "type": "object" },
-        "status": { "type": "string", "enum": ["EM_ANDAMENTO", "CONCLUIDA", "FALHA"] },
-        "updatedAt": { "type": "string", "format": "date-time" }
-      }
+        "tipo": { "type": "string", "enum": ["LOGICA", "CODIGO", "DB", "REDES", "DECISAO"] },
+        "cenario": { "type": "string" },
+        "etapas": { "type": "array" },
+        "createdBy": { "type": "string" }
+      },
+      "required": ["tenantId", "titulo", "tipo"]
     },
-    "GamificationStreak": {
-      "title": "Controle de Streak",
+    "EstudoCaso": {
+      "title": "EstudoCaso",
+      "description": "Cenário de problema real para análise técnica.",
       "type": "object",
       "properties": {
-        "id": { "type": "string" },
-        "alunoId": { "type": "string" },
-        "contagem": { "type": "number" },
-        "ultimaAtividade": { "type": "string", "format": "date-time" },
-        "createdAt": { "type": "string", "format": "date-time" }
-      }
-    },
-    "GamificationEvent": {
-      "title": "Fato Gamificável",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "alunoId": { "type": "string" },
-        "tipoEvento": { "type": "string" },
-        "origemModulo": { "type": "string" },
-        "origemId": { "type": "string" },
-        "payload": { "type": "object" },
-        "processado": { "type": "boolean" },
-        "processadoEm": { "type": "string", "format": "date-time" },
-        "createdAt": { "type": "string", "format": "date-time" }
-      }
-    },
-    "GamificationLedger": {
-      "title": "Histórico de Transações",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "alunoId": { "type": "string" },
-        "tipo": { "type": "string", "enum": ["PONTOS", "XP", "TOKENS"] },
-        "valor": { "type": "number" },
-        "motivo": { "type": "string" },
-        "origemId": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" }
-      }
-    },
-    "GamificationProgress": {
-      "title": "Status de Progresso",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "alunoId": { "type": "string" },
-        "referenciaId": { "type": "string", "description": "ID da Missão, Trilha ou Desafio" },
-        "tipoReferencia": { "type": "string", "enum": ["TRILHA", "MISSAO", "DESAFIO"] },
-        "percentual": { "type": "number" },
-        "concluido": { "type": "boolean" },
-        "concluidoEm": { "type": "string", "format": "date-time" },
-        "updatedAt": { "type": "string", "format": "date-time" }
-      }
-    },
-    "GamificationConfig": {
-      "title": "Configuração do Módulo",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "multiplicadorXpGlobal": { "type": "number" },
-        "regrasPontuacao": { "type": "object" },
-        "tokensDiariosGratuitos": { "type": "number" },
-        "updatedAt": { "type": "string", "format": "date-time" }
-      }
-    },
-    "Laboratorio": {
-      "title": "Laboratório Prático",
-      "type": "object",
-      "properties": {
+        "tenantId": { "type": "string" },
         "titulo": { "type": "string" },
         "descricao": { "type": "string" },
-        "contexto": { "type": "string" },
-        "objetivoGeral": { "type": "string" },
-        "objetivosEspecificos": { "type": "array", "items": { "type": "string" } },
-        "cursoId": { "type": "string" },
-        "turmaId": { "type": "string" },
-        "unidadeCurricularId": { "type": "string" },
-        "conhecimentoTecnicoIds": { "type": "array", "items": { "type": "string" } },
-        "capacidadeTecnicaIds": { "type": "array", "items": { "type": "string" } },
-        "nivelDificuldade": { "type": "string", "enum": ["INICIANTE", "INTERMEDIARIO", "AVANCADO"] },
-        "tempoEstimado": { "type": "number" },
-        "preRequisitos": { "type": "array", "items": { "type": "string" } },
-        "materiaisNecessarios": { "type": "array", "items": { "type": "string" } },
-        "ferramentasNecessarias": { "type": "array", "items": { "type": "string" } },
-        "instrucoes": { "type": "string" },
-        "checklist": { "type": "array", "items": { "type": "string" } },
-        "criteriosAvaliacao": { "type": "array", "items": { "type": "string" } },
-        "rubricaId": { "type": "string" },
-        "entregaveis": { "type": "array", "items": { "type": "string" } },
-        "evidenciasEsperadas": { "type": "array", "items": { "type": "string" } },
-        "versaoProfessor": { "type": "string" },
-        "versaoAluno": { "type": "string" },
-        "status": { "type": "string", "enum": ["DRAFT", "PUBLISHED", "ARCHIVED"] },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "updatedAt": { "type": "string", "format": "date-time" },
-        "createdBy": { "type": "string" },
-        "tenantId": { "type": "string" }
+        "solucoesEsperadas": { "type": "array" }
       }
     },
-    "Execution": {
-      "title": "Execução de Laboratório",
+    "AulaInvertida": {
+      "title": "AulaInvertida",
+      "description": "Configuração de materiais pré-aula e validação prévia.",
       "type": "object",
       "properties": {
-        "laboratorioId": { "type": "string" },
-        "alunoId": { "type": "string" },
-        "status": { "type": "string", "enum": ["STARTED", "SUBMITTED", "COMPLETED"] },
-        "progresso": { "type": "number" },
-        "dataInicio": { "type": "string", "format": "date-time" },
-        "dataFim": { "type": "string", "format": "date-time" },
-        "tenantId": { "type": "string" }
+        "tenantId": { "type": "string" },
+        "conteudoPre": { "type": "string" },
+        "quizValidacao": { "type": "array" }
       }
     },
+    "IndicadoresBI": {
+      "title": "IndicadoresBI",
+      "description": "BI agregado para dashboards institucionais.",
+      "type": "object",
+      "properties": {
+        "tenantId": { "type": "string" },
+        "resumo": { "type": "object" }
+      },
+      "required": ["tenantId"]
+    }
   },
   "firestore": {
-    "usuarios": {
-      "schema": "User",
-      "description": "Collection of all users in the system"
+    "/tenants/{tenantId}": {
+      "schema": "Tenant",
+      "description": "Instituições cadastradas no SaaS."
     },
-    "avaliacoes": { "schema": "Evaluation", "description": "Advanced multi-type evaluations" },
-    "planos_aula": { "schema": "LessonPlan", "description": "Teacher lesson plans" },
-    "dossies_alunos": { "schema": "StudentDossier", "description": "In-depth student records" },
-    "questoes": {
-      "schema": "Question",
-      "description": "Bank of pedagogical questions with analysis"
+    "/usuarios/{userId}": {
+      "schema": "Usuario",
+      "description": "Usuários do sistema."
     },
-    "situacoes_aprendizagem": {
-      "schema": "SituationLearning",
-      "description": "Situations of Learning created by professors"
+    "/laboratorio_categorias/{catId}": {
+      "schema": "LaboratorioCategoria",
+      "description": "Categorias de laboratórios por tenant."
     },
-    "cursos": { "schema": "Course", "description": "Educational courses" },
-    "turmas": { "schema": "ClassGroup", "description": "Class groups" },
-    "unidades_curriculares": { "schema": "CurricularUnit", "description": "Curricular units" },
-    "vinculos_academicos": { "schema": "AcademicLink", "description": "Relacionamentos Pedagógicos" },
-    "conhecimentos_tecnicos": { "schema": "object", "description": "Technical knowledge definitions" },
-    "capacidades_tecnicas": { "schema": "object", "description": "Technical capability definitions" },
-    "gamificacao": { "schema": "GamificationProfile", "description": "Resumo gamificado por aluno" },
-    "laboratorios_praticos": { "schema": "Laboratorio", "description": "Collection of practical labs" },
-    "execucoes_laboratorio": { "schema": "Execution", "description": "Lab execution records" },
-    "trilhas_gamificadas": { "schema": "GamificationTrack", "description": "Trilhas de aprendizado gamificadas" },
-    "fases_trilha": { "schema": "TrackPhase", "description": "Fases que compõem uma trilha" },
-    "missoes": { "schema": "GamificationMission", "description": "Missões diárias e especiais" },
-    "desafios": { "schema": "GamificationChallenge", "description": "Desafios práticos complexos" },
-    "boss_challenges": { "schema": "BossChallenge", "description": "Desafios finais de trilha" },
-    "conquistas": { "schema": "GamificationAchievement", "description": "Catálogo mestre de conquistas" },
-    "badges": { "schema": "GamificationBadge", "description": "Badges de reconhecimento" },
-    "ranking": { "schema": "GamificationRanking", "description": "Snapshots de rankings periódicos" },
-    "metas": { "schema": "GamificationGoal", "description": "Metas individuais inteligentes" },
-    "streaks": { "schema": "GamificationStreak", "description": "Controle de ofícios diários" },
-    "historico_pontos": { "schema": "GamificationLedger", "description": "Extrato de Pontuação (Legacy: historico)" },
-    "historico_xp": { "schema": "GamificationLedger", "description": "Extrato de Experiência" },
-    "bonus_tokens": { "schema": "GamificationLedger", "description": "Extrato de Bônus de Tokens AI" },
-    "progresso_trilha": { "schema": "GamificationProgress", "description": "Progresso em trilhas" },
-    "progresso_missao": { "schema": "GamificationProgress", "description": "Progresso em missões" },
-    "progresso_desafio": { "schema": "GamificationProgress", "description": "Progresso em desafios" },
-    "notificacoes_gamificacao": { "schema": "Notification", "description": "Notificações do módulo" },
-    "eventos_gamificacao": { "schema": "GamificationEvent", "description": "Fila de processamento" },
-    "configuracoes_gamificacao": { "schema": "GamificationConfig", "description": "Regras globais" },
-    "logs_gamificacao": { "schema": "GamificationLog", "description": "Logs específicos do módulo" },
-    "configuracoes_institucionais": { "schema": "InstitutionalConfig", "description": "Configurações avançadas" },
-    "uso_ia": { "schema": "object", "description": "Logs of AI usage" },
-    "materiais_apoio": { "schema": "object", "description": "Reference materials" },
-    "relatorios": { "schema": "object", "description": "Educational reports" },
-    "abp_projetos": { "schema": "ProjectABP", "description": "Aprendizagem Baseada em Projetos" },
-    "abp_entregas": { "schema": "object", "description": "Entregas de projetos ABP" },
-    "colaboracao_grupos": { "schema": "CollaborationGroup", "description": "Grupos de trabalho e colaboração" },
-    "revisao_espacada": { "schema": "SpacedLearningItem", "description": "Itens para revisão espaçada" },
-    "conquistas_academicas": { "schema": "AcademicAchievement", "description": "Certificações e conquistas" },
-    "agenda_inteligente": { "schema": "object", "description": "Compromissos e prazos monitorados por IA" },
-    "logs": { "schema": "object", "description": "System event logs" },
-    "configuracoes": { "schema": "object", "description": "System-wide settings" },
-    "assinaturas": { "schema": "Subscription", "description": "SaaS Subscriptions tracking" }
+    "/config_integracoes/{configId}": {
+      "schema": "IntegrationProviderConfig",
+      "description": "Configurações unificadas de integrações externas."
+    },
+    "/audit_integracoes/{logId}": {
+      "schema": "IntegrationAuditLog",
+      "description": "Logs de auditoria de integrações."
+    },
+    "/simuladores/{simId}": {
+      "schema": "Simulador",
+      "description": "Banco de simuladores pedagógicos."
+    },
+    "/estudos_caso/{caseId}": {
+      "schema": "EstudoCaso",
+      "description": "Repositório de estudos de caso reais."
+    },
+    "/aulas_invertidas/{aulaId}": {
+      "schema": "AulaInvertida",
+      "description": "Gestão de conteúdos pré-aula."
+    },
+    "/gamificacao/{gamificacaoId}": {
+      "schema": "Gamificacao",
+      "description": "Configurações de gamificação por tenant."
+    },
+    "/perfis_aluno/{userId}": {
+      "schema": "PerfilAluno",
+      "description": "Dados pedagógicos e gamificados do aluno."
+    },
+    "/indicadores_bi/{biId}": {
+      "schema": "IndicadoresBI",
+      "description": "BI agregado para dashboards institucionais."
+    }
   }
+
 }

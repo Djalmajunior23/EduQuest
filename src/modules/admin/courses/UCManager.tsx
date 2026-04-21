@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, orderBy, onSnapshot, addDoc, updateDoc, doc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, updateDoc, doc, serverTimestamp, where } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
 import { useAuth } from '../../../lib/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
@@ -31,9 +31,19 @@ export default function UCManager() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    if (!profile?.tenantId) return;
+
     // Escuta sincronizada de Cursos e UCs para o administrador
-    const qUcs = query(collection(db, 'unidades_curriculares'), orderBy('createdAt', 'desc'));
-    const qCourses = query(collection(db, 'cursos'), orderBy('nome', 'asc'));
+    const qUcs = query(
+      collection(db, 'unidades_curriculares'), 
+      where('tenantId', '==', profile.tenantId),
+      orderBy('createdAt', 'desc')
+    );
+    const qCourses = query(
+      collection(db, 'cursos'), 
+      where('tenantId', '==', profile.tenantId),
+      orderBy('nome', 'asc')
+    );
 
     const unsubscribeUcs = onSnapshot(qUcs, (snap) => {
       setUcs(snap.docs.map(d => ({ id: d.id, ...d.data() })));
@@ -48,7 +58,7 @@ export default function UCManager() {
        unsubscribeUcs();
        unsubscribeCourses();
     };
-  }, []);
+  }, [profile]);
 
   const handleOpenPanel = (uc: any = null) => {
     if (uc) {
@@ -90,6 +100,7 @@ export default function UCManager() {
       } else {
         await addDoc(collection(db, 'unidades_curriculares'), {
           ...ucData,
+          tenantId: profile.tenantId,
           createdAt: serverTimestamp()
         });
       }
@@ -103,13 +114,23 @@ export default function UCManager() {
 
   const filteredUcs = ucs.filter(uc => {
     const matchSearch = uc.nome?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchCourse = selectedCourseFilter === 'ALL' || uc.cursoId === selectedCourseFilter;
+    
+    let matchCourse = false;
+    if (selectedCourseFilter === 'ALL') {
+      matchCourse = true;
+    } else if (selectedCourseFilter === 'ORPHAN') {
+      matchCourse = !courses.some(c => c.id === uc.cursoId);
+    } else {
+      matchCourse = uc.cursoId === selectedCourseFilter;
+    }
+
     return matchSearch && matchCourse;
   });
 
-  const getCourseName = (courseId: string) => {
+  const getCourseDetails = (courseId: string) => {
+     if (!courseId) return { nome: 'Sem Curso Associado', isOrphan: true };
      const course = courses.find(c => c.id === courseId);
-     return course ? course.nome : 'Curso Órfão / Não Vinculado';
+     return course ? { nome: course.nome, isOrphan: false } : { nome: 'Curso Órfão / Não Encontrado', isOrphan: true };
   };
 
   return (
@@ -149,6 +170,7 @@ export default function UCManager() {
              onChange={(e) => setSelectedCourseFilter(e.target.value)}
           >
              <option value="ALL">Todos os Cursos Matriciais</option>
+             <option value="ORPHAN">Apenas UCs Órfãs (Sem Curso)</option>
              {courses.map(course => (
                  <option key={course.id} value={course.id}>{course.nome}</option>
              ))}
@@ -197,8 +219,10 @@ export default function UCManager() {
                              </td>
                              <td className="px-8 py-6">
                                 <div className="flex items-center gap-2">
-                                  <Building2 className="w-4 h-4 text-slate-400" />
-                                  <span className="text-xs font-bold text-slate-600 line-clamp-1">{getCourseName(uc.cursoId)}</span>
+                                  <Building2 className={cn("w-4 h-4", getCourseDetails(uc.cursoId).isOrphan ? "text-red-400" : "text-slate-400")} />
+                                  <span className={cn("text-xs font-bold line-clamp-1", getCourseDetails(uc.cursoId).isOrphan ? "text-red-500" : "text-slate-600")}>
+                                    {getCourseDetails(uc.cursoId).nome}
+                                  </span>
                                 </div>
                              </td>
                              <td className="px-8 py-6">
@@ -265,7 +289,10 @@ export default function UCManager() {
                       <label className="micro-label">Atribuição de Matriz Curricular (Curso Pai)</label>
                       <select 
                          required
-                         className="w-full px-6 py-4 bg-slate-50 border border-transparent rounded-2xl text-xs font-bold focus:bg-white focus:border-slate-200 transition-all text-slate-900 cursor-pointer"
+                         className={cn(
+                           "w-full px-6 py-4 bg-slate-50 border border-transparent rounded-2xl text-xs font-bold focus:bg-white focus:border-slate-200 transition-all cursor-pointer",
+                           (formData.cursoId && !courses.find(c => c.id === formData.cursoId)) ? "text-red-900 bg-red-50 ring-4 ring-red-100" : "text-slate-900"
+                         )}
                          value={formData.cursoId}
                          onChange={(e) => setFormData({...formData, cursoId: e.target.value})}
                       >
@@ -273,8 +300,22 @@ export default function UCManager() {
                          {courses.map(course => (
                              <option key={course.id} value={course.id}>{course.nome}</option>
                          ))}
+                         {formData.cursoId && !courses.find(c => c.id === formData.cursoId) && (
+                            <option value={formData.cursoId} disabled hidden>
+                               ⚠️ Curso Anterior Excluído (Órfão)
+                            </option>
+                         )}
                       </select>
-                      {courses.length === 0 && <p className="text-xs text-red-500 font-medium mt-2">Você precisa criar ao menos um Curso primeiro.</p>}
+                      {formData.cursoId && !courses.find(c => c.id === formData.cursoId) && (
+                         <div className="flex items-start gap-2 mt-3 p-4 bg-red-50 text-red-600 rounded-xl border border-red-100">
+                            <AlertCircle className="w-5 h-5 shrink-0" />
+                            <p className="text-[10px] font-black uppercase tracking-[0.1em] leading-relaxed">
+                               O curso vinculado a esta unidade foi deletado do sistema. Por favor, reatribua a um curso válido.
+                            </p>
+                         </div>
+                      )}
+                      
+                      {courses.length === 0 && <p className="text-xs text-amber-500 font-medium mt-2">Você precisa criar ao menos um Curso primeiro.</p>}
                     </div>
 
                     <div className="space-y-2">

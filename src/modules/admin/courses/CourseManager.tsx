@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, orderBy, onSnapshot, addDoc, updateDoc, doc, serverTimestamp, getDocs } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, updateDoc, doc, serverTimestamp, getDocs, where } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
 import { useAuth } from '../../../lib/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
@@ -31,13 +31,18 @@ export default function CourseManager() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    const q = query(collection(db, 'cursos'), orderBy('createdAt', 'desc'));
+    if (!profile?.tenantId) return;
+    const q = query(
+      collection(db, 'cursos'), 
+      where('tenantId', '==', profile.tenantId),
+      orderBy('createdAt', 'desc')
+    );
     const unsubscribe = onSnapshot(q, (snap) => {
       setCourses(snap.docs.map(d => ({ id: d.id, ...d.data() })));
       setLoading(false);
     });
     return () => unsubscribe();
-  }, []);
+  }, [profile]);
 
   const handleOpenPanel = (course: any = null) => {
     if (course) {
@@ -81,6 +86,7 @@ export default function CourseManager() {
       } else {
         await addDoc(collection(db, 'cursos'), {
           ...courseData,
+          tenantId: profile.tenantId,
           createdAt: serverTimestamp()
         });
       }

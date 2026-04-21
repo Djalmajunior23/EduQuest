@@ -55,7 +55,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { icon: FileCheck, label: 'Avaliações', path: '/evaluations', roles: ['ALUNO', 'PROFESSOR', 'ADMIN'] },
     {icon: Trophy, label: 'Gamificação', path: '/gamification', roles: ['ALUNO'] },
     { icon: Trophy, label: 'Gamificação Turma', path: '/gamification-professor', roles: ['PROFESSOR'] },
-    { icon: Brain, label: 'Curadoria IA', path: '/ai-hub', roles: ['PROFESSOR', 'ADMIN'] },
+    { icon: Brain, label: 'Professor AI Hub', path: '/ai-hub', roles: ['PROFESSOR', 'ADMIN'] },
     { icon: BookOpen, label: 'Recursos e SA', path: '/sa', roles: ['PROFESSOR', 'ADMIN'] },
     { icon: FileText, label: 'Banco de Questões', path: '/questions', roles: ['PROFESSOR', 'ADMIN'] },
     { icon: BarChart3, label: 'BI e Relatórios', path: '/reports', roles: ['PROFESSOR', 'ADMIN'] },
@@ -70,6 +70,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { icon: Library, label: 'Disciplinas (UCs)', path: '/admin/ucs' },
     { icon: Target, label: 'Capacidades (Habilidades)', path: '/admin/capacidades' },
     { icon: FileText, label: 'Configurações Base', path: '/admin/settings' },
+    { icon: Star, label: 'Pagamentos (Gateway)', path: '/admin/payments' },
   ];
 
   const filteredMenuItems = menuItems.filter(item => 

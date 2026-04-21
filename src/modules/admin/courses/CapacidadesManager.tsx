@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, orderBy, onSnapshot, addDoc, updateDoc, doc, serverTimestamp, deleteDoc } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, updateDoc, doc, serverTimestamp, deleteDoc, where } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
 import { useAuth } from '../../../lib/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
@@ -30,9 +30,19 @@ export default function CapacidadesManager() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    if (!profile?.tenantId) return;
+
     // Escuta dupla para cruzar relacional
-    const qCaps = query(collection(db, 'capacidades_tecnicas'), orderBy('createdAt', 'desc'));
-    const qUcs = query(collection(db, 'unidades_curriculares'), orderBy('nome', 'asc'));
+    const qCaps = query(
+      collection(db, 'capacidades_tecnicas'), 
+      where('tenantId', '==', profile.tenantId),
+      orderBy('createdAt', 'desc')
+    );
+    const qUcs = query(
+      collection(db, 'unidades_curriculares'), 
+      where('tenantId', '==', profile.tenantId),
+      orderBy('nome', 'asc')
+    );
 
     const unsubscribeCaps = onSnapshot(qCaps, (snap) => {
       setCapacidades(snap.docs.map(d => ({ id: d.id, ...d.data() })));
@@ -47,7 +57,7 @@ export default function CapacidadesManager() {
        unsubscribeCaps();
        unsubscribeUcs();
     };
-  }, []);
+  }, [profile]);
 
   const handleOpenPanel = (capacidade: any = null) => {
     if (capacidade) {
@@ -94,6 +104,7 @@ export default function CapacidadesManager() {
       } else {
         await addDoc(collection(db, 'capacidades_tecnicas'), {
           ...capData,
+          tenantId: profile.tenantId,
           createdAt: serverTimestamp()
         });
       }

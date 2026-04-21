@@ -1,8 +1,7 @@
 import { collection, addDoc, updateDoc, doc, getDoc, getDocs, query, where, serverTimestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { GoogleGenAI } from "@google/genai";
-
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+import { AIService } from './aiService';
+import { Type } from '@google/genai';
 
 export interface LearningSituation {
   id?: string;
@@ -65,28 +64,38 @@ export const saService = {
   },
 
   async generateSAWithIA(prompt: string, ucInfo?: string): Promise<Partial<LearningSituation>> {
-    const fullPrompt = `Você é um especialista em Design Pedagógico do Inteligência Educacional Interativa. 
+    const fullPrompt = `Você é um especialista em Design Pedagógico. 
     Gere uma Situação de Aprendizagem (SA) detalhada baseada no seguinte prompt: "${prompt}".
-    Considere estas informações da Unidade Curricular: ${ucInfo || 'Área de TI/Desenvolvimento de Sistemas'}.
-    Retorne EXCLUSIVAMENTE um objeto JSON com as seguintes chaves:
-    titulo, contexto, problema_desafio, objetivo_geral, objetivos_especificos (array), entregas (array de objetos {descricao, prazo}), criterios_avaliacao (array), evidencias (array), recursos_necessarios (array), cronograma, orientacoes_aluno, orientacoes_professor.
-    Não inclua markdown ou texto fora do JSON.`;
+    Considere estas informações: ${ucInfo || 'Área de TI/Desenvolvimento de Sistemas'}.`;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: fullPrompt,
-    });
-    
-    const text = response.text || "{}";
-    
-    try {
-      // Basic cleanup in case Gemini returns markdown blocks
-      const cleanJson = text.replace(/```json|```/g, '').trim();
-      return JSON.parse(cleanJson);
-    } catch (error) {
-      console.error("Falha ao parsear JSON da IA:", text);
-      throw new Error("A IA gerou um formato inválido. Tente novamente.");
-    }
+    const schema = {
+       type: Type.OBJECT,
+       properties: {
+          titulo: { type: Type.STRING },
+          contexto: { type: Type.STRING },
+          problema_desafio: { type: Type.STRING },
+          objetivo_geral: { type: Type.STRING },
+          objetivos_especificos: { type: Type.ARRAY, items: { type: Type.STRING } },
+          entregas: {
+             type: Type.ARRAY,
+             items: {
+                type: Type.OBJECT,
+                properties: {
+                   descricao: { type: Type.STRING },
+                   prazo: { type: Type.STRING }
+                }
+             }
+          },
+          criterios_avaliacao: { type: Type.ARRAY, items: { type: Type.STRING } },
+          evidencias: { type: Type.ARRAY, items: { type: Type.STRING } },
+          recursos_necessarios: { type: Type.ARRAY, items: { type: Type.STRING } },
+          cronograma: { type: Type.STRING },
+          orientacoes_aluno: { type: Type.STRING },
+          orientacoes_professor: { type: Type.STRING }
+       }
+    };
+
+    return AIService.generateJSON<Partial<LearningSituation>>(fullPrompt, schema, 'PREMIUM');
   },
 
   async generateRubricsWithIA(saId: string): Promise<any[]> {
@@ -96,25 +105,29 @@ export const saService = {
     const fullPrompt = `Gere rubricas de avaliação para a seguinte Situação de Aprendizagem:
     Título: ${sa.titulo}
     Desafio: ${sa.problema_desafio}
-    Critérios de Avaliação: ${sa.criterios_avaliacao.join(', ')}
-    
-    Retorne EXCLUSIVAMENTE um array JSON de objetos "Rubric", onde cada um tem:
-    criterio (string), niveis (array de objetos {titulo, descricao, valor (0-10)}).
-    Gere 3 níveis por critério (ex: Insuficiente, Regular, Excelente).`;
+    Critérios de Avaliação: ${(sa.criterios_avaliacao || []).join(', ')}`;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: fullPrompt,
-    });
-    
-    const text = response.text || "[]";
-    
-    try {
-      const cleanJson = text.replace(/```json|```/g, '').trim();
-      return JSON.parse(cleanJson);
-    } catch (error) {
-      console.error("Falha ao parsear rubricas da IA:", text);
-      throw new Error("A IA gerou um formato de rubrica inválido.");
-    }
+    const schema = {
+       type: Type.ARRAY,
+       items: {
+          type: Type.OBJECT,
+          properties: {
+             criterio: { type: Type.STRING },
+             niveis: {
+                type: Type.ARRAY,
+                items: {
+                   type: Type.OBJECT,
+                   properties: {
+                      titulo: { type: Type.STRING },
+                      descricao: { type: Type.STRING },
+                      valor: { type: Type.NUMBER }
+                   }
+                }
+             }
+          }
+       }
+    };
+
+    return AIService.generateJSON<any[]>(fullPrompt, schema, 'PREMIUM');
   }
 };

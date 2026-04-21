@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Brain, Sparkles, Loader2, Target, Users, BookOpen } from 'lucide-react';
-import { aiService } from '../../services/aiService';
+import { AIService } from '../../services/aiService';
 import Markdown from 'react-markdown';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../lib/AuthContext';
@@ -61,7 +61,7 @@ A estrutura de sua resposta em Markdown DEVE conter:
 - ...
 `;
        // Usando o SDK Gemni (Flash ou Pro) dependendo da implementação em aiService
-       const responseText = await aiService.generateText(prompt);
+       const responseText = await AIService.generateText(prompt);
        setGeneratedSA(responseText);
     } catch (err: any) {
        console.error("Erro ao gerar IA:", err);

@@ -107,7 +107,31 @@ export default function SAEditor() {
     setSA(prev => ({ ...prev, [key]: (prev[key] as any[]).filter((_, i) => i !== index) }));
   };
 
-  if (loading) return <div className="flex items-center justify-center min-h-screen">Carregando Meta-Arquitetura...</div>;
+  if (loading) return (
+    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-6rem)] relative overflow-hidden">
+        <motion.div 
+          animate={{ rotate: 360 }}
+          transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+          className="w-64 h-64 border-[1px] border-indigo-600/20 rounded-full border-dashed absolute"
+        />
+        <motion.div 
+          animate={{ rotate: -360 }}
+          transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
+          className="w-96 h-96 border-[1px] border-blue-600/10 rounded-full absolute"
+        />
+        <motion.div 
+           initial={{ scale: 0.8, opacity: 0 }}
+           animate={{ scale: 1, opacity: 1 }}
+           className="relative z-10 flex flex-col items-center bg-white/50 backdrop-blur-xl p-12 rounded-[3rem] border border-slate-100 shadow-2xl"
+        >
+            <div className="w-20 h-20 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-[2rem] flex items-center justify-center shadow-lg shadow-indigo-600/20 mb-8 animate-pulse">
+               <Wand2 className="w-10 h-10 text-white" />
+            </div>
+            <h2 className="text-3xl font-black italic uppercase tracking-tighter text-slate-900 mb-2">Engenharia Pedagógica Ativa</h2>
+            <p className="text-slate-500 font-bold text-xs uppercase tracking-[0.2em] animate-pulse">Sintetizando Conhecimento Tecnológico...</p>
+        </motion.div>
+    </div>
+  );
 
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-10 space-y-12">

@@ -4,15 +4,16 @@ import { db } from '../../../lib/firebase';
 import { useAuth } from '../../../lib/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  BrainCircuit, Compass, Target, Trophy, Flame, Loader2, ArrowRight
+  BrainCircuit, Compass, Target, Trophy, Flame, Loader2, ArrowRight, Zap, Target as TargetIcon
 } from 'lucide-react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { cn } from '../../../lib/utils';
 
 export default function StudentAdaptiveJourney() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [perfil, setPerfil] = useState<any>(null);
   const [plano, setPlano] = useState<any>(null);
+  const [missoes, setMissoes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const radarData = [
@@ -37,7 +38,7 @@ export default function StudentAdaptiveJourney() {
                taxaAcertoGeral: 68.5,
                pontosFortes: ['Banco de Dados MySQL'],
                pontosFracos: ['Conceitos de Redes / IP'],
-               xpMotor: 1450
+               xpMotor: profile?.xp || 1450
             });
         }
     });
@@ -62,14 +63,30 @@ export default function StudentAdaptiveJourney() {
               ]
            });
        }
-       setLoading(false);
     });
+
+    // Busca missões da gamificação baseadas no tenant
+    let unsubscribeMissions = () => {};
+    if (profile?.tenantId) {
+      const qMissions = query(
+        collection(db, 'missoes'),
+        where('tenantId', '==', profile.tenantId),
+        orderBy('createdAt', 'desc')
+      );
+      unsubscribeMissions = onSnapshot(qMissions, (snap) => {
+        setMissoes(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+        setLoading(false);
+      });
+    } else {
+      setLoading(false);
+    }
 
     return () => {
         unsubscribeProfile();
         unsubscribePlan();
+        unsubscribeMissions();
     };
-  }, [user]);
+  }, [user, profile]);
 
   if(loading) {
       return (
@@ -137,48 +154,99 @@ export default function StudentAdaptiveJourney() {
                  <div className="mt-8 pt-6 border-t border-white/10 flex items-center justify-between">
                      <div className="flex items-center gap-2">
                          <Flame className="w-5 h-5 text-amber-500" />
-                         <span className="font-black italic text-xl tracking-tighter">{perfil?.taxaAcertoGeral}% GERAL</span>
+                         <span className="font-black italic text-xl tracking-tighter cursor-help" title={`${profile?.xp || 0} XP Real Total`}>{perfil?.taxaAcertoGeral}% GERAL</span>
                      </div>
                  </div>
              </div>
           </div>
 
-          {/* NEXT BEST ACTIONS (O Plano Mutante) */}
-          <div className="lg:col-span-2 bg-white rounded-[2rem] p-8 border border-slate-200 shadow-sm flex flex-col">
-              <div className="flex justify-between items-center mb-6">
-                  <div>
-                      <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500 mb-1">Ação Sugerida (Semana {plano?.semana})</h3>
-                      <h4 className="text-2xl font-black text-slate-900 tracking-tight">{plano?.focoPrincipal}</h4>
+          {/* NEXT BEST ACTIONS & MISSIONS */}
+          <div className="lg:col-span-2 space-y-6">
+              
+              {/* O Plano Mutante */}
+              <div className="bg-white rounded-[2rem] p-8 border border-slate-200 shadow-sm flex flex-col">
+                  <div className="flex justify-between items-center mb-6">
+                      <div>
+                          <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500 mb-1">Ação Sugerida (Semana {plano?.semana})</h3>
+                          <h4 className="text-2xl font-black text-slate-900 tracking-tight">{plano?.focoPrincipal}</h4>
+                      </div>
+                      <Target className="w-8 h-8 text-slate-200" />
                   </div>
-                  <Target className="w-8 h-8 text-slate-200" />
+
+                  <div className="space-y-3 flex-1 flex flex-col justify-center">
+                      {(plano?.tarefasRecomendadas || []).map((t: any, i: number) => (
+                          <div key={i} className="p-4 border border-slate-100 rounded-2xl flex items-center justify-between hover:border-indigo-200 hover:bg-indigo-50/50 transition-colors cursor-pointer group">
+                             <div className="flex items-center gap-4">
+                                 <div className={cn(
+                                     "w-10 h-10 rounded-xl flex items-center justify-center font-black",
+                                     t.tipo === 'REVISAO' ? "bg-amber-100 text-amber-600" : "bg-blue-100 text-blue-600"
+                                 )}>
+                                    {t.tipo === 'REVISAO' ? 'R' : 'S'}
+                                 </div>
+                                 <div>
+                                    <p className="text-xs font-black uppercase tracking-widest text-slate-400">{t.tipo} • {t.tempoInfo}</p>
+                                    <p className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">{t.title}</p>
+                                 </div>
+                             </div>
+                             <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
+                                <ArrowRight className="w-4 h-4" />
+                             </div>
+                          </div>
+                      ))}
+                  </div>
+                  
+                  <div className="mt-6 pt-6 border-t border-slate-100">
+                      <button className="w-full py-4 bg-slate-900 text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-indigo-600 transition-colors shadow-lg shadow-slate-200">
+                          Iniciar Trilha Adaptada
+                      </button>
+                  </div>
               </div>
 
-              <div className="space-y-3 flex-1 flex flex-col justify-center">
-                  {(plano?.tarefasRecomendadas || []).map((t: any, i: number) => (
-                      <div key={i} className="p-4 border border-slate-100 rounded-2xl flex items-center justify-between hover:border-indigo-200 hover:bg-indigo-50/50 transition-colors cursor-pointer group">
-                         <div className="flex items-center gap-4">
-                             <div className={cn(
-                                 "w-10 h-10 rounded-xl flex items-center justify-center font-black",
-                                 t.tipo === 'REVISAO' ? "bg-amber-100 text-amber-600" : "bg-blue-100 text-blue-600"
-                             )}>
-                                {t.tipo === 'REVISAO' ? 'R' : 'S'}
-                             </div>
-                             <div>
-                                <p className="text-xs font-black uppercase tracking-widest text-slate-400">{t.tipo} • {t.tempoInfo}</p>
-                                <p className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">{t.title}</p>
-                             </div>
-                         </div>
-                         <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
-                            <ArrowRight className="w-4 h-4" />
-                         </div>
+              {/* Missões Ativas na Tela do Aluno */}
+              <div className="bg-white rounded-[2rem] p-8 border border-slate-200 shadow-sm">
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6 flex items-center gap-2">
+                      <Trophy className="w-4 h-4 text-amber-500" /> Suas Missões Gamificadas
+                  </h3>
+                  
+                  {missoes.length === 0 ? (
+                      <div className="text-center p-6 text-slate-400 font-medium">Nenhuma missão ativa no momento.</div>
+                  ) : (
+                      <div className="space-y-3">
+                          {missoes.slice(0,3).map((missao) => (
+                              <div key={missao.id} className="p-4 border border-slate-100 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4 hover:border-indigo-100 hover:shadow-sm transition-all">
+                                  <div className="flex items-center gap-4">
+                                      <div className={cn(
+                                          "w-12 h-12 rounded-xl flex items-center justify-center",
+                                          missao.type === 'SEMANAL' ? "bg-purple-50 text-purple-600" :
+                                          missao.type === 'DIARIA' ? "bg-blue-50 text-blue-600" : "bg-amber-50 text-amber-600"
+                                      )}>
+                                          <TargetIcon className="w-6 h-6" />
+                                      </div>
+                                      <div>
+                                          <p className={cn(
+                                              "text-[9px] font-black uppercase tracking-widest mb-1",
+                                              missao.type === 'SEMANAL' ? "text-purple-500" :
+                                              missao.type === 'DIARIA' ? "text-blue-500" : "text-amber-500"
+                                          )}>{missao.type}</p>
+                                          <p className="font-bold text-slate-900 text-sm leading-tight">{missao.titulo}</p>
+                                      </div>
+                                  </div>
+                                  <div className="flex items-center gap-3 bg-slate-50 px-4 py-2 rounded-xl border border-slate-100 self-start md:self-auto shrink-0">
+                                      <div className="flex items-center gap-1.5 text-slate-600">
+                                          <Zap className="w-3.5 h-3.5 text-amber-500" />
+                                          <span className="text-xs font-black italic">{missao.xp} XP</span>
+                                      </div>
+                                      {missao.aiTokens > 0 && (
+                                          <div className="flex items-center gap-1.5 text-slate-600 border-l border-slate-200 pl-3">
+                                              <BrainCircuit className="w-3.5 h-3.5 text-indigo-500" />
+                                              <span className="text-xs font-black italic">+{missao.aiTokens}</span>
+                                          </div>
+                                      )}
+                                  </div>
+                              </div>
+                          ))}
                       </div>
-                  ))}
-              </div>
-              
-              <div className="mt-6 pt-6 border-t border-slate-100">
-                  <button className="w-full py-4 bg-slate-900 text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-indigo-600 transition-colors shadow-lg shadow-slate-200">
-                      Iniciar Trilha Adaptada
-                  </button>
+                  )}
               </div>
           </div>
       </div>

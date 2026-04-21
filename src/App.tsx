@@ -22,6 +22,7 @@ import ProfessorGamification from './modules/professor/gamification/ProfessorGam
 import AdminGamification from './modules/admin/gamification/AdminGamification';
 import Missions from './pages/admin/Missions';
 import LabDashboard from './modules/professor/laboratorios/LabDashboard';
+import LabEditor from './modules/professor/laboratorios/LabEditor';
 import { StudentAITutor } from './modules/student/ai-tutor';
 import { ProfessorAIHub } from './modules/professor/ai-hub';
 import UserManager from './pages/admin/UserManager';
@@ -41,9 +42,15 @@ import CollaborativeWorkspace from './modules/pedagogical/collaboration/Collabor
 import SpacedLearningHub from './modules/student/spaced-learning/SpacedLearningHub';
 import CertificationCenter from './modules/student/certification/CertificationCenter';
 import InstitutionalConfigManager from './modules/admin/institutional/InstitutionalConfigManager';
+import { PaymentConfigManager } from './modules/admin/payments/PaymentConfigManager';
 
 import SubscriptionPlans from './modules/saas/SubscriptionPlans';
 import { ProfessorSAPlanner } from './modules/professor/ProfessorSAPlanner';
+import SimulationManager from './modules/professor/simuladores/SimulationManager';
+import CaseStudyManager from './modules/professor/estudos-caso/CaseStudyManager';
+import PedagogicalMaestro from './modules/professor/ai-hub/PedagogicalMaestro';
+import FlippedModuleManager from './modules/professor/flipped/FlippedModuleManager';
+import LiveMonitoring from './modules/professor/classroom/LiveMonitoring';
 
 export default function App() {
   useEffect(() => {
@@ -152,6 +159,20 @@ export default function App() {
                 </Layout>
               </AuthGuard>
             } />
+            <Route path="/professor/laboratorios/novo" element={
+              <AuthGuard requiredRole="PROFESSOR">
+                <Layout>
+                  <LabEditor />
+                </Layout>
+              </AuthGuard>
+            } />
+            <Route path="/professor/laboratorios/:id" element={
+              <AuthGuard requiredRole="PROFESSOR">
+                <Layout>
+                  <LabEditor />
+                </Layout>
+              </AuthGuard>
+            } />
 
             <Route path="/admin/gamification" element={
               <AuthGuard requiredRole="ADMIN">
@@ -232,6 +253,46 @@ export default function App() {
               </AuthGuard>
             } />
 
+            <Route path="/professor/simuladores" element={
+              <AuthGuard requiredRole="PROFESSOR">
+                <Layout>
+                  <SimulationManager />
+                </Layout>
+              </AuthGuard>
+            } />
+
+            <Route path="/professor/casos" element={
+              <AuthGuard requiredRole="PROFESSOR">
+                <Layout>
+                  <CaseStudyManager />
+                </Layout>
+              </AuthGuard>
+            } />
+
+            <Route path="/professor/maestro" element={
+              <AuthGuard requiredRole="PROFESSOR">
+                <Layout>
+                  <PedagogicalMaestro />
+                </Layout>
+              </AuthGuard>
+            } />
+
+            <Route path="/professor/invertida" element={
+              <AuthGuard requiredRole="PROFESSOR">
+                <Layout>
+                  <FlippedModuleManager />
+                </Layout>
+              </AuthGuard>
+            } />
+
+            <Route path="/professor/live/:sessionId" element={
+              <AuthGuard requiredRole="PROFESSOR">
+                <Layout>
+                  <LiveMonitoring sessionId="default" />
+                </Layout>
+              </AuthGuard>
+            } />
+
             <Route path="/sa/:id" element={
               <AuthGuard>
                 <Layout>
@@ -292,6 +353,13 @@ export default function App() {
               <AuthGuard requiredRole="ADMIN">
                 <Layout>
                   <InstitutionalConfigManager />
+                </Layout>
+              </AuthGuard>
+            } />
+            <Route path="/admin/payments" element={
+              <AuthGuard requiredRole="ADMIN">
+                <Layout>
+                  <PaymentConfigManager />
                 </Layout>
               </AuthGuard>
             } />

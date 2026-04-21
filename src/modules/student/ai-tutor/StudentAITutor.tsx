@@ -154,22 +154,26 @@ export default function StudentAITutor() {
          </div>
 
          <footer className="p-6 bg-slate-50/50 border-t border-slate-100">
-            <div className="flex gap-4 items-center bg-white p-2 rounded-3xl border border-slate-200 shadow-sm focus-within:ring-2 focus-within:ring-blue-500 transition-all">
+            <div className={cn(
+               "flex gap-4 items-center bg-white p-2 rounded-3xl border shadow-sm transition-all",
+               (profile?.saldoTokensIA || 0) < 5 ? "border-amber-300 ring-2 ring-amber-100 bg-amber-50" : "border-slate-200 focus-within:ring-2 focus-within:ring-blue-500"
+            )}>
                <input 
                  type="text" 
                  value={input}
                  onChange={(e) => setInput(e.target.value)}
                  onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                 placeholder="Digite sua dúvida técnica..."
-                 className="flex-1 bg-transparent border-none outline-none px-4 py-3 font-medium text-slate-900"
+                 placeholder={(profile?.saldoTokensIA || 0) < 5 ? "⚠️ Bateria de Tokens fraca! Cumpra Missões para recarregar." : "Digite sua dúvida técnica..."}
+                 disabled={(profile?.saldoTokensIA || 0) < 5}
+                 className="flex-1 bg-transparent border-none outline-none px-4 py-3 font-medium text-slate-900 disabled:text-amber-700 disabled:placeholder-amber-400"
                />
                <button 
                  onClick={handleSend}
-                 disabled={!input.trim() || isTyping}
+                 disabled={!input.trim() || isTyping || (profile?.saldoTokensIA || 0) < 5}
                  className={cn(
                     "w-12 h-12 rounded-2xl flex items-center justify-center transition-all",
-                    input.trim() 
-                      ? "bg-slate-900 text-white hover:scale-110 active:scale-95" 
+                    input.trim() && (profile?.saldoTokensIA || 0) >= 5
+                      ? "bg-slate-900 text-white hover:scale-110 active:scale-95 shadow-lg shadow-slate-900/20" 
                       : "bg-slate-100 text-slate-300"
                  )}
                >
@@ -177,7 +181,10 @@ export default function StudentAITutor() {
                </button>
             </div>
             <div className="mt-4 flex justify-between items-center px-2">
-               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+               <p className={cn(
+                  "text-[10px] font-black uppercase tracking-widest flex items-center gap-2",
+                  (profile?.saldoTokensIA || 0) < 5 ? "text-amber-500 animate-pulse" : "text-slate-400"
+               )}>
                   <Info className="w-3 h-3" /> Custo: 5 Tokens por consulta
                </p>
                <button className="text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-900 flex items-center gap-2">

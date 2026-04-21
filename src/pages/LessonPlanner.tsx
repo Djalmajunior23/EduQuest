@@ -29,13 +29,15 @@ export default function LessonPlanner() {
   const [formData, setFormData] = useState({
     title: '',
     uc: '',
+    theme: '',
+    level: 'Intermediário',
     discipline: '',
     objectives: '',
     aiInsights: true
   });
 
   const handleGenerate = async () => {
-    if (!formData.title || !formData.uc) return;
+    if (!formData.title || !formData.uc || !formData.theme) return;
     setLoading(true);
     try {
       const classInsights = { 
@@ -45,7 +47,9 @@ export default function LessonPlanner() {
       };
       
       const plan = await generateLessonPlan({ 
-        unit: formData.uc, 
+        unit: formData.uc,
+        theme: formData.theme,
+        level: formData.level,
         classInsights 
       });
 
@@ -58,7 +62,15 @@ export default function LessonPlanner() {
         };
         setPlans([newPlan, ...plans]);
         setIsModalOpen(false);
-        setFormData({ title: '', uc: '', discipline: '', objectives: '', aiInsights: true });
+        setFormData({ 
+          title: '', 
+          uc: '', 
+          theme: '', 
+          level: 'Intermediário', 
+          discipline: '', 
+          objectives: '', 
+          aiInsights: true 
+        });
       }
     } catch (error) {
       console.error('Error generating plan:', error);
@@ -149,17 +161,26 @@ export default function LessonPlanner() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                     <div>
                       <h4 className="text-sm font-black text-slate-400 uppercase mb-4 tracking-tighter">Objetivos Pedagógicos</h4>
-                      <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-wrap">{plan.description || plan.objectives}</p>
+                      <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-wrap">{plan.theme}</p>
+                      {plan.aiRecommendation && (
+                        <div className="mt-4 p-4 bg-indigo-50 rounded-2xl border border-indigo-100 italic text-indigo-700 text-xs">
+                          <Sparkles className="w-4 h-4 mb-2" />
+                          {plan.aiRecommendation}
+                        </div>
+                      )}
                     </div>
                     <div>
                       <h4 className="text-sm font-black text-slate-400 uppercase mb-4 tracking-tighter">Sequência Didática</h4>
                       <div className="space-y-4">
-                        {(plan.sequenciaDidatica || []).slice(0, 3).map((step: any, idx: number) => (
+                        {(plan.activities || []).slice(0, 4).map((step: any, idx: number) => (
                           <div key={idx} className="flex gap-3">
                             <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500 shrink-0">
-                              {idx + 1}
+                              {step.time}
                             </div>
-                            <p className="text-xs text-slate-600 font-medium leading-snug">{typeof step === 'string' ? step : step.etapa || step.atividade}</p>
+                            <p className="text-xs text-slate-600 font-medium leading-snug">
+                              <span className="font-bold text-slate-900 block">{step.activity}</span>
+                              {step.focus}
+                            </p>
                           </div>
                         ))}
                       </div>
@@ -214,14 +235,38 @@ export default function LessonPlanner() {
               </div>
 
               <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-black text-slate-400 uppercase mb-2 tracking-widest pl-1">Título da Aula</label>
+                    <input 
+                      type="text" 
+                      value={formData.title}
+                      onChange={e => setFormData({...formData, title: e.target.value})}
+                      placeholder="Ex: Dominação do DOM"
+                      className="w-full bg-slate-50 border-none rounded-2xl p-4 text-slate-900 placeholder:text-slate-300 focus:ring-2 focus:ring-indigo-500 transition-all font-medium"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-black text-slate-400 uppercase mb-2 tracking-widest pl-1">Nível Desejado</label>
+                    <select 
+                      value={formData.level}
+                      onChange={e => setFormData({...formData, level: e.target.value})}
+                      className="w-full bg-slate-50 border-none rounded-2xl p-4 text-slate-900 focus:ring-2 focus:ring-indigo-500 transition-all font-medium appearance-none"
+                    >
+                      <option value="Básico">Básico</option>
+                      <option value="Intermediário">Intermediário</option>
+                      <option value="Avançado">Avançado</option>
+                    </select>
+                  </div>
+                </div>
+
                 <div>
-                  <label className="block text-xs font-black text-slate-400 uppercase mb-2 tracking-widest pl-1">Título da Aula</label>
-                  <input 
-                    type="text" 
-                    value={formData.title}
-                    onChange={e => setFormData({...formData, title: e.target.value})}
-                    placeholder="Ex: Introdução ao DOM e Eventos"
-                    className="w-full bg-slate-50 border-none rounded-2xl p-4 text-slate-900 placeholder:text-slate-300 focus:ring-2 focus:ring-indigo-500 transition-all font-medium"
+                  <label className="block text-xs font-black text-slate-400 uppercase mb-2 tracking-widest pl-1">Tema e Objetivos</label>
+                  <textarea 
+                    value={formData.theme}
+                    onChange={e => setFormData({...formData, theme: e.target.value})}
+                    placeholder="Descreva o que os alunos devem aprender hoje..."
+                    className="w-full bg-slate-50 border-none rounded-2xl p-4 text-slate-900 placeholder:text-slate-300 focus:ring-2 focus:ring-indigo-500 transition-all font-medium h-32 resize-none"
                   />
                 </div>
 

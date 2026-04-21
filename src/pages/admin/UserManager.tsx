@@ -25,15 +25,42 @@ import { inviteUser } from '../../services/userManagementService';
 
 import { BulkImportModal } from '../../components/admin/BulkImportModal';
 
+const PermissionModal = ({isOpen, onClose, user, permissions, toggle, onSave}: any) => {
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm">
+      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white w-full max-w-lg rounded-[2rem] shadow-2xl p-8">
+        <h2 className="text-xl font-black uppercase italic mb-6">Permissões de {user?.nome}</h2>
+        <div className="grid grid-cols-2 gap-2 mb-8">
+          {['usar_ia_professor', 'gerenciar_turmas', 'gerenciar_cursos'].map(perm => (
+              <button key={perm} onClick={() => toggle(perm)} className={cn("px-4 py-3 rounded-xl text-[10px] font-black uppercase text-left transition-all", permissions.includes(perm) ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-600")}>
+              {perm}
+              </button>
+          ))}
+        </div>
+        <div className="flex gap-4">
+          <button onClick={onClose} className="flex-1 py-4 border rounded-xl font-bold uppercase text-[10px]">Cancelar</button>
+          <button onClick={onSave} className="flex-1 py-4 bg-slate-900 text-white rounded-xl font-bold uppercase text-[10px]">Salvar</button>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
 export default function UserManager() {
   const { profile: currentUser } = useAuth();
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState('ALL');
+  const [filterStatus, setFilterStatus] = useState('ALL');
+  const [filterDate, setFilterDate] = useState('ALL');
   
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isPermissionModalOpen, setIsPermissionModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<any | null>(null);
+  const [newPermissions, setNewPermissions] = useState<string[]>([]);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [inviteData, setInviteData] = useState({ nome: '', email: '', perfil: 'ALUNO', turmaId: '' });
   const [isInviting, setIsInviting] = useState(false);
@@ -71,10 +98,45 @@ export default function UserManager() {
     }
   };
 
+  const togglePermission = (perm: string) => {
+    setNewPermissions(prev => 
+      prev.includes(perm) ? prev.filter(p => p !== perm) : [...prev, perm]
+    );
+  };
+
+  const savePermissions = async () => {
+    if (!selectedUser) return;
+    try {
+      await updateDoc(doc(db, 'usuarios', selectedUser.id), {
+        permissoesGranulares: newPermissions
+      });
+      setIsPermissionModalOpen(false);
+      fetchUsers();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const openPermissionModal = (user: any) => {
+    setSelectedUser(user);
+    setNewPermissions(user.permissoesGranulares || []);
+    setIsPermissionModalOpen(true);
+  };
+
   const filteredUsers = users.filter(u => {
     const matchesSearch = u.nome?.toLowerCase().includes(searchTerm.toLowerCase()) || u.email?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = filterRole === 'ALL' || u.perfil === filterRole;
-    return matchesSearch && matchesRole;
+    const matchesStatus = filterStatus === 'ALL' || u.status === filterStatus;
+    
+    let matchesDate = true;
+    if (filterDate === 'LAST_30') {
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const createdAt = u.createdAt?.toDate ? u.createdAt.toDate() : new Date(u.createdAt);
+        matchesDate = createdAt >= thirtyDaysAgo;
+    }
+    
+    return matchesSearch && matchesRole && matchesStatus && matchesDate;
   });
 
   return (
@@ -227,19 +289,42 @@ export default function UserManager() {
              onChange={(e) => setSearchTerm(e.target.value)}
            />
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
            {['ALL', 'ALUNO', 'PROFESSOR', 'ADMIN'].map((role) => (
              <button
                key={role}
                onClick={() => setFilterRole(role)}
                className={cn(
-                 "px-6 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
-                 filterRole === role ? "bg-slate-900 text-white shadow-lg" : "bg-slate-50 text-slate-500 hover:bg-slate-100"
+                 "px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all border",
+                 filterRole === role ? "bg-slate-900 text-white border-slate-900" : "bg-white text-slate-500 border-slate-200 hover:border-slate-300"
                )}
              >
-               {role === 'ALL' ? 'Todos' : role}
+               {role === 'ALL' ? 'Todos Perfis' : role}
              </button>
            ))}
+           <div className="w-px h-8 bg-slate-200 mx-2" />
+           {['ALL', 'ATIVO', 'PENDENTE'].map((status) => (
+             <button
+               key={status}
+               onClick={() => setFilterStatus(status)}
+               className={cn(
+                 "px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all border",
+                 filterStatus === status ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-slate-500 border-slate-200 hover:border-slate-300"
+               )}
+             >
+               {status === 'ALL' ? 'Todos Status' : status}
+             </button>
+           ))}
+           <div className="w-px h-8 bg-slate-200 mx-2" />
+            <button
+               onClick={() => setFilterDate(filterDate === 'ALL' ? 'LAST_30' : 'ALL')}
+               className={cn(
+                 "px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all border",
+                 filterDate === 'LAST_30' ? "bg-emerald-600 text-white border-emerald-600" : "bg-white text-slate-500 border-slate-200 hover:border-slate-300"
+               )}
+             >
+               {filterDate === 'ALL' ? 'Toda Data' : 'Últimos 30 Dias'}
+             </button>
         </div>
       </section>
 

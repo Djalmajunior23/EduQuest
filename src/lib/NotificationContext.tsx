@@ -25,7 +25,7 @@ interface NotificationContextType {
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -36,8 +36,11 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     }
 
     // Listens to 1:1 Notifications. (Broadcast filtering will be left for Phase 2/App integration).
+    if (!profile || !profile.tenantId) return;
+
     const q = query(
       collection(db, 'notificacoes_gamificacao'),
+      where('tenantId', '==', profile.tenantId),
       where('userId', '==', user.uid),
       orderBy('createdAt', 'desc')
     );
@@ -48,7 +51,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     });
 
     return () => unsubscribe();
-  }, [user]);
+  }, [user, profile]);
 
   const markAsRead = async (id: string) => {
     try {

@@ -1,10 +1,8 @@
 {
-  "name": "NEXUSINTAI - Plataforma Educacional SaaS",
-  "description": "Plataforma educacional inteligente e gamificada para ensino técnico e TI, com IA adaptativa e arquitetura SaaS.",
+  "name": "NexusIntAI Platform",
+  "description": "Plataforma Educacional SaaS Inteligente, Gamificada e Multi-tenant para Ensino Técnico.",
   "requestFramePermissions": [
     "camera",
-    "microphone",
-    "geolocation"
-  ],
-  "majorCapabilities": []
+    "microphone"
+  ]
 }

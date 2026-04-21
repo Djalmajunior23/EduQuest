@@ -130,7 +130,7 @@ export default function StudentGamification() {
         for (const m of demoMissions) {
           await addDoc(missionsRef, m);
         }
-        const freshData = await missionService.getMissionsWithProgress(user.uid);
+        const freshData = await missionService.getMissionsWithProgress(user.uid, tenant.id);
         setMissions(freshData as MissionWithProgress[]);
       } else {
         setMissions(data as MissionWithProgress[]);

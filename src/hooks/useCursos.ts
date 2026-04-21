@@ -4,7 +4,8 @@ import { db } from '../lib/firebase';
 import { useAuth } from '../lib/AuthContext';
 
 export function useCursos() {
-  const { tenantId } = useAuth();
+  const { profile } = useAuth();
+  const tenantId = profile?.tenantId;
   const [cursos, setCursos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 

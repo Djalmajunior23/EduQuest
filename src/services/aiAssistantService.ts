@@ -1,4 +1,4 @@
-import { aiService } from './aiService';
+import { AIService } from './aiService';
 
 export async function generateQuestions(prompt: string): Promise<any> {
   const fullPrompt = `
@@ -34,7 +34,7 @@ export async function generateQuestions(prompt: string): Promise<any> {
   };
 
   try {
-    return await aiService.generateJSON(fullPrompt, schema, 'PREMIUM');
+    return await AIService.generateJSON(fullPrompt, schema, 'PREMIUM');
   } catch (error) {
     console.error("Error generating questions:", error);
     throw new Error("Failed to generate questions. Please try again.");
@@ -63,7 +63,7 @@ export async function generateSA(context: {
   `;
 
   try {
-    return await aiService.generateText(prompt, 'PREMIUM');
+    return await AIService.generateText(prompt, 'PREMIUM');
   } catch (error) {
     console.error("Error generating SA:", error);
     throw new Error("Failed to generate SA. Please try again.");
@@ -78,7 +78,7 @@ export async function generateStudySuggestions(performanceData: any): Promise<st
   `;
 
   try {
-    return await aiService.generateText(prompt, 'FLEET');
+    return await AIService.generateText(prompt, 'FLEET');
   } catch (error) {
     console.error("Error generating study suggestions:", error);
     throw new Error("Failed to generate study suggestions.");
@@ -93,7 +93,7 @@ export async function analyzePedagogicalResults(results: any): Promise<string> {
   `;
 
   try {
-    return await aiService.generateText(prompt, 'PREMIUM');
+    return await AIService.generateText(prompt, 'PREMIUM');
   } catch (error) {
     console.error("Error analyzing results:", error);
     throw new Error("Failed to analyze pedagogical results.");
@@ -121,25 +121,33 @@ export async function suggestQuestionMetadata(questionData: { text: string; opti
   };
 
   try {
-    return await aiService.generateJSON(prompt, schema, 'PREMIUM');
+    return await AIService.generateJSON(prompt, schema, 'PREMIUM');
   } catch (error) {
     console.error("Error suggesting metadata:", error);
     throw new Error("Failed to suggest metadata.");
   }
 }
 
-export async function generateLessonPlan(context: any): Promise<any> {
+export async function generateLessonPlan(context: { unit: string; theme: string; level: string; classInsights: any }): Promise<any> {
   const prompt = `
-    [SISTEMA]: Você é um arquiteto pedagógico. Crie um plano de aula detalhado para a Unidade Curricular: ${context.unit}.
-    Insights da turma: ${JSON.stringify(context.classInsights)}
+    [SISTEMA]: Você é um arquiteto pedagógico sênior.
+    [TAREFA]: Crie um plano de aula detalhado e estruturado.
+    
+    Unidade Curricular: ${context.unit}
+    Tema da Aula: ${context.theme}
+    Nível Desejado: ${context.level}
+    
+    Insights da turma (Desempenho e Fragilidades): ${JSON.stringify(context.classInsights)}
 
+    O plano deve ser criativo, engajador para alunos de tecnologia e focado em competências práticas.
+    
     Retorne um JSON contendo:
     {
-      "duration": "Tempo estimado",
+      "duration": "Tempo total estimado",
       "activities": [
-        { "activity": "nome", "time": "duração", "focus": "objetivo" }
+        { "activity": "nome da atividade", "time": "duração (ex: 20min)", "focus": "objetivo específico desta etapa" }
       ],
-      "aiRecommendation": "recomendações com base nos insights"
+      "aiRecommendation": "recomendações pedagógicas baseadas nos insights da turma para este tema específico"
     }
   `;
 
@@ -165,7 +173,7 @@ export async function generateLessonPlan(context: any): Promise<any> {
   };
 
   try {
-    return await aiService.generateJSON(prompt, schema, 'PREMIUM');
+    return await AIService.generateJSON(prompt, schema, 'PREMIUM');
   } catch (error) {
     console.error("Error generating lesson plan:", error);
     throw new Error("Failed to generate lesson plan.");
@@ -182,7 +190,7 @@ export async function getVirtualMentorAdvice(messageContext: any, userMessage?: 
   `;
 
   try {
-    return await aiService.generateText(prompt, 'FLEET');
+    return await AIService.generateText(prompt, 'FLEET');
   } catch (error) {
     console.error("Error getting mentor advice:", error);
     throw new Error("Failed to get mentor advice.");
@@ -208,7 +216,7 @@ export async function predictStudentRisk(studentData: any): Promise<any> {
   };
 
   try {
-    return await aiService.generateJSON(prompt, schema, 'PREMIUM');
+    return await AIService.generateJSON(prompt, schema, 'PREMIUM');
   } catch (error) {
     console.error("Error predicting risk:", error);
     throw new Error("Failed to predict student risk.");

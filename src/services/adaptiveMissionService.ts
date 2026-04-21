@@ -1,6 +1,6 @@
 import { collection, query, where, getDocs, doc, getDoc, updateDoc, setDoc, serverTimestamp, increment } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { aiService } from './aiService';
+import { AIService } from './aiService';
 
 export type StudentProfileType = 
   | 'INICIANTE_INSEGURO' 
@@ -85,7 +85,7 @@ export const adaptiveMissionService = {
     let generatedMissions: any[] = [];
     
     try {
-      generatedMissions = await aiService.generateJSON(prompt, schema, 'FLEET');
+      generatedMissions = await AIService.generateJSON(prompt, schema, 'FLEET');
     } catch (error) {
       console.error("AI failure softly fallback to default mission", error);
       generatedMissions = [{

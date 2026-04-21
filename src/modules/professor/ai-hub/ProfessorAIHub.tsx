@@ -32,6 +32,7 @@ export default function ProfessorAIHub() {
     { id: 'ATIVIDADE_PRATICA', label: 'Atividade Prática', icon: ClipboardList },
     { id: 'MATERIAL_APOIO', label: 'Material de Apoio', icon: FilePlus },
     { id: 'RUBRICA', label: 'Rubrica Avaliativa', icon: Target },
+    { id: 'BANCO_QUESTOES', label: 'Banco de Questões', icon: Brain },
   ];
 
   const handleGenerate = async () => {
@@ -138,7 +139,8 @@ export default function ProfessorAIHub() {
                  {[
                    { t: "Plano Aula: Dev Web", p: "Crie um plano de aula sobre introdução ao React, focado em 'componentização'. Alunos: 15-18 anos, básico de JS." },
                    { t: "Cibersegurança", p: "Gere 5 cenários práticos de ataque de engenharia social para alunos iniciarem análise de vulnerabilidades." },
-                   { t: "Rubrica: Projeto Node", p: "Crie uma rubrica de avaliação para um projeto prático de API Node.js seguindo requisitos de organização de rotas." }
+                   { t: "Rubrica: Projeto Node", p: "Crie uma rubrica de avaliação para um projeto prático de API Node.js seguindo requisitos de organização de rotas." },
+                   { t: "Questões Docker", p: "Gere 3 questões avançadas sobre Gerenciamento de Containers Docker, focadas na Taxonomia de Bloom (nível 'Criar')." }
                  ].map((ex, i) => (
                     <button 
                       key={i} 
