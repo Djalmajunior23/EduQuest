@@ -11,9 +11,10 @@ service cloud.firestore {
     // --- Helpers de Autenticação e Autorização ---
     function isSignedIn() { return request.auth != null; }
     
-    // Uso cauteloso de get() - Prevenindo erros de runtime
+    // Helper seguro: tenta ler o perfil apenas se existir, evitando exceções que causam permission-denied
     function getProfile() { 
-      return get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data; 
+      let userPath = /databases/$(database)/documents/usuarios/$(request.auth.uid);
+      return exists(userPath) ? get(userPath).data : null;
     }
     
     function isAdmin() { 
@@ -26,15 +27,20 @@ service cloud.firestore {
       return isSignedIn() && profile != null && profile.perfil == 'PROFESSOR'; 
     }
     
+    function getTenantId() {
+       let profile = getProfile();
+       return profile != null ? profile.tenantId : null;
+    }
+
     function isMemberOfTenant(data) {
-       return data.tenantId == getProfile().tenantId;
+       return data.tenantId == getTenantId();
     }
 
     // --- Regras de Coleções ---
 
     // Tenants: Apenas o dono do tenant lê
     match /tenants/{tenantId} {
-       allow read: if isSignedIn() && tenantId == getProfile().tenantId;
+       allow read: if isSignedIn() && tenantId == getTenantId();
        allow write: if isAdmin();
     }
 
@@ -80,9 +86,64 @@ service cloud.firestore {
       allow write: if isAdmin() || isProfessor() || request.auth.uid == userId;
     }
 
-    match /missoes/{missaoId} {
+    match /gamificacao/{gamificacaoId} {
       allow read: if isSignedIn();
       allow write: if isAdmin() || isProfessor();
+    }
+
+    match /simuladores/{simId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() || isProfessor();
+    }
+
+    match /estudos_caso/{caseId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() || isProfessor();
+    }
+
+    match /aulas_invertidas/{aulaId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() || isProfessor();
+    }
+
+    match /questions/{qId} {
+      allow read, write: if isSignedIn();
+    }
+    match /exams/{exId} {
+      allow read, write: if isSignedIn();
+    }
+    match /unidades_curriculares/{ucId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() || isProfessor();
+    }
+    match /capacidades_tecnicas/{capId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() || isProfessor();
+    }
+    match /gamificacao_missoes/{missaoId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() || isProfessor();
+    }
+    match /ranking/{rankId} {
+      allow read: if isSignedIn();
+      allow write: if false; // Should be handled by backend
+    }
+    match /avaliacoes/{avId} {
+      allow read, write: if isSignedIn();
+    }
+    match /resultados/{resId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
+    }
+    match /attempts/{attId} {
+      allow read, write: if isSignedIn();
+    }
+    match /convites/{convId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+    match /logs/{logId} {
+      allow read, write: if isAdmin();
     }
 
     match /notificacoes/{notifId} {
@@ -93,6 +154,11 @@ service cloud.firestore {
     match /situacoes_aprendizagem/{saId} {
       allow read: if isSignedIn();
       allow write: if isAdmin() || isProfessor();
+    }
+
+    match /sessoes_ativas/{sessionId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn(); // Simplificado para permitir o funcionamento, refinar se necessário
     }
 
     match /indicadores_bi/{docId} {

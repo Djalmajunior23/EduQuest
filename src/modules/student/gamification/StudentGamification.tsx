@@ -493,10 +493,18 @@ export default function StudentGamification() {
                       <div className="space-y-4 pt-6 border-t border-white/5">
                         <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-slate-500">
                            <span>Progresso</span>
-                           <span>{mission.progress} / {mission.threshold}</span>
+                           <span>{Math.min(mission.progress, mission.threshold)} / {mission.threshold}</span>
                         </div>
                         <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-                           <div className="h-full bg-indigo-500 transition-all" style={{ width: `${(mission.progress / mission.threshold) * 100}%` }} />
+                           <motion.div
+                             className={cn(
+                               "h-full transition-colors duration-500",
+                               mission.progress >= mission.threshold ? "bg-emerald-500" : "bg-indigo-500"
+                             )}
+                             initial={{ width: 0 }}
+                             animate={{ width: `${Math.min((mission.progress / mission.threshold) * 100, 100)}%` }}
+                             transition={{ duration: 0.8, ease: "easeOut" }}
+                           />
                         </div>
                         <div className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest">
                            <CalendarDays className="w-3 h-3 text-indigo-500" />

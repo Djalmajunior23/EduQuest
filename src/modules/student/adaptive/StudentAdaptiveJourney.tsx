@@ -4,7 +4,8 @@ import { db } from '../../../lib/firebase';
 import { useAuth } from '../../../lib/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  BrainCircuit, Compass, Target, Trophy, Flame, Loader2, ArrowRight, Zap, Target as TargetIcon
+  BrainCircuit, Compass, Target, Trophy, Flame, Loader2, ArrowRight, Zap, Target as TargetIcon,
+  Cpu, Network, Database, LayoutGrid, Code2
 } from 'lucide-react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { cn } from '../../../lib/utils';
@@ -22,6 +23,14 @@ export default function StudentAdaptiveJourney() {
     { subject: 'Sistemas', A: 70, fullMark: 100 },
     { subject: 'Banco', A: 90, fullMark: 100 },
     { subject: 'UI/UX', A: 30, fullMark: 100 },
+  ];
+
+  const learningTracks = [
+    { id: '1', name: 'Lógica', progress: 80, icon: Code2 },
+    { id: '2', name: 'Redes', progress: 50, icon: Network },
+    { id: '3', name: 'Sistemas', progress: 70, icon: Cpu },
+    { id: '4', name: 'Banco', progress: 90, icon: Database },
+    { id: '5', name: 'UI/UX', progress: 30, icon: LayoutGrid },
   ];
 
   useEffect(() => {
@@ -248,6 +257,33 @@ export default function StudentAdaptiveJourney() {
                       </div>
                   )}
               </div>
+          </div>
+      </div>
+
+       {/* NOVO: PROGRESSO POR TRILHA */}
+      <div className="bg-white rounded-[2rem] p-8 border border-slate-200 shadow-sm mt-8">
+          <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-8">Progresso por Linha de Aprendizagem (UCs)</h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {learningTracks.map((track) => {
+                  const Icon = track.icon;
+                  return (
+                      <div key={track.id} className="p-6 bg-slate-50 rounded-3xl border border-slate-100 flex flex-col gap-4">
+                          <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center text-indigo-600">
+                                  <Icon className="w-6 h-6" />
+                              </div>
+                              <div className="flex-1">
+                                  <h4 className="font-black text-slate-900">{track.name}</h4>
+                                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{track.progress}% Concluído</p>
+                              </div>
+                          </div>
+                          <div className="w-full bg-slate-200 rounded-full h-2.5">
+                              <div className="bg-indigo-600 h-2.5 rounded-full" style={{ width: `${track.progress}%` }}></div>
+                          </div>
+                      </div>
+                  );
+              })}
           </div>
       </div>
 
