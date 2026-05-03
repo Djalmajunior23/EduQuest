@@ -25,6 +25,8 @@ import LabDashboard from './modules/professor/laboratorios/LabDashboard';
 import LabEditor from './modules/professor/laboratorios/LabEditor';
 import { StudentAITutor } from './modules/student/ai-tutor';
 import { ProfessorAIHub } from './modules/professor/ai-hub';
+import { PedagogicalBI } from './modules/teacher/bi';
+import { CoordinatorBI } from './modules/coordinator/bi';
 import UserManager from './pages/admin/UserManager';
 import CourseManager from './modules/admin/courses/CourseManager';
 import UCManager from './modules/admin/courses/UCManager';
@@ -288,6 +290,22 @@ export default function App() {
               <AuthGuard requiredRole="PROFESSOR">
                 <Layout>
                   <ProfessorInsights />
+                </Layout>
+              </AuthGuard>
+            } />
+
+            <Route path="/professor/bi" element={
+              <AuthGuard requiredRole="PROFESSOR">
+                <Layout>
+                  <PedagogicalBI />
+                </Layout>
+              </AuthGuard>
+            } />
+
+            <Route path="/coordinator/bi" element={
+              <AuthGuard requiredRole="COORDENADOR">
+                <Layout>
+                  <CoordinatorBI />
                 </Layout>
               </AuthGuard>
             } />

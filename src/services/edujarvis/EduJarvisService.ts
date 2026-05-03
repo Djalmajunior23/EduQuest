@@ -54,6 +54,7 @@ import { DataLakeService } from './DataLakeService';
 import { AdvancedPersonalizationService } from './AdvancedPersonalizationService';
 import { ApprovalWorkflowService } from './ApprovalWorkflowService';
 import { GlobalIntelligenceService } from './GlobalIntelligenceService';
+import { AnalystIA } from './agents/AnalystIA';
 import { EduJarvisMessage, EduJarvisAgentType } from './types';
 import { GoogleGenAI } from '@google/genai';
 
@@ -250,16 +251,8 @@ export class EduJarvisService {
       case 'PROFESSOR':
         return await ProfessorAgent.execute(message, { ...context, profile });
       case 'ANALYST':
-        const tid = profile.turmaId || context?.turmaId;
-        if (tid) {
-          return await NarrativeBIAgent.execute(tid);
-        }
-        systemInstruction = `Você é o AnalystIA. Responsabilidades:
-        1. Interpretar dados de desempenho de alunos e turmas.
-        2. Mapear lacunas de competências técnicas.
-        3. Gerar relatórios de BI sintéticos e acionáveis.
-        Linguagem: Factual, analítica e orientada a dados.`;
-        break;
+        const tid = profile.turmaId || context?.turmaId || "TURMA-Geral";
+        return await AnalystIA.execute(tid, tenantId, message);
       case 'RECOMMENDER':
         const studentId = profile.id || auth.currentUser?.uid;
         let digitalTwin = null;
