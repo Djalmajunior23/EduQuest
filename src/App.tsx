@@ -48,6 +48,7 @@ import { EnterpriseCommandCenter } from './components/edujarvis/EnterpriseComman
 import { EduJarvisIntelligencePlatform } from './components/edujarvis/EduJarvisIntelligencePlatform';
 import { EducationOSDashboard } from './components/edujarvis/EducationOSDashboard';
 import { HyperIntelligenceDashboard } from './components/edujarvis/HyperIntelligenceDashboard';
+import { EduQuestMVP } from './components/mvp/EduQuestMVP';
 
 import SubscriptionPlans from './modules/saas/SubscriptionPlans';
 import { ProfessorSAPlanner } from './modules/professor/ProfessorSAPlanner';
@@ -133,6 +134,14 @@ export default function App() {
               <AuthGuard>
                 <Layout>
                    <TenantSpecificHyperOS />
+                </Layout>
+              </AuthGuard>
+            } />
+
+            <Route path="/mvp" element={
+              <AuthGuard>
+                <Layout>
+                   <EduQuestMVP />
                 </Layout>
               </AuthGuard>
             } />

@@ -1,6 +1,7 @@
 // src/services/edujarvis/Orchestrator.ts
 import { GoogleGenAI } from "@google/genai";
 import { EduJarvisIntent, EduJarvisAgentType } from "./types";
+import { EduJarvisAgentConfig } from "./AgentConfiguration";
 
 const BLOCKED_TERMS = [
   "cola na prova",
@@ -51,7 +52,10 @@ export class EduJarvisOrchestrator {
       Você é o Orquestrador Neural do sistema EduJarvis. 
       Sua tarefa é classificar a intenção da mensagem do usuário e direcionar para o agente correto.
 
-      AGENTES DISPONÍVEIS:
+      AGENTES EDUJARVIS PRINCIPAIS (Use estes preferencialmente):
+      ${Object.entries(EduJarvisAgentConfig).map(([key, config]) => `- ${key}: ${config.description}. Use para: ${config.responsibilities.join(", ")}`).join('\n      ')}
+
+      OUTROS AGENTES DISPONÍVEIS:
       - TUTOR: Atende intenções do tipo 'student_question' (dúvidas de alunos, explicações didáticas, auxílio em softwares/código).
       - PROFESSOR: Atende intenções do tipo 'teacher_content_generation' (criação de conteúdo, simulados, rubricas, planos de aula).
       - ANALYST: Atende intenções do tipo 'performance_analysis' (análise de desempenho, relatórios de BI, insights de dados).

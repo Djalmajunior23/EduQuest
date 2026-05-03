@@ -480,6 +480,26 @@
     "/business_copilot_insights/{insightId}": {
       "schema": "object",
       "description": "Copiloto de negócio (Phase 13)."
+    },
+    "/turmas/{turmaId}": {
+      "schema": "object",
+      "description": "Turmas do MVP."
+    },
+    "/alunos/{alunoId}": {
+      "schema": "object",
+      "description": "Alunos do MVP."
+    },
+    "/simulados/{simuladoId}": {
+      "schema": "object",
+      "description": "Simulados do MVP."
+    },
+    "/respostas/{respostaId}": {
+      "schema": "object",
+      "description": "Respostas do MVP."
+    },
+    "/analises/{analiseId}": {
+      "schema": "object",
+      "description": "Análises do MVP."
     }
   }
 }

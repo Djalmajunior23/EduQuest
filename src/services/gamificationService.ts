@@ -1,6 +1,4 @@
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../lib/firebase';
-import { auth } from '../lib/firebase';
+import { supabase } from '../lib/supabase';
 
 export type GamificationEventType = 
   | 'PRACTICAL_CHALLENGE_COMPLETED'
@@ -12,32 +10,41 @@ export type GamificationEventType =
   | 'ADAPTIVE_MISSION_COMPLETED';
 
 export interface GamificationEvent {
-  alunoId: string;
-  tipoEvento: GamificationEventType;
+  aluno_id: string;
+  tipo_evento: GamificationEventType;
   payload: any;
-  createdAt: any;
+  created_at?: string;
 }
 
 export const gamificationService = {
   /**
-   * Logs a gamification event to Firestore.
+   * Logs a gamification event to Supabase.
    * This is the entry point for the n8n automation engine.
    */
   async logEvent(type: GamificationEventType, payload: any = {}) {
-    const user = auth.currentUser;
-    if (!user) throw new Error('User not authenticated');
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) throw new Error('User not authenticated');
 
     const event: GamificationEvent = {
-      alunoId: user.uid,
-      tipoEvento: type,
+      aluno_id: user.user.id,
+      tipo_evento: type,
       payload,
-      createdAt: serverTimestamp(),
     };
 
     try {
-      const docRef = await addDoc(collection(db, 'eventos_gamificacao'), event);
+      const { data, error } = await supabase
+        .from('eventos_gamificacao')
+        .insert(event)
+        .select()
+        .single();
+        
+      if (error) {
+         console.error('Error logging gamification event:', error);
+         throw error;
+      }
+      
       // Gamification event successfully logged
-      return docRef.id;
+      return data?.id;
     } catch (error) {
       console.error('Error logging gamification event:', error);
       throw error;

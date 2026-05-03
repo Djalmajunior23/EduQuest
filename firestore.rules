@@ -450,5 +450,30 @@ service cloud.firestore {
       allow read: if isSignedIn();
       allow write: if isSignedIn();
     }
+
+    match /turmas/{turmaId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    match /alunos/{alunoId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    match /simulados/{simuladoId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    match /respostas/{respostaId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    match /analises/{analiseId} {
+      allow read: if true;
+      allow write: if true;
+    }
   }
 }

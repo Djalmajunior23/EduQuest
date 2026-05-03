@@ -37,8 +37,7 @@ const DynamicIcon = ({ name, className }: { name: string, className?: string }) 
 };
 import { useAuth } from '../../../lib/AuthContext';
 import { useTenant } from '../../../lib/TenantContext';
-import { collection, query, orderBy, limit, onSnapshot, addDoc, where } from 'firebase/firestore';
-import { db } from '../../../lib/firebase';
+import { supabase } from '../../../lib/supabase';
 import { missionService } from '../../../services/missionService';
 import { adaptiveMissionService, AdaptiveMission, StudentProfileType } from '../../../services/adaptiveMissionService';
 import { cn } from '../../../lib/utils';
@@ -66,6 +65,7 @@ export default function StudentGamification() {
   const [adaptiveMissions, setAdaptiveMissions] = useState<AdaptiveMission[]>([]);
   const [ranking, setRanking] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const [history, setHistory] = useState<any[]>([
     { id: 'h1', type: 'EXAM', desc: 'Quiz: Redes II', xp: 200, date: '2024-03-20 14:30' },
@@ -80,36 +80,112 @@ export default function StudentGamification() {
     { id: 'g3', title: 'Consistência de 7 Dias', progress: 5, total: 7, reward: 'Double XP (24h)' },
   ]);
 
-  useEffect(() => {
-    if (!user || !tenant) return;
+  async function loadGamificationData() {
+    console.log("[Gamificação] Iniciando carregamento (Protocolo Blindado)...");
 
-    // Real-time ranking fetch
-    const q = query(collection(db, 'ranking'), where('tenantId', '==', tenant.id), orderBy('xp', 'desc'), limit(10));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      setRanking(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    });
+    setLoading(true);
+    setError(null);
 
-    // Initial missions load
-    const loadMissions = async () => {
-      const data = await missionService.getMissionsWithProgress(user.uid, tenant.id);
-      const adaptiveData = await adaptiveMissionService.getActiveAdaptiveMissions(user.uid, tenant.id);
-      setAdaptiveMissions(adaptiveData);
-      
-      setMissions(data as MissionWithProgress[]);
+    const timeout = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("Tempo limite ao carregar protocolo de gamificação. Verifique sua conexão.")), 10000)
+    );
+
+    try {
+      if (!user || !tenant) {
+        console.warn("[Gamificação] User ou Tenant ausentes.");
+        return;
+      }
+
+      if (!supabase) {
+        throw new Error("Cliente Supabase não inicializado.");
+      }
+
+      const fetchAll = async () => {
+        const missionsData = await missionService.getMissionsWithProgress(user.uid, tenant.id).catch((e: any) => {
+          console.error("Erro missões:", e);
+          return [];
+        });
+
+        const adaptiveData = await adaptiveMissionService.getActiveAdaptiveMissions(user.uid, tenant.id).catch((e: any) => {
+          console.error("Erro missões adaptativas:", e);
+          return [];
+        });
+
+        const { data: rankData, error: rankError } = await supabase
+          .from('ranking')
+          .select('*')
+          .eq('tenantId', tenant.id)
+          .order('xp', { ascending: false })
+          .limit(10);
+
+        if (rankError) {
+          console.error("Erro ranking:", rankError);
+        }
+
+        return { 
+          missionsData, 
+          adaptiveData, 
+          rankData: rankData || [] 
+        };
+      };
+
+      const result = await Promise.race([fetchAll(), timeout]);
+
+      console.log("[Gamificação] Resultado carregado com sucesso:", result);
+
+      setMissions(Array.isArray(result.missionsData) ? result.missionsData : []);
+      setAdaptiveMissions(Array.isArray(result.adaptiveData) ? result.adaptiveData : []);
+      setRanking(Array.isArray(result.rankData) ? result.rankData : []);
+
+    } catch (err: any) {
+      console.error("[Gamificação] Erro:", err);
+      setError(
+        err?.message ||
+        "Não foi possível carregar o módulo de gamificação devido a uma falha de sincronização."
+      );
+    } finally {
+      console.log("[Gamificação] Finalizando loading...");
       setLoading(false);
-    };
+    }
+  }
 
-    loadMissions();
-    return () => unsubscribe();
-  }, [user, profile]);
+  useEffect(() => {
+    loadGamificationData();
+  }, [user?.uid, tenant?.id]);
 
   if (loading) {
-     return (
-        <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center">
-           <Loader2 className="w-12 h-12 text-indigo-500 animate-spin mb-4" />
-           <p className="text-slate-400 font-black uppercase text-xs tracking-widest">Iniciando Protocolo de Gamificação...</p>
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#020617] text-white">
+        <div className="text-center">
+          <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent" />
+          <p className="text-sm font-bold tracking-widest text-slate-300">
+            INICIANDO PROTOCOLO DE GAMIFICAÇÃO...
+          </p>
+          <p className="mt-3 text-xs text-slate-500">
+            Carregando dados do módulo...
+          </p>
         </div>
-     );
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[#020617] p-8 text-white flex items-center justify-center">
+        <div className="rounded-2xl border border-red-500/40 bg-red-950/30 p-10 max-w-lg text-center">
+          <ShieldAlert className="w-16 h-16 text-red-500 mx-auto mb-6 opacity-80" />
+          <h2 className="text-2xl font-bold">Erro ao carregar Gamificação</h2>
+          <p className="mt-3 text-red-200">{error}</p>
+
+          <button
+            onClick={loadGamificationData}
+            className="mt-8 rounded-xl bg-red-600 px-8 py-3 font-bold text-white hover:bg-red-700 transition-all uppercase text-xs tracking-widest"
+          >
+            Tentar novamente
+          </button>
+        </div>
+      </div>
+    );
   }
 
   const currentXp = profile?.xp || 0;
@@ -236,21 +312,27 @@ export default function StudentGamification() {
                     <button onClick={() => setActiveTab('missoes')} className="text-indigo-400 text-xs font-bold hover:underline">Ver todas</button>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {missions.slice(0, 4).map((mission) => {
-                      const percentage = Math.min((mission.progress / mission.threshold) * 100, 100);
+                    {(missions || []).slice(0, 4).map((mission) => {
+                      const percentage = Math.min(((mission?.progress || 0) / (mission?.threshold || 1)) * 100, 100);
                       return (
                         <div key={mission.id} className="bg-slate-900 border border-slate-800 p-8 rounded-3xl hover:border-indigo-500/30 transition-all">
                            <div className="flex justify-between mb-4 text-xs font-black uppercase text-indigo-400">
-                             <span>{mission.title}</span>
-                             <span>+{mission.xpReward} XP</span>
+                             <span>{mission?.title || 'Missão Desconhecida'}</span>
+                             <span>+{mission?.xpReward || 0} XP</span>
                            </div>
-                           <p className="text-slate-400 text-sm mb-6 line-clamp-2">{mission.description}</p>
+                           <p className="text-slate-400 text-sm mb-6 line-clamp-2">{mission?.description || 'Carregando detalhes...'}</p>
                            <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
                              <div className="h-full bg-indigo-500" style={{ width: `${percentage}%` }} />
                            </div>
                         </div>
                       );
                     })}
+                    {missions.length === 0 && (
+                      <div className="col-span-full py-20 text-center border-2 border-dashed border-white/5 rounded-3xl">
+                        <Target className="w-10 h-10 text-slate-800 mx-auto mb-4" />
+                        <p className="text-slate-600 font-black uppercase text-[10px] tracking-widest">Nenhuma missão ativa no momento</p>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -261,18 +343,21 @@ export default function StudentGamification() {
                     Top Operadores
                   </h2>
                   <div className="bg-slate-900 border border-slate-800 rounded-[2rem] p-6 space-y-4">
-                    {ranking.slice(0, 5).map((player, idx) => (
-                      <div key={player.id} className="flex items-center gap-4 p-3 rounded-2xl hover:bg-white/5 transition-all">
+                    {(ranking || []).slice(0, 5).map((player, idx) => (
+                      <div key={player?.id || idx} className="flex items-center gap-4 p-3 rounded-2xl hover:bg-white/5 transition-all">
                         <span className="text-slate-500 font-black text-xs w-4">{idx + 1}</span>
                         <div className="w-10 h-10 rounded-full bg-slate-800 overflow-hidden border border-slate-700">
-                           <img src={`https://picsum.photos/seed/${player.id}/100/100`} alt="p" className="w-full h-full object-cover" />
+                           <img src={`https://picsum.photos/seed/${player?.id || idx}/100/100`} alt="p" className="w-full h-full object-cover" />
                         </div>
                         <div className="flex-1 min-w-0">
-                           <p className="text-sm font-bold truncate">{player.id === user?.uid ? 'VOCÊ' : (player.nome || 'Novato')}</p>
-                           <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">{player.xp || 0} XP</p>
+                           <p className="text-sm font-bold truncate">{player?.id === user?.uid ? 'VOCÊ' : (player?.nome || 'Operador')}</p>
+                           <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">{player?.xp || 0} XP</p>
                         </div>
                       </div>
                     ))}
+                    {ranking.length === 0 && (
+                      <p className="text-center py-4 text-[10px] font-black uppercase text-slate-700 tracking-widest">Ranking Indisponível</p>
+                    )}
                   </div>
                 </aside>
               </div>
@@ -386,96 +471,98 @@ export default function StudentGamification() {
                       <Sparkles className="w-4 h-4" />
                       Sincronizar Missões IA
                     </button>
-                    <div className="flex bg-slate-900 p-1 rounded-2xl">
-                      {['Todas', 'Diárias', 'Semanais', 'Especiais'].map(cat => (
-                        <button key={cat} className="px-6 py-2 rounded-xl text-xs font-black uppercase text-slate-500 hover:text-slate-200 transition-all">{cat}</button>
-                      ))}
-                    </div>
+                  <div className="flex bg-slate-900 p-1 rounded-2xl">
+                    {['Todas', 'Diárias', 'Semanais', 'Especiais'].map(cat => (
+                      <button key={cat} className="px-6 py-2 rounded-xl text-xs font-black uppercase text-slate-500 hover:text-slate-200 transition-all">{cat}</button>
+                    ))}
                   </div>
-               </div>
+                </div>
+              </div>
 
-               {/* Adaptive Missions Section */}
-               {adaptiveMissions.length > 0 && (
-                 <div className="space-y-6">
-                    <h2 className="text-xl font-black uppercase tracking-tighter italic flex items-center gap-3 text-indigo-400">
-                      <Sparkles className="w-6 h-6" />
-                      Missões Sugeridas pela IA (Adaptativas)
-                    </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {adaptiveMissions.map(am => (
-                        <div key={am.id} className="bg-indigo-950/20 border border-indigo-500/30 p-8 rounded-[2.5rem] flex flex-col group relative overflow-hidden backdrop-blur-sm">
-                           <div className="absolute top-0 right-0 p-4 opacity-10">
-                              <Sparkles className="w-20 h-20 text-indigo-500" />
-                           </div>
-                           <div className="flex justify-between items-start mb-6">
-                              <div className="p-4 bg-indigo-600 text-white rounded-2xl">
-                                 <BrainCircuit className="w-6 h-6" />
-                              </div>
-                              <div className="text-right">
-                                 <p className="text-[10px] font-black text-indigo-400 uppercase">{am.difficulty}</p>
-                                 <p className="text-xs font-black text-white">+{am.xpReward} XP</p>
-                              </div>
-                           </div>
-                           <h3 className="text-xl font-black mb-2">{am.title}</h3>
-                           <p className="text-slate-400 text-sm mb-6 flex-1 leading-relaxed">{am.description}</p>
-                           <div className="pt-6 border-t border-indigo-500/20 flex flex-col gap-3">
-                              <div className="flex items-center gap-2 text-[10px] font-black text-indigo-300 uppercase tracking-widest">
-                                 <Bot className="w-4 h-4" />
-                                 Motivo: {am.technicalSkill}
-                              </div>
-                              <button className="w-full py-4 bg-indigo-600 text-white font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-indigo-500 transition-all">Iniciar Missão</button>
-                           </div>
+              {/* Adaptive Missions Section */}
+              {(adaptiveMissions || []).length > 0 && (
+                <div className="space-y-6">
+                  <h2 className="text-xl font-black uppercase tracking-tighter italic flex items-center gap-3 text-indigo-400">
+                    <Sparkles className="w-6 h-6" />
+                    Missões Sugeridas pela IA (Adaptativas)
+                  </h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {adaptiveMissions.map(am => (
+                      <div key={am.id} className="bg-indigo-950/20 border border-indigo-500/30 p-8 rounded-[2.5rem] flex flex-col group relative overflow-hidden backdrop-blur-sm">
+                        <div className="absolute top-0 right-0 p-4 opacity-10">
+                          <Sparkles className="w-20 h-20 text-indigo-500" />
                         </div>
-                      ))}
-                    </div>
-                 </div>
-               )}
-
-               <div className="pt-8 space-y-6">
-                 <h2 className="text-xl font-black uppercase tracking-tighter italic flex items-center gap-3">
-                   <ListTodo className="w-6 h-6 text-slate-500" />
-                   Objetivos Gerais da Trilha
-                 </h2>
-                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                 {missions.map(mission => (
-                   <div key={mission.id} className="bg-slate-900 border border-slate-800 p-8 rounded-[2.5rem] flex flex-col group hover:border-indigo-500/20 transition-all">
-                      <div className="flex justify-between items-start mb-6">
-                         <div className="p-4 bg-slate-800 rounded-2xl text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-all">
-                            <Zap className="w-6 h-6" />
-                         </div>
-                         <div className="flex flex-col items-end">
-                            <span className="text-xs font-black text-indigo-400">+{mission.xpReward} XP</span>
-                            <span className="text-xs font-black text-slate-500 cursor-default">#{mission.id.slice(-4).toUpperCase()}</span>
-                         </div>
+                        <div className="flex justify-between items-start mb-6">
+                          <div className="p-4 bg-indigo-600 text-white rounded-2xl">
+                            <BrainCircuit className="w-6 h-6" />
+                          </div>
+                          <div className="text-right">
+                            <p className="text-[10px] font-black text-indigo-400 uppercase">{am?.difficulty || 'PADRÃO'}</p>
+                            <p className="text-xs font-black text-white">+{am?.xpReward || 0} XP</p>
+                          </div>
+                        </div>
+                        <h3 className="text-xl font-black mb-2">{am?.title || 'Missão IA'}</h3>
+                        <p className="text-slate-400 text-sm mb-6 flex-1 leading-relaxed">{am?.description || 'Carregando diretrizes...'}</p>
+                        <div className="pt-6 border-t border-indigo-500/20 flex flex-col gap-3">
+                          <div className="flex items-center gap-2 text-[10px] font-black text-indigo-300 uppercase tracking-widest">
+                            <Bot className="w-4 h-4" />
+                            Motivo: {am?.technicalSkill || 'Análise comportamental'}
+                          </div>
+                          <button className="w-full py-4 bg-indigo-600 text-white font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-indigo-500 transition-all">Iniciar Missão</button>
+                        </div>
                       </div>
-                      <h3 className="text-xl font-black mb-3">{mission.title}</h3>
-                      <p className="text-slate-400 text-sm mb-8 flex-1 leading-relaxed">{mission.description}</p>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="pt-8 space-y-6">
+                <h2 className="text-xl font-black uppercase tracking-tighter italic flex items-center gap-3">
+                  <ListTodo className="w-6 h-6 text-slate-500" />
+                  Objetivos Gerais da Trilha
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {(missions || []).map(mission => (
+                    <div key={mission?.id || Math.random()} className="bg-slate-900 border border-slate-800 p-8 rounded-[2.5rem] flex flex-col group hover:border-indigo-500/20 transition-all">
+                      <div className="flex justify-between items-start mb-6">
+                        <div className="p-4 bg-slate-800 rounded-2xl text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                          <Zap className="w-6 h-6" />
+                        </div>
+                        <div className="flex flex-col items-end">
+                          <span className="text-xs font-black text-indigo-400">+{mission?.xpReward || 0} XP</span>
+                          <span className="text-xs font-black text-slate-500 cursor-default">#{mission?.id?.slice(-4).toUpperCase() || '####'}</span>
+                        </div>
+                      </div>
+                      <h3 className="text-xl font-black mb-3">{mission?.title || 'Missão Indefinida'}</h3>
+                      <p className="text-slate-400 text-sm mb-8 flex-1 leading-relaxed">{mission?.description || 'O objetivo desta missão ainda está sendo processado pelo sistema.'}</p>
                       
                       <div className="space-y-4 pt-6 border-t border-white/5">
                         <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-slate-500">
-                           <span>Progresso</span>
-                           <span>{Math.min(mission.progress, mission.threshold)} / {mission.threshold}</span>
+                          <span>Progresso</span>
+                          <span>{Math.min(mission?.progress || 0, mission?.threshold || 1)} / {mission?.threshold || 1}</span>
                         </div>
                         <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-                           <motion.div
-                             className={cn(
-                               "h-full transition-colors duration-500",
-                               mission.progress >= mission.threshold ? "bg-emerald-500" : "bg-indigo-500"
-                             )}
-                             initial={{ width: 0 }}
-                             animate={{ width: `${Math.min((mission.progress / mission.threshold) * 100, 100)}%` }}
-                             transition={{ duration: 0.8, ease: "easeOut" }}
-                           />
-                        </div>
-                        <div className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                           <CalendarDays className="w-3 h-3 text-indigo-500" />
-                           Expira em 22:15:04
+                          <motion.div
+                            className={cn(
+                              "h-full transition-colors duration-500",
+                              (mission?.progress || 0) >= (mission?.threshold || 1) ? "bg-emerald-500" : "bg-indigo-500"
+                            )}
+                            initial={{ width: 0 }}
+                            animate={{ width: `${Math.min(((mission?.progress || 0) / (mission?.threshold || 1)) * 100, 100)}%` }}
+                            transition={{ duration: 0.8, ease: "easeOut" }}
+                          />
                         </div>
                       </div>
-                   </div>
-                 ))}
-                 </div>
-               </div>
+                    </div>
+                  ))}
+                  {(missions || []).length === 0 && (
+                    <div className="col-span-full py-20 text-center border-2 border-dashed border-white/5 rounded-3xl">
+                      <ListTodo className="w-10 h-10 text-slate-800 mx-auto mb-4" />
+                      <p className="text-slate-600 font-black uppercase text-[10px] tracking-widest">Nenhuma missão listada no banco de dados</p>
+                    </div>
+                  )}
+                </div>
+              </div>
             </motion.div>
           )}
 
@@ -690,7 +777,7 @@ export default function StudentGamification() {
                </div>
 
                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  {goals.map(goal => (
+                  {(goals || []).map(goal => (
                     <div key={goal.id} className="bg-slate-900 border border-slate-800 p-10 rounded-[3rem] space-y-6">
                        <div className="flex justify-between items-start">
                           <h3 className="text-2xl font-black italic tracking-tight">{goal.title}</h3>
@@ -744,26 +831,26 @@ export default function StudentGamification() {
                         </tr>
                      </thead>
                      <tbody className="divide-y divide-white/5">
-                        {history.map(item => (
+                        {(history || []).map(item => (
                           <tr key={item.id} className="hover:bg-white/5 transition-all group">
                              <td className="p-6">
-                                <p className="font-black italic uppercase tracking-tight text-white group-hover:text-indigo-400 transition-colors">{item.desc}</p>
+                                <p className="font-black italic uppercase tracking-tight text-white group-hover:text-indigo-400 transition-colors">{item?.desc || 'Atividade Operacional'}</p>
                              </td>
                              <td className="p-6 text-center">
                                 <span className={cn(
                                    "text-[8px] font-black px-2 py-1 rounded uppercase tracking-widest",
-                                   item.type === 'EXAM' ? "bg-red-500/10 text-red-500" :
-                                   item.type === 'MISSION' ? "bg-emerald-500/10 text-emerald-500" :
+                                   item?.type === 'EXAM' ? "bg-red-500/10 text-red-500" :
+                                   item?.type === 'MISSION' ? "bg-emerald-500/10 text-emerald-500" :
                                    "bg-indigo-500/10 text-indigo-500"
                                 )}>
-                                   {item.type}
+                                   {item?.type || 'LOG'}
                                 </span>
                              </td>
                              <td className="p-6 text-right">
-                                <span className="font-black italic text-indigo-400 text-lg">+{item.xp}</span>
+                                <span className="font-black italic text-indigo-400 text-lg">+{item?.xp || 0}</span>
                              </td>
                              <td className="p-6 text-right text-xs font-bold text-slate-500">
-                                {item.date}
+                                {item?.date || '--/--/----'}
                              </td>
                           </tr>
                         ))}
@@ -787,8 +874,8 @@ export default function StudentGamification() {
                </div>
 
                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                  {ALL_BADGES.map((badge) => {
-                    const isUnlocked = profile?.badgesIds?.includes(badge.id);
+                  {(ALL_BADGES || []).map((badge) => {
+                    const isUnlocked = profile?.badgesIds?.includes(badge?.id);
                     return (
                       <div key={badge.id} className={cn(
                         "p-6 rounded-[2rem] border flex flex-col items-center justify-center text-center gap-4 group transition-all cursor-pointer relative overflow-hidden",
@@ -854,21 +941,21 @@ export default function StudentGamification() {
                   </header>
 
                   <div className="space-y-4">
-                     {ranking.map((user_rank, idx) => (
-                       <div key={user_rank.id} className={cn(
+                     {(ranking || []).map((user_rank, idx) => (
+                       <div key={user_rank?.id || idx} className={cn(
                          "flex items-center gap-6 p-6 rounded-[2rem] border transition-all",
-                         user_rank.id === user?.uid ? "bg-indigo-600 border-white/20 shadow-2xl" : "bg-slate-900 border-white/5 hover:bg-slate-800"
+                         user_rank?.id === user?.uid ? "bg-indigo-600 border-white/20 shadow-2xl" : "bg-slate-900 border-white/5 hover:bg-slate-800"
                        )}>
                           <span className="text-2xl font-black italic w-10 text-slate-500">{idx + 1}</span>
                           <div className="w-16 h-16 rounded-2xl bg-slate-800 overflow-hidden border border-white/10">
-                             <img src={`https://picsum.photos/seed/${user_rank.id}/100/100`} alt="profile" className="w-full h-full object-cover" />
+                             <img src={`https://picsum.photos/seed/${user_rank?.id || idx}/100/100`} alt="profile" className="w-full h-full object-cover" />
                           </div>
                           <div className="flex-1 min-w-0">
-                             <h4 className="text-xl font-black tracking-tight truncate">{user_rank.id === user?.uid ? 'VOCÊ (Soberano)' : (user_rank.nome || 'Novato')}</h4>
-                             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Operador Nível {Math.floor(user_rank.xp / 1000) + 1}</p>
+                             <h4 className="text-xl font-black tracking-tight truncate">{user_rank?.id === user?.uid ? 'VOCÊ (Soberano)' : (user_rank?.nome || 'Novato')}</h4>
+                             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Operador Nível {Math.floor((user_rank?.xp || 0) / 1000) + 1}</p>
                           </div>
                           <div className="text-right">
-                             <p className="text-2xl font-black italic tracking-tighter">{user_rank.xp || 0}</p>
+                             <p className="text-2xl font-black italic tracking-tighter">{user_rank?.xp || 0}</p>
                              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">XP Total</p>
                           </div>
                        </div>

@@ -28,7 +28,8 @@ import {
   Settings2,
   Lock,
   Star,
-  Zap
+  Zap,
+  Sparkles
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
@@ -74,6 +75,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { icon: BrainCircuit, label: 'Intelligence Platform', path: '/intelligence' },
     { icon: Target, label: 'Autonomous OS', path: '/os' },
     { icon: Zap, label: 'Hyper Intelligence OS', path: '/hyper-os' },
+    { icon: Sparkles, label: 'MVP EduQuest', path: '/mvp' },
   ];
 
   const filteredMenuItems = menuItems.filter(item => 

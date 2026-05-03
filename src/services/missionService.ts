@@ -1,5 +1,4 @@
-import { collection, query, where, getDocs, doc, getDoc, setDoc, updateDoc, increment, serverTimestamp, addDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { supabase } from '../lib/supabase';
 
 export interface Mission {
   id: string;
@@ -29,21 +28,29 @@ export const missionService = {
   async checkMissions(userId: string, action: 'COMPLETE_EXAM', metadata: { score?: number, examId?: string }) {
     try {
       // 1. Buscar missões ativas do tipo correspondente
-      const missionsQuery = query(collection(db, 'gamificacao_missoes'), where('type', '==', action));
-      const missionsSnap = await getDocs(missionsQuery);
+      const { data: missionsSnap, error: missionsError } = await supabase
+        .from('gamificacao_missoes')
+        .select('*')
+        .eq('type', action);
+        
+      if (missionsError) throw missionsError;
       
       const results = [];
       
-      for (const missionDoc of missionsSnap.docs) {
-        const mission = { id: missionDoc.id, ...missionDoc.data() } as Mission;
-        const progressId = `${userId}_${mission.id}`;
-        const progressRef = doc(db, 'gamificacao_progresso_missoes', progressId);
-        const progressSnap = await getDoc(progressRef);
+      for (const missionDoc of missionsSnap || []) {
+        const mission = missionDoc as any;
         
+        const { data: progressSnap } = await supabase
+          .from('gamificacao_progresso_missoes')
+          .select('*')
+          .eq('userId', userId)
+          .eq('missionId', mission.id)
+          .single();
+          
         let progressData: MissionProgress;
         
-        if (progressSnap.exists()) {
-          progressData = progressSnap.data() as MissionProgress;
+        if (progressSnap) {
+          progressData = progressSnap as MissionProgress;
           if (progressData.completed) continue; // Já completou
         } else {
           progressData = {
@@ -73,28 +80,50 @@ export const missionService = {
         // 3. Atualizar progresso e conceder recompensas
         if (newlyCompleted) {
           progressData.completed = true;
-          progressData.completedAt = serverTimestamp();
+          progressData.completedAt = new Date().toISOString();
           
-          // Conceder recompensas no perfil do usuário
-          const userRef = doc(db, 'usuarios', userId);
-          await updateDoc(userRef, {
-            xp: increment(mission.xpReward),
-            saldoTokensIA: increment(mission.tokenReward),
-            updatedAt: serverTimestamp()
-          });
+          // Use RPC para incrementar saldo ou buscar usuario primeiro
+          // Fallback: update manual
+          const { data: user } = await supabase
+            .from('usuarios')
+            .select('xp, saldoTokensIA')
+            .eq('id', userId)
+            .single();
+            
+          if (user) {
+             await supabase
+               .from('usuarios')
+               .update({
+                 xp: (user.xp || 0) + mission.xpReward,
+                 saldoTokensIA: (user.saldoTokensIA || 0) + mission.tokenReward,
+                 updatedAt: new Date().toISOString()
+               })
+               .eq('id', userId);
+          }
           
           // Registrar conquista
-          await addDoc(collection(db, 'gamificacao_conquistas_aluno'), {
-            userId,
-            missionId: mission.id,
-            title: mission.title,
-            awardedAt: serverTimestamp()
-          });
+          await supabase
+            .from('gamificacao_conquistas_aluno')
+            .insert({
+              userId,
+              missionId: mission.id,
+              title: mission.title,
+            });
 
           results.push({ mission, status: 'COMPLETED' });
         }
 
-        await setDoc(progressRef, progressData);
+        if (progressSnap) {
+          await supabase
+            .from('gamificacao_progresso_missoes')
+            .update(progressData)
+            .eq('userId', userId)
+            .eq('missionId', mission.id);
+        } else {
+          await supabase
+            .from('gamificacao_progresso_missoes')
+            .insert(progressData);
+        }
       }
       
       return results;
@@ -109,13 +138,21 @@ export const missionService = {
    */
   async getMissionsWithProgress(userId: string, tenantId: string) {
     try {
-      const q = query(collection(db, 'gamificacao_missoes'), where('tenantId', '==', tenantId));
-      const missionsSnap = await getDocs(q);
-      const missions = missionsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Mission));
+      const { data: missionsSnap, error: mErr } = await supabase
+        .from('gamificacao_missoes')
+        .select('*')
+        .eq('tenantId', tenantId);
+        
+      if (mErr) throw mErr;
+      const missions = missionsSnap || [];
       
-      const progressQuery = query(collection(db, 'gamificacao_progresso_missoes'), where('userId', '==', userId));
-      const progressSnap = await getDocs(progressQuery);
-      const progressMap = new Map(progressSnap.docs.map(doc => [doc.data().missionId, doc.data()]));
+      const { data: progressSnap, error: pErr } = await supabase
+        .from('gamificacao_progresso_missoes')
+        .select('*')
+        .eq('userId', userId);
+        
+      if (pErr) throw pErr;
+      const progressMap = new Map((progressSnap || []).map(doc => [doc.missionId, doc]));
       
       return missions.map(m => ({
         ...m,

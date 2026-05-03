@@ -40,9 +40,29 @@ export class AIService {
     }
   }
 
-  public static async generateJSON<T = any>(prompt: string, schema: any, model: string): Promise<T> {
-    // Em um cenário real, retornaria o objeto parseado conforme o schema
-    return {} as T; 
+  public static async generateJSON<T = any>(prompt: string, schema: any, modelTier?: string): Promise<T> {
+    const ai = this.getAI();
+    if (!ai) throw new Error("IA_OFFLINE");
+
+    const modelId = modelTier === 'PREMIUM' ? 'gemini-2.0-flash-exp' : 'gemini-2.0-flash-exp';
+
+    try {
+      const fullPrompt = `${prompt}\n\nResponda estritamente em JSON seguindo este schema: ${JSON.stringify(schema)}`;
+      
+      const result = await ai.models.generateContent({
+        model: modelId,
+        contents: [{ role: "user", parts: [{ text: fullPrompt }] }]
+      });
+      
+      const text = (result as any).text || "";
+      
+      // Limpeza básica de markdown
+      const cleanJson = text.replace(/```json|```/g, "").trim();
+      return JSON.parse(cleanJson) as T;
+    } catch (e) {
+      console.error("AI JSON Generation Error", e);
+      throw e;
+    }
   }
 
   public static async tutorStudent(prompt: string, context: string) {

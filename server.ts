@@ -10,6 +10,7 @@ import phase11Routes from './src/server/routes/phase11.routes';
 import phase12Routes from './src/server/routes/phase12.routes';
 import phase12AdvancedRoutes from './src/server/routes/phase12Advanced.routes';
 import phase13Routes from './src/server/routes/phase13.routes';
+import mvpRoutes from './src/server/routes/mvp.routes';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -55,6 +56,7 @@ async function startServer() {
   app.use('/api/phase12', phase12Routes);
   app.use('/api/phase12-advanced', phase12AdvancedRoutes);
   app.use('/api/phase13', phase13Routes);
+  app.use('/api/mvp', mvpRoutes);
 
   // n8n Webhook Proxy (Optional, but useful for keeping keys server-side)
   app.post('/api/webhook/n8n', async (req, res) => {
