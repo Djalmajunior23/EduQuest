@@ -20,7 +20,7 @@ export const professorAiService = {
 
     try {
       // Usando o PREMIUM Tier conforme definido pela Arquitetura para Planejamento/Criação Densa
-      return await AIService.generateText(prompt, 'PREMIUM');
+      return await AIService.generate(prompt);
     } catch (error) {
       console.error("Professor AI Error:", error);
       throw new Error("Falha ao processar inteligência pedagógica do Professor.");
@@ -40,7 +40,7 @@ export const professorAiService = {
 
     try {
       // Chamando a engine estruturada do aiService (usando PREMIUM tier pela análise)
-      const data = await AIService.generateText(prompt, 'PREMIUM');
+      const data = await AIService.generate(prompt);
       // Limpeza tradicional previnindo strings ```json soltas mesmo não usando o Type Enum no SDK ainda
       const cleanJson = data.replace(/```json|```/g, '').trim();
       return JSON.parse(cleanJson);

@@ -14,7 +14,7 @@ export const studentAiService = {
 
     try {
       // Call architectural Socratic layer from central AIService
-      const tutorResponse = await AIService.tutorStudent(prompt, subjectContext);
+      const tutorResponse = await AIService.generate(prompt, subjectContext);
 
       // Record usage and deduct tokens
       const usageRef = collection(db, 'uso_ia');

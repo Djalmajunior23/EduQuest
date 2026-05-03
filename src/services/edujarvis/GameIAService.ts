@@ -1,21 +1,10 @@
 // src/services/edujarvis/GameIAService.ts
 import { supabase } from '../../lib/supabase';
-import { GoogleGenAI } from "@google/genai";
+import { AIService } from '../aiService';
 import { StudentDigitalTwinService } from './StudentDigitalTwinService';
 import { adaptiveMissionService } from '../adaptiveMissionService';
 
 export class GameIAService {
-  private static ai: GoogleGenAI;
-
-  private static getAI() {
-    if (!this.ai) {
-      const apiKey = process.env.GEMINI_API_KEY;
-      if (!apiKey) throw new Error("GEMINI_API_KEY_MISSING");
-      this.ai = new GoogleGenAI({ apiKey });
-    }
-    return this.ai;
-  }
-
   /**
    * Gera uma missão épica baseada no contexto atual do aluno.
    */
@@ -23,11 +12,7 @@ export class GameIAService {
     const twin = await StudentDigitalTwinService.getTwin(userId);
     const profile = await adaptiveMissionService.determineStudentProfile(userId);
     
-    const ai = this.getAI();
-    
     const prompt = `
-      Você é o GameIA, o arquiteto de gamificação mestre do sistema EduJarvis.
-      
       CONTEXTO DO ALUNO:
       - Perfil: ${profile}
       - Nível: ${twin?.nivel || 'Iniciante'}
@@ -43,27 +28,24 @@ export class GameIAService {
       2. Descrição com Storytelling (um pequeno contexto de RPG)
       3. Objetivo Técnico Claro (o que ele deve aprender ou praticar)
       4. Recompensas (XP, Tokens, Badge sujerida)
-      
-      Responda apenas com o JSON da missão no formato:
-      {
-        "title": "string",
-        "story": "string",
-        "objective": "string",
-        "difficulty": "EASY|MEDIUM|HARD",
-        "xp": number,
-        "tokens": number,
-        "badgeName": "string"
-      }
     `;
 
+    const schema = {
+      type: "object",
+      properties: {
+        title: { type: "string" },
+        story: { type: "string" },
+        objective: { type: "string" },
+        difficulty: { type: "string", enum: ["EASY", "MEDIUM", "HARD"] },
+        xp: { type: "number" },
+        tokens: { type: "number" },
+        badgeName: { type: "string" }
+      },
+      required: ["title", "story", "objective", "difficulty", "xp", "tokens", "badgeName"]
+    };
+
     try {
-      const result = await ai.models.generateContent({
-        model: "gemini-2.0-flash-exp",
-        contents: [{ role: "user", parts: [{ text: prompt }] }]
-      });
-      const text = (result as any).text || "";
-      const cleanJson = text.replace(/```json|```/g, "").trim();
-      return JSON.parse(cleanJson);
+      return await AIService.generateJSON(prompt, schema);
     } catch (error) {
       console.error("[GameIA] Erro ao gerar quest épica:", error);
       return {

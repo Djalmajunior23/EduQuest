@@ -63,7 +63,7 @@ export async function generateSA(context: {
   `;
 
   try {
-    return await AIService.generateText(prompt, 'PREMIUM');
+    return await AIService.generate(prompt);
   } catch (error) {
     console.error("Error generating SA:", error);
     throw new Error("Failed to generate SA. Please try again.");
@@ -78,7 +78,7 @@ export async function generateStudySuggestions(performanceData: any): Promise<st
   `;
 
   try {
-    return await AIService.generateText(prompt, 'FLEET');
+    return await AIService.generate(prompt);
   } catch (error) {
     console.error("Error generating study suggestions:", error);
     throw new Error("Failed to generate study suggestions.");
@@ -93,7 +93,7 @@ export async function analyzePedagogicalResults(results: any): Promise<string> {
   `;
 
   try {
-    return await AIService.generateText(prompt, 'PREMIUM');
+    return await AIService.generate(prompt);
   } catch (error) {
     console.error("Error analyzing results:", error);
     throw new Error("Failed to analyze pedagogical results.");
@@ -190,7 +190,7 @@ export async function getVirtualMentorAdvice(messageContext: any, userMessage?: 
   `;
 
   try {
-    return await AIService.generateText(prompt, 'FLEET');
+    return await AIService.generate(prompt);
   } catch (error) {
     console.error("Error getting mentor advice:", error);
     throw new Error("Failed to get mentor advice.");

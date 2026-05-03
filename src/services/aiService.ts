@@ -17,26 +17,29 @@ export class AIService {
     return this.instance;
   }
 
-  // Exemplos de métodos para otimização de custo (Section 13)
-  public static async generateText(prompt: string, modelOrTier?: string) {
+  // Método unificado para geração de texto com suporte a sistema e usuário
+  public static async generate(prompt: string, systemInstruction?: string, modelId: string = 'gemini-2.0-flash-exp') {
     const ai = this.getAI();
-    if (!ai) return "IA Temporariamente Indisponível (Chave ausente).";
-
-    // Mapeamento de Tiers para modelos específicos (Arquitetura Seção 4.10)
-    // PROMO: Flash 2.0 (Equilíbrio)
-    // PREMIUM: Flash 2.0 Thinking ou pro (Raciocínio)
-    // LOCAL: Fallback para mensagem de erro ou chamada local (Ollama)
-    const modelId = modelOrTier === 'PREMIUM' ? 'gemini-2.0-flash-exp' : 'gemini-2.0-flash-exp';
+    if (!ai) return "IA Temporariamente Indisponível.";
 
     try {
+      const contents: any[] = [];
+      if (systemInstruction) {
+        // No SDK @google/genai 1.x, a instrução de sistema pode ser passada como um papel 'system' ou na config
+        // Para simplificar e garantir compatibilidade, vamos concatenar no prompt ou usar a estrutura correta se disponível
+        contents.push({ role: "user", parts: [{ text: `[INSTRUÇÃO DE SISTEMA]: ${systemInstruction}\n\n[MENSAGEM]: ${prompt}` }] });
+      } else {
+        contents.push({ role: "user", parts: [{ text: prompt }] });
+      }
+
       const response = await ai.models.generateContent({
         model: modelId,
-        contents: [{ role: "user", parts: [{ text: prompt }] }]
+        contents
       });
-      return response.text || "Sem resposta.";
+      return response.text || "Sem resposta da rede neural.";
     } catch (e) {
-      console.error("AI Generation Error", e);
-      return "Erro ao gerar resposta da IA. Tente novamente.";
+      console.error("[AIService Error]", e);
+      return "Erro na Matrix: Falha ao processar resposta da IA.";
     }
   }
 
@@ -54,7 +57,7 @@ export class AIService {
         contents: [{ role: "user", parts: [{ text: fullPrompt }] }]
       });
       
-      const text = (result as any).text || "";
+      const text = result.text || "";
       
       // Limpeza básica de markdown
       const cleanJson = text.replace(/```json|```/g, "").trim();
@@ -63,9 +66,5 @@ export class AIService {
       console.error("AI JSON Generation Error", e);
       throw e;
     }
-  }
-
-  public static async tutorStudent(prompt: string, context: string) {
-    return "Resposta do tutor: " + prompt;
   }
 }

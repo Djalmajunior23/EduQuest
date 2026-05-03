@@ -1,21 +1,9 @@
 // src/services/edujarvis/agents/ProfessorAgent.ts
+import { AIService } from "../../aiService";
 import { GoogleGenAI } from "@google/genai";
 
 export class ProfessorAgent {
-  private static ai: GoogleGenAI;
-
-  private static getAI() {
-    if (!this.ai) {
-      const apiKey = process.env.GEMINI_API_KEY;
-      if (!apiKey) throw new Error("GEMINI_API_KEY_MISSING");
-      this.ai = new GoogleGenAI({ apiKey });
-    }
-    return this.ai;
-  }
-
   public static async execute(message: string, context: any) {
-    const ai = this.getAI();
-
     const systemPrompt = `
 Você é o **ProfessorIA**, o arquiteto pedagógico sênior do ecossistema NexusInt AI / EduQuest. 
 Sua especialidade é transformar diretrizes educacionais complexas em materiais didáticos de alta performance, focando na excelência acadêmica e técnica.
@@ -50,16 +38,6 @@ ${JSON.stringify(context || {}, null, 2)}
 [PRODUÇÃO REQUERIDA]: Gere o conteúdo seguindo os modelos SENAI/SAEP e Taxonomia de Bloom.
 `;
 
-    try {
-      const result = await ai.models.generateContent({
-        model: "gemini-2.0-flash-exp",
-        contents: [{ role: "user", parts: [{ text: `${systemPrompt}\n\n${fullPrompt}` }] }]
-      });
-      
-      return (result as any).text || "Ocorreu um erro na orquestração pedagógica do ProfessorIA.";
-    } catch (error) {
-      console.error("[ProfessorAgent] Fatal Error:", error);
-      return "Tivemos uma falha de sincronização neural ao gerar o conteúdo pedagógico. Por favor, tente descrever seu pedido novamente.";
-    }
+    return await AIService.generate(fullPrompt, systemPrompt);
   }
 }

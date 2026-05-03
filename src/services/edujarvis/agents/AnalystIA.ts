@@ -1,19 +1,8 @@
 // src/services/edujarvis/agents/AnalystIA.ts
-import { GoogleGenAI } from "@google/genai";
+import { AIService } from "../../aiService";
 import { BIService, BIAnalysis } from "../BIService";
 
 export class AnalystIA {
-  private static ai: GoogleGenAI;
-
-  private static getAI() {
-    if (!this.ai) {
-      const apiKey = process.env.GEMINI_API_KEY;
-      if (!apiKey) throw new Error("GEMINI_API_KEY_MISSING");
-      this.ai = new GoogleGenAI({ apiKey });
-    }
-    return this.ai;
-  }
-
   /**
    * Executa a análise profunda da turma e gera o relatório.
    */
@@ -34,8 +23,6 @@ export class AnalystIA {
    * Gera um relatório analítico profundo baseado nos dados de BI da turma.
    */
   public static async generatePedagogicalReport(analysis: BIAnalysis, additionalContext?: string) {
-    const ai = this.getAI();
-
     const systemPrompt = `
 Você é o **AnalystIA**, o cérebro neural analítico do EduJarvis. 
 Sua responsabilidade é analisar o desempenho da turma, identificar dificuldades de aprendizagem, mapear competências frágeis e gerar relatórios pedagógicos de elite.
@@ -77,16 +64,6 @@ ${additionalContext || "Análise padrão de desempenho."}
 [TAREFA]: Gere o diagnóstico analítico completo seguindo o guia acima.
 `;
 
-    try {
-      const result = await ai.models.generateContent({
-        model: "gemini-2.0-flash-exp",
-        contents: [{ role: "user", parts: [{ text: `${systemPrompt}\n\n${fullPrompt}` }] }]
-      });
-      
-      return (result as any).text || "Ocorreu um erro ao processar o relatório analítico.";
-    } catch (error) {
-      console.error("[AnalystIA] Generation Error:", error);
-      return "Erro na geração do relatório pelo motor AnalystIA. Tente novamente.";
-    }
+    return await AIService.generate(fullPrompt, systemPrompt);
   }
 }

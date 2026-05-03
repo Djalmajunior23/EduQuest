@@ -61,7 +61,7 @@ A estrutura de sua resposta em Markdown DEVE conter:
 - ...
 `;
        // Usando o SDK Gemni (Flash ou Pro) dependendo da implementação em aiService
-       const responseText = await AIService.generateText(prompt);
+       const responseText = await AIService.generate(prompt);
        setGeneratedSA(responseText);
     } catch (err: any) {
        console.error("Erro ao gerar IA:", err);
