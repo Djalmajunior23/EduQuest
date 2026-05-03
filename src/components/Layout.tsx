@@ -71,6 +71,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { icon: Target, label: 'Capacidades (Habilidades)', path: '/admin/capacidades' },
     { icon: FileText, label: 'Configurações Base', path: '/admin/settings' },
     { icon: Star, label: 'Pagamentos (Gateway)', path: '/admin/payments' },
+    { icon: BrainCircuit, label: 'Intelligence Platform', path: '/intelligence' },
+    { icon: Target, label: 'Autonomous OS', path: '/os' },
+    { icon: Zap, label: 'Hyper Intelligence OS', path: '/hyper-os' },
   ];
 
   const filteredMenuItems = menuItems.filter(item => 

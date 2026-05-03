@@ -43,6 +43,11 @@ import SpacedLearningHub from './modules/student/spaced-learning/SpacedLearningH
 import CertificationCenter from './modules/student/certification/CertificationCenter';
 import InstitutionalConfigManager from './modules/admin/institutional/InstitutionalConfigManager';
 import { PaymentConfigManager } from './modules/admin/payments/PaymentConfigManager';
+import { EduJarvisChat } from './components/EduJarvis/Chat';
+import { EnterpriseCommandCenter } from './components/edujarvis/EnterpriseCommandCenter';
+import { EduJarvisIntelligencePlatform } from './components/edujarvis/EduJarvisIntelligencePlatform';
+import { EducationOSDashboard } from './components/edujarvis/EducationOSDashboard';
+import { HyperIntelligenceDashboard } from './components/edujarvis/HyperIntelligenceDashboard';
 
 import SubscriptionPlans from './modules/saas/SubscriptionPlans';
 import { ProfessorSAPlanner } from './modules/professor/ProfessorSAPlanner';
@@ -51,6 +56,22 @@ import CaseStudyManager from './modules/professor/estudos-caso/CaseStudyManager'
 import PedagogicalMaestro from './modules/professor/ai-hub/PedagogicalMaestro';
 import FlippedModuleManager from './modules/professor/flipped/FlippedModuleManager';
 import LiveMonitoring from './modules/professor/classroom/LiveMonitoring';
+import { useTenant } from './lib/TenantContext';
+
+function TenantSpecificIntelligence() {
+  const { tenant } = useTenant();
+  return <EduJarvisIntelligencePlatform tenantId={tenant?.id || 'public'} />;
+}
+
+function TenantSpecificOS() {
+  const { tenant } = useTenant();
+  return <EducationOSDashboard tenantId={tenant?.id || 'public'} />;
+}
+
+function TenantSpecificHyperOS() {
+  const { tenant } = useTenant();
+  return <HyperIntelligenceDashboard tenantId={tenant?.id || 'public'} />;
+}
 
 export default function App() {
   useEffect(() => {
@@ -71,6 +92,7 @@ export default function App() {
       <TenantProvider>
         <NotificationProvider>
           <Router>
+            <EduJarvisChat />
             <Routes>
               <Route path="/login" element={<Login />} />
             <Route path="/activate" element={<ActivateAccount />} />
@@ -79,6 +101,38 @@ export default function App() {
               <AuthGuard>
                 <Layout>
                   <Dashboard />
+                </Layout>
+              </AuthGuard>
+            } />
+
+            <Route path="/enterprise" element={
+              <AuthGuard>
+                <Layout>
+                  <EnterpriseCommandCenter />
+                </Layout>
+              </AuthGuard>
+            } />
+
+            <Route path="/intelligence" element={
+              <AuthGuard>
+                <Layout>
+                   <TenantSpecificIntelligence />
+                </Layout>
+              </AuthGuard>
+            } />
+
+            <Route path="/os" element={
+              <AuthGuard>
+                <Layout>
+                   <TenantSpecificOS />
+                </Layout>
+              </AuthGuard>
+            } />
+
+            <Route path="/hyper-os" element={
+              <AuthGuard>
+                <Layout>
+                   <TenantSpecificHyperOS />
                 </Layout>
               </AuthGuard>
             } />

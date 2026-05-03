@@ -8,6 +8,11 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Permite o teste de conexão inicial
+    match /test/connection {
+      allow read: if true;
+    }
+
     // --- Helpers de Autenticação e Autorização ---
     function isSignedIn() { return request.auth != null; }
     
@@ -42,6 +47,12 @@ service cloud.firestore {
     match /tenants/{tenantId} {
        allow read: if isSignedIn() && tenantId == getTenantId();
        allow write: if isAdmin();
+       
+       // Configurações aninhadas (ex: /tenants/ID/config/payments)
+       match /{allSubcollections=**} {
+          allow read: if isSignedIn() && tenantId == getTenantId();
+          allow write: if isAdmin();
+       }
     }
 
     // Usuários: Privacidade alta
@@ -163,6 +174,281 @@ service cloud.firestore {
 
     match /indicadores_bi/{docId} {
       allow read: if isSignedIn() && (isAdmin() || isProfessor());
+    }
+
+    match /missoes/{missaoId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() || isProfessor();
+    }
+
+    match /planos_estudo/{planoId} {
+      allow read: if isSignedIn() && (resource == null || resource.data.studentId == request.auth.uid || isAdmin() || isProfessor());
+      allow write: if isAdmin() || isProfessor();
+    }
+
+    match /alertas_pedagogicos/{alertaId} {
+      allow read: if isSignedIn() && (isProfessor() || isAdmin());
+      allow write: if isAdmin() || isProfessor();
+    }
+
+    match /notificacoes_gamificacao/{notifId} {
+      allow read: if isSignedIn() && (resource == null || resource.data.userId == request.auth.uid);
+      allow write: if isAdmin() || isProfessor();
+    }
+
+    match /gamificacao_missoes_adaptativas/{mId} {
+      allow read: if isSignedIn() && (resource == null || resource.data.userId == request.auth.uid || isAdmin() || isProfessor());
+      allow write: if isAdmin() || isProfessor() || (isSignedIn() && request.auth.uid == request.resource.data.userId);
+    }
+
+    match /gamificacao_progresso_missoes/{pId} {
+      allow read: if isSignedIn() && (resource == null || resource.data.userId == request.auth.uid || isAdmin() || isProfessor());
+      allow write: if isAdmin() || isProfessor() || (isSignedIn() && request.auth.uid == request.resource.data.userId);
+    }
+
+    match /abp_projetos/{pId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() || isProfessor();
+    }
+
+    match /uso_ia/{usageId} {
+      allow read: if isSignedIn() && (resource == null || resource.data.userId == request.auth.uid || isAdmin());
+      allow write: if isSignedIn(); // Aluno registra seu próprio uso via service
+    }
+
+    match /eventos_gamificacao/{eventId} {
+      allow read: if isAdmin();
+      allow write: if isSignedIn();
+    }
+
+    match /configuracoes_institucionais/{docId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    match /progresso_missao/{pId} {
+      allow read: if isSignedIn() && (resource == null || resource.data.alunoId == request.auth.uid || isAdmin() || isProfessor());
+      allow write: if isAdmin() || isProfessor() || (isSignedIn() && request.auth.uid == request.resource.data.alunoId);
+    }
+
+    match /edujarvis_conversas/{conversaId} {
+      allow read, write: if isSignedIn() && (resource == null || resource.data.userId == request.auth.uid || isAdmin() || isProfessor());
+    }
+
+    match /edujarvis_cache/{hashId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
+    }
+
+    // --- Phase 06: Autonomous & Predictive Rules ---
+    
+    match /student_digital_twins/{alunoId} {
+      allow read: if isSignedIn() && (request.auth.uid == alunoId || isProfessor() || isAdmin());
+      allow write: if isAdmin() || isProfessor(); // Escrita apenas por agentes (via service account ou professor autorizado)
+    }
+
+    match /behavioral_logs/{logId} {
+      allow read: if isProfessor() || isAdmin();
+      allow write: if isSignedIn(); // O próprio aluno/sistema registra eventos
+    }
+
+    match /ai_feedback_logs/{feedbackId} {
+      allow read: if isAdmin() || isProfessor();
+      allow write: if isSignedIn();
+    }
+
+    // --- Phase 07: Multimodal, RAG & SaaS Audit Rules ---
+
+    match /rag_documents/{docId} {
+      allow read: if isSignedIn();
+      allow write: if isProfessor() || isAdmin();
+    }
+
+    match /rag_chunks/{chunkId} {
+      allow read: if isSignedIn();
+      allow write: if isProfessor() || isAdmin();
+    }
+
+    match /ai_content_marketplace/{contentId} {
+      allow read: if isSignedIn();
+      allow write: if isProfessor() || isAdmin();
+    }
+
+    match /tenant_ai_config/{tenantId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    match /ai_audit_logs/{auditId} {
+      allow read: if isAdmin();
+      allow write: if isSignedIn(); // System logs its interaction
+    }
+
+    match /tenant_ai_usage/{tenantId} {
+      allow read: if isSignedIn() && (request.auth.uid == tenantId || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    match /ai_observability_events/{eventId} {
+      allow read: if isAdmin();
+      allow write: if isSignedIn();
+    }
+
+    match /ai_approval_requests/{requestId} {
+      allow read: if isSignedIn() && (resource.data.tenantId == request.auth.uid || isAdmin());
+      allow write: if isSignedIn();
+    }
+
+    match /ai_prompt_versions/{versionId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /global_intelligence_metrics/{metricId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    match /pedagogical_research_experiments/{expId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /global_benchmarks/{benchmarkId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    match /education_data_lake_events/{eventId} {
+      allow read: if isSignedIn() && (resource.data.tenantId == request.auth.uid || isAdmin());
+      allow write: if isSignedIn();
+    }
+
+    match /institutional_benchmarks_v2/{benchmarkId} {
+      allow read: if isSignedIn() && (resource.data.tenantId == request.auth.uid || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    match /personalization_profiles/{profileId} {
+      allow read: if isSignedIn() && (resource.data.alunoId == request.auth.uid || isAdmin());
+      allow write: if isSignedIn();
+    }
+
+    match /ai_auto_improvement_experiments/{expId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /strategic_decision_reports/{reportId} {
+      allow read: if isSignedIn() && (resource.data.tenantId == request.auth.uid || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    match /digital_credentials/{credentialId} {
+      allow read: if isSignedIn() && (resource.data.alunoId == request.auth.uid || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    match /career_paths_ai/{pathId} {
+      allow read: if isSignedIn() && (resource.data.alunoId == request.auth.uid || isAdmin());
+      allow write: if isSignedIn();
+    }
+
+    match /learning_agent_marketplace/{agentId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    match /curriculum_autopilot_proposals/{proposalId} {
+      allow read: if isSignedIn() && (resource.data.tenantId == request.auth.uid || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    match /ai_simulation_labs/{labId} {
+      allow read: if isSignedIn() && (resource.data.tenantId == request.auth.uid || isAdmin());
+      allow write: if isSignedIn();
+    }
+
+    match /curriculum_recommendations/{recId} {
+      allow read: if isSignedIn() && (resource.data.tenantId == request.auth.uid || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    match /tenant_enabled_agents/{tenantAgentId} {
+      allow read: if isSignedIn() && (resource.data.tenantId == request.auth.uid || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    match /advanced_simulation_sessions/{sessionId} {
+      allow read: if isSignedIn() && (resource.data.alunoId == request.auth.uid || isAdmin());
+      allow write: if isSignedIn();
+    }
+
+    match /advanced_simulation_steps/{stepId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
+    }
+
+    match /career_dashboard_snapshots/{snapshotId} {
+      allow read: if isSignedIn() && (resource.data.alunoId == request.auth.uid || isAdmin());
+      allow write: if isSignedIn();
+    }
+
+    match /skills_graph/{skillId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    match /portfolio_pages/{portfolioId} {
+      allow read: if true; // public visibility possible
+      allow write: if isSignedIn() && (resource.data.alunoId == request.auth.uid || isAdmin());
+    }
+
+    match /hyperagent_workflows/{workflowId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
+    }
+
+    match /immersive_simulations/{simulationId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
+    }
+
+    match /student_success_center/{successId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
+    }
+
+    match /ai_quality_reviews/{reviewId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
+    }
+
+    match /app_builder_projects/{projectId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
+    }
+
+    match /autonomous_planners/{planId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
+    }
+
+    match /ai_content_factory_packs/{packId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
+    }
+
+    match /saas_growth_metrics/{metricId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
+    }
+
+    match /classroom_companion_sessions/{sessionId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
+    }
+
+    match /business_copilot_insights/{insightId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
     }
   }
 }

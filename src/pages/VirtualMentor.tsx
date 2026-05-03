@@ -11,7 +11,9 @@ import {
   Zap,
   Loader2,
   Calendar,
-  BookOpen
+  BookOpen,
+  HeartPulse,
+  Rocket
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
@@ -198,13 +200,23 @@ export default function VirtualMentor() {
             </div>
 
             <div className="bg-indigo-600 rounded-[2.5rem] p-10 text-white shadow-xl shadow-indigo-100">
-               <BookOpen className="w-10 h-10 mb-6 text-indigo-300" />
-               <h3 className="text-xl font-bold mb-4">Trilha de Recuperação Ativa</h3>
+               <HeartPulse className="w-10 h-10 mb-6 text-indigo-300" />
+               <h3 className="text-xl font-bold mb-4">Recuperação Ativa</h3>
                <p className="text-sm text-indigo-100 leading-relaxed mb-6">
                  Iniciei uma mini-trilha de exercícios sobre <strong>Dependency Arrays</strong> personalizada para você.
                </p>
                <button className="w-full py-4 bg-white text-indigo-600 rounded-2xl font-bold text-sm shadow-lg shadow-indigo-700/20 active:scale-95 transition-all">
-                 Acessar Trilha
+                 Acessar Resgate
+               </button>
+            </div>
+            <div className="bg-slate-900 rounded-[2.5rem] p-10 text-white shadow-xl shadow-slate-200">
+               <Rocket className="w-10 h-10 mb-6 text-blue-400" />
+               <h3 className="text-xl font-bold mb-4">Projetos Práticos</h3>
+               <p className="text-sm text-slate-300 leading-relaxed mb-6">
+                 Que tal aplicar o que aprendeu em um desafio real? Geramos um novo projeto PBL para você.
+               </p>
+               <button className="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold text-sm shadow-lg shadow-blue-700/20 active:scale-95 transition-all">
+                 Ver Projeto
                </button>
             </div>
           </div>

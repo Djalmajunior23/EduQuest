@@ -95,46 +95,7 @@ export default function StudentGamification() {
       const adaptiveData = await adaptiveMissionService.getActiveAdaptiveMissions(user.uid, tenant.id);
       setAdaptiveMissions(adaptiveData);
       
-      // If no missions exist, seed some for demo if admin
-      if (data.length === 0 && profile?.perfil === 'ADMIN') {
-        const missionsRef = collection(db, 'gamificacao_missoes');
-        const demoMissions = [
-          {
-            title: 'Iniciante Dev Academy',
-            description: 'Conclua seu primeiro módulo de lógica de programação com aproveitamento total.',
-            type: 'SCORE_ABOVE',
-            threshold: 100,
-            xpReward: 500,
-            tokenReward: 10,
-            active: true
-          },
-          {
-            title: 'Maratonista Web Builder',
-            description: 'Finalize 3 desafios da trilha de desenvolvimento web esta semana.',
-            type: 'COMPLETE_EXAM',
-            threshold: 3,
-            xpReward: 1000,
-            tokenReward: 25,
-            active: true
-          },
-          {
-             title: 'Sprint Cyber Defender',
-             description: 'Identifique 5 vulnerabilidades em ambiente controlado sem erros.',
-             type: 'STREAK',
-             threshold: 5,
-             xpReward: 750,
-             tokenReward: 15,
-             active: true
-          }
-        ];
-        for (const m of demoMissions) {
-          await addDoc(missionsRef, m);
-        }
-        const freshData = await missionService.getMissionsWithProgress(user.uid, tenant.id);
-        setMissions(freshData as MissionWithProgress[]);
-      } else {
-        setMissions(data as MissionWithProgress[]);
-      }
+      setMissions(data as MissionWithProgress[]);
       setLoading(false);
     };
 

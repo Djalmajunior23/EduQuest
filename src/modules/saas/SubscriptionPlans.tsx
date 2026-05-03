@@ -1,12 +1,73 @@
-import React from 'react';
-import { motion } from 'motion/react';
-import { Check, Zap, Shield, Building2, Star, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Check, Zap, Shield, Building2, Star, ArrowRight, Lock, Unlock, Clock, Loader2 } from 'lucide-react';
 import { SAAS_PLANS } from '../../constants/saas';
 import { useAuth } from '../../lib/AuthContext';
 import { cn } from '../../lib/utils';
+import { doc, getDoc, setDoc, updateDoc, onSnapshot } from 'firebase/firestore';
+import { db } from '../../lib/firebase';
 
 export default function SubscriptionPlans() {
   const { profile, user } = useAuth();
+  const [liberatedPlans, setLiberatedPlans] = useState<string[]>([]);
+  const [selectedMonths, setSelectedMonths] = useState<Record<string, number>>({});
+  const [isUpdating, setIsUpdating] = useState<string | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(doc(db, 'configuracoes_institucionais', 'saas'), (doc) => {
+      if (doc.exists()) {
+        setLiberatedPlans(doc.data().planosLiberados || []);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const handleToggleLiberation = async (planKey: string) => {
+    const isLiberated = liberatedPlans.includes(planKey);
+    const newList = isLiberated 
+      ? liberatedPlans.filter(p => p !== planKey)
+      : [...liberatedPlans, planKey];
+    
+    try {
+      await setDoc(doc(db, 'configuracoes_institucionais', 'saas'), {
+        planosLiberados: newList,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+    } catch (err) {
+      console.error("Erro ao liberar plano:", err);
+    }
+  };
+
+  const handleUpgrade = async (key: string, plan: any) => {
+    if (!user) return alert('Faça login primeiro.');
+    
+    const months = selectedMonths[key] || 1;
+    const total = (plan.price * months).toFixed(2);
+    
+    const confirm = window.confirm(`[CHECKOUT NEXUSINTAI] 
+Plano: ${plan.label}
+Duração: ${months} mês(es)
+Total: R$ ${total}
+
+Deseja confirmar a assinatura?`);
+
+    if(confirm) {
+       setIsUpdating(key);
+       try {
+         await updateDoc(doc(db, 'usuarios', user.uid), { 
+           plano: key,
+           planoExpiracao: months > 1 ? new Date(Date.now() + months * 30 * 24 * 60 * 60 * 1000).toISOString() : null,
+           planoDuration: months
+         });
+         alert('✅ Assinatura confirmada com sucesso!');
+       } catch (err) {
+         alert('Erro ao atualizar plano: ' + err);
+       } finally {
+         setIsUpdating(null);
+       }
+    }
+  };
 
   return (
     <div className="max-w-6xl mx-auto space-y-12 pb-24">
@@ -42,13 +103,34 @@ export default function SubscriptionPlans() {
             )}
           >
             {profile?.plano === key && (
-              <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-indigo-600 text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg">
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-indigo-600 text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg whitespace-nowrap">
                 Seu Plano Atual
               </div>
             )}
 
+            {liberatedPlans.includes(key) && profile?.perfil === 'ALUNO' && profile?.plano !== key && (
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-emerald-500 text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg whitespace-nowrap flex items-center gap-1">
+                <Unlock className="w-3 h-3" />
+                Liberado pela Instituição
+              </div>
+            )}
+
             <div className="mb-8">
-              <h3 className="text-2xl font-black italic uppercase tracking-tighter text-slate-900 mb-1">{plan.label}</h3>
+              <div className="flex justify-between items-start mb-2">
+                <h3 className="text-2xl font-black italic uppercase tracking-tighter text-slate-900 leading-none">{plan.label || plan.name}</h3>
+                {profile?.perfil === 'ADMIN' && (
+                  <button 
+                    onClick={() => handleToggleLiberation(key)}
+                    className={cn(
+                      "p-2 rounded-xl transition-all",
+                      liberatedPlans.includes(key) ? "bg-emerald-50 text-emerald-600" : "bg-slate-50 text-slate-400 hover:text-slate-600"
+                    )}
+                    title={liberatedPlans.includes(key) ? "Liberado para Alunos" : "Liberar para Alunos"}
+                  >
+                    {liberatedPlans.includes(key) ? <Unlock className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+                  </button>
+                )}
+              </div>
               <div className="flex items-baseline gap-1">
                 <span className="text-3xl font-black text-slate-900">R$ {plan.price}</span>
                 <span className="text-slate-400 font-bold text-xs uppercase tracking-widest">/mês</span>
@@ -58,7 +140,7 @@ export default function SubscriptionPlans() {
             <ul className="flex-1 space-y-4 mb-8">
               {plan.features.map((feature: string, fIndex: number) => (
                 <li key={fIndex} className="flex items-start gap-3">
-                  <div className="mt-1 bg-emerald-50 p-0.5 rounded-full">
+                  <div className="mt-1 bg-emerald-50 p-0.5 rounded-full shrink-0">
                     <Check className="w-3 h-3 text-emerald-600" />
                   </div>
                   <span className="text-[11px] font-bold text-slate-600 uppercase leading-relaxed">{feature}</span>
@@ -69,30 +151,48 @@ export default function SubscriptionPlans() {
             <div className="space-y-4 pt-6 border-t border-slate-100">
                <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
                   <span>Alunos</span>
-                  <span className="text-slate-900">{plan.limits.students === 999999 ? 'Ilimitado' : plan.limits.students}</span>
+                  <span className="text-slate-900">{plan.limits.students === 999999 ? 'Ilimitado' : (plan.limits.students || plan.limits.alunos)}</span>
                </div>
                <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
                   <span>IA Tokens</span>
-                  <span className="text-slate-900">{plan.limits.aiTokens / 1000}k</span>
+                  <span className="text-slate-900">{((plan.limits.aiTokens || plan.limits.tokensIA) / 1000).toFixed(0)}k</span>
                </div>
             </div>
 
+            {/* Se o plano estiver liberado, habilitar opções de tempo para upgrade */}
+            <AnimatePresence>
+              {liberatedPlans.includes(key) && profile?.plano !== key && (
+                <motion.div 
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  className="mt-6 pt-6 border-t border-dashed border-slate-200 space-y-3"
+                >
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <Clock className="w-3 h-3" /> Escolha o Período do Upgrade
+                  </label>
+                  <div className="flex gap-2">
+                    {[1, 12, 16].map((m) => (
+                      <button
+                        key={m}
+                        onClick={() => setSelectedMonths(prev => ({ ...prev, [key]: m }))}
+                        className={cn(
+                          "flex-1 py-2 rounded-xl text-[10px] font-bold uppercase transition-all border",
+                          (selectedMonths[key] || 1) === m
+                            ? "bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-100"
+                            : "bg-slate-50 border-slate-100 text-slate-400 hover:border-indigo-200"
+                        )}
+                      >
+                        {m === 1 ? 'Mensal' : `${m} Meses`}
+                      </button>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             <button
-              disabled={profile?.plano === key}
-              onClick={async () => {
-                 if (!user) return alert('Faça login primeiro.');
-                 const confirm = window.confirm(`[SIMULAÇÃO STRIPE] Deseja simular o Checkout para o plano ${plan.label}? (Isso fará o update direto no seu usuário simulando um webhook do n8n)`);
-                 if(confirm) {
-                    const { doc, updateDoc } = await import('firebase/firestore');
-                    const { db } = await import('../../lib/firebase');
-                    try {
-                      await updateDoc(doc(db, 'usuarios', user.uid), { plano: key });
-                      alert('✅ Webhook Simulando Sucesso! Plano atualizado para ' + key);
-                    } catch (err) {
-                      alert('Erro ao atualizar plano: ' + err);
-                    }
-                 }
-              }}
+              disabled={profile?.plano === key || isUpdating === key}
+              onClick={() => handleUpgrade(key, plan)}
               className={cn(
                 "mt-8 w-full py-4 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2 transition-all",
                 profile?.plano === key
@@ -100,8 +200,14 @@ export default function SubscriptionPlans() {
                   : "bg-slate-900 text-white hover:bg-indigo-600 shadow-xl shadow-slate-200"
               )}
             >
-              {profile?.plano === key ? 'Plano Ativo' : 'Fazer Upgrade'}
-              {profile?.plano !== key && <ArrowRight className="w-4 h-4" />}
+              {isUpdating === key ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <>
+                  {profile?.plano === key ? 'Plano Ativo' : 'Fazer Upgrade'}
+                  {profile?.plano !== key && <ArrowRight className="w-4 h-4" />}
+                </>
+              )}
             </button>
           </motion.div>
         ))}
@@ -126,7 +232,7 @@ export default function SubscriptionPlans() {
             <div className="grid grid-cols-2 gap-4">
                {[
                  { label: 'SLA 99.9%', icon: Shield },
-                 { label: 'Tokens Custom', icon: Zap },
+                 { label: 'Upgrade 16m', icon: Zap },
                  { label: 'Relatórios BI', icon: Building2 },
                  { label: 'Integração LMS', icon: Zap },
                ].map((item, i) => (

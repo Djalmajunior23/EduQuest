@@ -1,6 +1,6 @@
 {
-  "name": "NexusIntAI Platform",
-  "description": "Plataforma Educacional SaaS Inteligente, Gamificada e Multi-tenant para Ensino Técnico.",
+  "name": "EduQuest Enterprise AI",
+  "description": "SaaS educacional com o ecossistema multiagente EduJarvis Fase 5 para automação pedagógica e IA Enterprise.",
   "requestFramePermissions": [
     "camera",
     "microphone"

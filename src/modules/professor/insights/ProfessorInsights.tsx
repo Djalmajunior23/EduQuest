@@ -39,12 +39,8 @@ export default function ProfessorInsights() {
       if(!snap.empty) {
          setAlertas(snap.docs.map(d => ({ id: d.id, ...d.data() })));
       } else {
-         // Fallback MOCK para demonstrar a tela enquanto o n8n não enche a tabela real
-         setAlertas([
-            { id: '1', alunoNome: 'Carlos Almeida', severidade: 'VERMELHA', motivo: 'Caiu de "CONSISTENTE" para "RISCO_EVASAO". Errou 4 desafios de Lógica seguidos.', sugestao: 'Reduzir dificuldade na Trilha 4 e agendar mentoria.' },
-            { id: '2', alunoNome: 'Mariana Silva', severidade: 'AMARELA', motivo: 'Tempo de tela reduziu 60% na última semana.', sugestao: 'Enviar notificação motivacional com bônus de XP.' },
-            { id: '3', alunoNome: 'João Pedro', severidade: 'VERDE', motivo: 'Atingiu perfil "AVANÇADO". Resolve SAs em tempo recorde.', sugestao: 'Desbloquear Trilha Masterclass opcional.' }
-         ]);
+         // Sem alertas reais do motor no momento
+         setAlertas([]);
       }
       setLoading(false);
     });
@@ -145,7 +141,11 @@ export default function ProfessorInsights() {
       
       <div className="grid grid-cols-1 gap-4">
          <AnimatePresence>
-            {alertas.map((alerta, i) => (
+            {alertas.length === 0 ? (
+               <div className="p-12 text-center border-2 border-dashed border-slate-100 rounded-[2rem] text-slate-400 font-bold uppercase text-[10px] tracking-widest">
+                  Nenhum aviso neural detectado pelo motor tático.
+               </div>
+            ) : alertas.map((alerta, i) => (
                 <motion.div
                    key={alerta.id}
                    initial={{ opacity: 0, x: -20 }}

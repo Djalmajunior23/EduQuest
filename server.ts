@@ -3,6 +3,13 @@ import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { generateQuestions, generateSA } from './src/services/aiAssistantService';
+import advancedAIRoutes from './src/server/routes/advancedAI.routes';
+import adaptiveExamRoutes from './src/server/routes/adaptiveExam.routes';
+import phase07Routes from './src/server/routes/phase07.routes';
+import phase11Routes from './src/server/routes/phase11.routes';
+import phase12Routes from './src/server/routes/phase12.routes';
+import phase12AdvancedRoutes from './src/server/routes/phase12Advanced.routes';
+import phase13Routes from './src/server/routes/phase13.routes';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -39,6 +46,15 @@ async function startServer() {
       res.status(500).json({ error: (error as Error).message });
     }
   });
+
+  // Fase 4 Routes
+  app.use('/api/advanced-ai', advancedAIRoutes);
+  app.use('/api/adaptive-exam', adaptiveExamRoutes);
+  app.use('/api/phase07', phase07Routes);
+  app.use('/api/phase11', phase11Routes);
+  app.use('/api/phase12', phase12Routes);
+  app.use('/api/phase12-advanced', phase12AdvancedRoutes);
+  app.use('/api/phase13', phase13Routes);
 
   // n8n Webhook Proxy (Optional, but useful for keeping keys server-side)
   app.post('/api/webhook/n8n', async (req, res) => {

@@ -41,13 +41,13 @@ export default function StudentAdaptiveJourney() {
         if(docSnap.exists()) {
             setPerfil(docSnap.data());
         } else {
-            // MOCK Fallback 
+            // Valores padrão neutros para quando o perfil ainda não foi gerado pela IA/n8n
             setPerfil({
-               classificacaoAtual: 'ALUNO_EM_EVOLUCAO',
-               taxaAcertoGeral: 68.5,
-               pontosFortes: ['Banco de Dados MySQL'],
-               pontosFracos: ['Conceitos de Redes / IP'],
-               xpMotor: profile?.xp || 1450
+               classificacaoAtual: 'ALUNO_EM_DESCOBERTA',
+               taxaAcertoGeral: 0,
+               pontosFortes: [],
+               pontosFracos: [],
+               xpMotor: profile?.xp || 0
             });
         }
     });
@@ -62,14 +62,11 @@ export default function StudentAdaptiveJourney() {
        if(!snap.empty) {
            setPlano(snap.docs[0].data());
        } else {
-           // MOCK Fallback de Plano
+           // Estado inicial de espera
            setPlano({
-              semana: 4,
-              focoPrincipal: 'Fundamentos de Redes (Sua maior dificuldade nas UCs base)',
-              tarefasRecomendadas: [
-                 { tipo: 'REVISAO', title: 'Leitura Rápida: Modelo OSI', status: 'PENDING', tempoInfo: '15 Min' },
-                 { tipo: 'SIMULADO', title: 'Quiz Diagnóstico de TCP/IP', status: 'PENDING', tempoInfo: '20 Min' }
-              ]
+              semana: 1,
+              focoPrincipal: 'Aguardando diagnóstico inicial...',
+              tarefasRecomendadas: []
            });
        }
     });

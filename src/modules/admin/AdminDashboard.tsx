@@ -7,8 +7,6 @@ import { db } from '../../lib/firebase';
 import { cn } from '../../lib/utils';
 import { Link } from 'react-router-dom';
 
-const MOCK_GROWTH_DATA: any[] = [];
-
 const COLORS = ['#4f46e5', '#3b82f6', '#f59e0b', '#ef4444'];
 
 export function AdminDashboardPanel() {
@@ -22,17 +20,17 @@ export function AdminDashboardPanel() {
        if (snap.exists()) {
           setData(snap.data());
        } else {
-          // Fallback MOCK data representing the BI consolidation
+          // Valores iniciais/vazios enquanto o motor de BI não popula a coleção
           setData({
-             totalUsersActivos: 450,
+             totalUsersActivos: 0,
              distribuicaoPerfis: [
-                { name: 'Alunos', value: 400 },
-                { name: 'Professores', value: 40 },
-                { name: 'Admins', value: 10 }
+                { name: 'Alunos', value: 0 },
+                { name: 'Professores', value: 0 },
+                { name: 'Admins', value: 0 }
              ],
-             tokensIA_Consumidos_Mes: 240500,
-             riscoPedagogicoAlunos: 12,
-             onboardingPendentes: 30
+             tokensIA_Consumidos_Mes: 0,
+             riscoPedagogicoAlunos: 0,
+             onboardingPendentes: 0
           });
        }
        setLoading(false);
@@ -81,11 +79,11 @@ export function AdminDashboardPanel() {
          <div className="lg:col-span-2 bg-white rounded-[2rem] p-8 border border-slate-200 shadow-sm">
             <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-8 flex justify-between">
                <span>Crescimento da Base (6 Meses)</span>
-               <span className="text-blue-500">Dados Consolidados n8n</span>
+               <span className="text-blue-500">Fluxo n8n ativo</span>
             </h3>
             <div className="h-[300px] w-full">
                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={MOCK_GROWTH_DATA} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                  <AreaChart data={[]} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
                     <defs>
                       <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#818cf8" stopOpacity={0.3}/>

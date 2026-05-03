@@ -13,7 +13,13 @@ import {
   Copy,
   ChevronDown,
   Layout,
-  ClipboardList
+  ClipboardList,
+  CheckSquare,
+  Rocket,
+  HeartPulse,
+  Code,
+  AlertTriangle,
+  FileText
 } from 'lucide-react';
 import { professorAiService } from '../../../services/professorAiService';
 import { cn } from '../../../lib/utils';
@@ -33,6 +39,12 @@ export default function ProfessorAIHub() {
     { id: 'MATERIAL_APOIO', label: 'Material de Apoio', icon: FilePlus },
     { id: 'RUBRICA', label: 'Rubrica Avaliativa', icon: Target },
     { id: 'BANCO_QUESTOES', label: 'Banco de Questões', icon: Brain },
+    { id: 'CORRECAO', label: 'Correção IA', icon: CheckSquare },
+    { id: 'PROJETOS', label: 'Projetos PBL', icon: Rocket },
+    { id: 'RECUPERACAO', label: 'Recuperação Ativa', icon: HeartPulse },
+    { id: 'CODE_REVIEW', label: 'Code Review IA', icon: Code },
+    { id: 'DROPOUT_RISK', label: 'Risco de Evasão', icon: AlertTriangle },
+    { id: 'AULA_COMPLETA', label: 'Aula Completa', icon: FileText },
   ];
 
   const handleGenerate = async () => {

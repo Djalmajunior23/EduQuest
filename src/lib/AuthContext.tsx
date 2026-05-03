@@ -127,8 +127,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signInWithGoogle = async () => {
-    const provider = new GoogleAuthProvider();
-    await signInWithPopup(auth, provider);
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+    } catch (error: any) {
+      if (error.code === 'auth/unauthorized-domain') {
+        const domain = window.location.hostname;
+        const msg = `ERRO DE CONFIGURAÇÃO: O domínio "${domain}" não está autorizado no Console do Firebase. ` +
+                    `Por favor, acesse o Console do Firebase -> Authentication -> Settings -> Authorized domains e adicione "${domain}".`;
+        console.error(msg);
+        alert(msg);
+      } else {
+        console.error("Login Error:", error);
+        throw error;
+      }
+    }
   };
 
   const logout = async () => {
