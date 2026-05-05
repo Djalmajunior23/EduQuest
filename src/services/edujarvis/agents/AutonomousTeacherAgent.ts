@@ -36,7 +36,7 @@ Foco em ser útil, economizar tempo do professor e salvar a trajetória do aluno
 `;
 
     const result = await ai.models.generateContent({
-      model: "gemini-2.0-flash-exp",
+      model: "gemini-2.5-flash",
       contents: [{ role: "user", parts: [{ text: `${systemPrompt}\n\nGere uma intervenção imediata.` }] }]
     });
     

@@ -32,6 +32,12 @@ export default function QuestionBank() {
   const [isQuickExamModalOpen, setIsQuickExamModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [aiPrompt, setAiPrompt] = useState('');
+  const [aiConfig, setAiConfig] = useState({
+    topic: '',
+    subject: '',
+    difficulty: 'medium',
+    bloomTaxonomy: 'Entender'
+  });
   const [quickExamConfig, setQuickExamConfig] = useState({ title: '', tag: '', count: 5, passingScore: 6 });
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeTab, setActiveTab] = useState<'question' | 'options' | 'metadata'>('question');
@@ -180,11 +186,16 @@ export default function QuestionBank() {
   const [generatedQuestions, setGeneratedQuestions] = useState<any[]>([]);
 
   const handleAIGenerate = async () => {
-    if (!aiPrompt) return;
+    if (!aiConfig.topic) return;
     setIsGenerating(true);
     setGeneratedQuestions([]);
     try {
-      const generated = await generateQuestions(aiPrompt);
+      const generated = await generateQuestions({
+        topic: aiConfig.topic,
+        subject: aiConfig.subject,
+        difficulty: aiConfig.difficulty,
+        bloomTaxonomy: aiConfig.bloomTaxonomy
+      });
       setGeneratedQuestions(generated);
     } catch (error) {
       console.error('Error generating AI questions:', error);
@@ -286,7 +297,7 @@ export default function QuestionBank() {
   };
 
   const handleOpenAIModalWithPrompt = (prompt: string) => {
-    setAiPrompt(prompt);
+    setAiConfig(prev => ({ ...prev, topic: prompt }));
     setIsAIModalOpen(true);
   };
 
@@ -545,22 +556,66 @@ export default function QuestionBank() {
                 {!generatedQuestions.length ? (
                   <>
                     <p className="text-slate-600 text-sm">
-                      Descreva o tema ou competência para gerar questões automaticamente com Taxonomia de Bloom.
+                      Preencha os dados abaixo para gerar questões automaticamente com a IA pedagógica.
                     </p>
                     
-                    <div>
-                      <label className="block text-sm font-bold text-slate-700 mb-2">Tema / Competência</label>
-                      <textarea 
-                        value={aiPrompt}
-                        onChange={e => setAiPrompt(e.target.value)}
-                        placeholder="Ex: Fundamentos de Redes de Computadores, Protocolo HTTP, Lógica de Programação com JavaScript..."
-                        className="w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none min-h-[100px]"
-                      />
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-1">Tema / Tópico</label>
+                        <input 
+                          type="text"
+                          value={aiConfig.topic}
+                          onChange={e => setAiConfig({...aiConfig, topic: e.target.value})}
+                          placeholder="Ex: Fundamentos de Redes, Protocolo HTTP..."
+                          className="w-full p-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-1">Disciplina / Assunto</label>
+                        <input 
+                          type="text"
+                          value={aiConfig.subject}
+                          onChange={e => setAiConfig({...aiConfig, subject: e.target.value})}
+                          placeholder="Ex: Redes de Computadores"
+                          className="w-full p-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none"
+                        />
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-bold text-slate-700 mb-1">Dificuldade</label>
+                          <select 
+                            value={aiConfig.difficulty}
+                            onChange={e => setAiConfig({...aiConfig, difficulty: e.target.value})}
+                            className="w-full p-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none"
+                          >
+                            <option value="easy">Easy</option>
+                            <option value="medium">Medium</option>
+                            <option value="hard">Hard</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-bold text-slate-700 mb-1">Taxonomia de Bloom</label>
+                          <select 
+                            value={aiConfig.bloomTaxonomy}
+                            onChange={e => setAiConfig({...aiConfig, bloomTaxonomy: e.target.value})}
+                            className="w-full p-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none"
+                          >
+                            <option value="Lembrar">Lembrar</option>
+                            <option value="Entender">Entender</option>
+                            <option value="Aplicar">Aplicar</option>
+                            <option value="Analisar">Analisar</option>
+                            <option value="Avaliar">Avaliar</option>
+                            <option value="Criar">Criar</option>
+                          </select>
+                        </div>
+                      </div>
                     </div>
 
                     <button 
                       onClick={handleAIGenerate}
-                      disabled={isGenerating || !aiPrompt}
+                      disabled={isGenerating || !aiConfig.topic}
                       className="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200 flex items-center justify-center gap-2 disabled:opacity-50"
                     >
                       {isGenerating ? (

@@ -34,7 +34,7 @@ Sua missão é gerar roteiros de projetos práticos, desafios e "SAs" (Situaçõ
 `;
 
     const result = await ai.models.generateContent({
-      model: "gemini-2.0-flash-exp",
+      model: "gemini-2.5-flash",
       contents: [{ role: "user", parts: [{ text: `${systemPrompt}\n\n[PEDIDO]: ${message}\n\n[CONTEXTO]: ${JSON.stringify(context || {})}` }] }]
     });
     

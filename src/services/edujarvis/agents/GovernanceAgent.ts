@@ -35,7 +35,7 @@ Esta análise é interna e serve para melhoria contínua do sistema.
 `;
 
     const result = await ai.models.generateContent({
-      model: "gemini-2.0-flash-exp",
+      model: "gemini-2.5-flash",
       contents: [{ role: "user", parts: [{ text: `${systemPrompt}\n\n[INTERAÇÃO AUDITADA]: ${JSON.stringify(aiInteraction)}` }] }]
     });
     

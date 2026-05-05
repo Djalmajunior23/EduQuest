@@ -41,7 +41,7 @@ Não seja agressivo. Corrija de forma didática, incentivando o aluno a entender
 `;
 
     const result = await ai.models.generateContent({
-      model: "gemini-2.0-flash-exp",
+      model: "gemini-2.5-flash",
       contents: [{ role: "user", parts: [{ text: `${systemPrompt}\n\nLinguagem: ${context.linguagem || 'Auto'}\n\nEnunciado: ${context.enunciado || 'Não informado'}\n\nCódigo do Aluno:\n\`\`\`\n${message}\n\`\`\`` }] }]
     });
     

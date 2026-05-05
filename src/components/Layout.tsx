@@ -59,6 +59,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { icon: Brain, label: 'Professor AI Hub', path: '/ai-hub', roles: ['PROFESSOR', 'ADMIN'] },
     { icon: BookOpen, label: 'Recursos e SA', path: '/sa', roles: ['PROFESSOR', 'ADMIN'] },
     { icon: FileText, label: 'Banco de Questões', path: '/questions', roles: ['PROFESSOR', 'ADMIN'] },
+    { icon: FileCheck, label: 'Correção c/ IA', path: '/activities', roles: ['PROFESSOR', 'ADMIN'] },
+    { icon: FileCheck, label: 'Minhas Atividades', path: '/my-activities', roles: ['ALUNO'] },
     { icon: BarChart3, label: 'BI e Relatórios', path: '/reports', roles: ['PROFESSOR', 'ADMIN'] },
   ];
 

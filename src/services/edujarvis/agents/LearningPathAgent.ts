@@ -32,7 +32,7 @@ Eficiência. O aluno deve aprender o máximo com o mínimo de esforço redundant
 `;
 
     const result = await ai.models.generateContent({
-      model: "gemini-2.0-flash-exp",
+      model: "gemini-2.5-flash",
       contents: [{ role: "user", parts: [{ text: `${systemPrompt}\n\n[OBJETIVO]: ${goal}\n\n[CONTEXTO ATUAL]: ${JSON.stringify(context)}` }] }]
     });
     

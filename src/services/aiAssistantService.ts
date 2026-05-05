@@ -1,17 +1,26 @@
 import { AIService } from './aiService';
 
-export async function generateQuestions(prompt: string): Promise<any> {
+export async function generateQuestions(params: {
+  topic: string;
+  difficulty: string;
+  bloomTaxonomy: string;
+  subject: string;
+}): Promise<any> {
   const fullPrompt = `
     [SISTEMA]: Você é um assistente pedagógico especializado em Taxonomia de Bloom para alunos da Plataforma.
-    Gere 5 questões de múltipla escolha baseadas no seguinte tema ou competência: "${prompt}".
+    Gere 5 questões de múltipla escolha baseadas nas seguintes diretrizes:
+    - Tema / Competência: "${params.topic}"
+    - Disciplina / Assunto: "${params.subject}"
+    - Dificuldade Alvo: "${params.difficulty}"
+    - Nível da Taxonomia de Bloom Predominante: "${params.bloomTaxonomy}"
     
-    É OBRIGATÓRIO que as 5 questões abordem níveis DIFERENTES da Taxonomia de Bloom. Distribua as questões garantindo variedade entre os níveis: Lembrar, Entender, Aplicar, Analisar, Avaliar e Criar.
+    É OBRIGATÓRIO que as 5 questões respeitem o nível de dificuldade e o nível da Taxonomia solicitados.
     
     Para cada questão, forneça:
     1. O enunciado.
-    2. 4 opções (A, B, C, D).
+    2. 4 opções (A, B, C, D) e que sejam plausíveis e coerentes.
     3. O índice da opção correta (0-3).
-    4. Uma explicação pedagógica detalhada.
+    4. Uma explicação pedagógica detalhada sobre a resposta correta e os distratores.
     5. O nível da Taxonomia de Bloom.
     6. A dificuldade (easy, medium, hard).
   `;

@@ -32,7 +32,7 @@ Sua missão é gerar conteúdo educacional multimídia de alta qualidade para pr
 `;
 
     const result = await ai.models.generateContent({
-      model: "gemini-2.0-flash-exp",
+      model: "gemini-2.5-flash",
       contents: [{ role: "user", parts: [{ text: `${systemPrompt}\n\n[FORMATO]: ${format}\n\n[CONTEÚDO/TÓPICO]: ${request}` }] }]
     });
     

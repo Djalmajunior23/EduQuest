@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { Brain, Sparkles, Loader2, Target, Users, BookOpen } from 'lucide-react';
+import { Brain, Sparkles, Loader2, Target, Users, BookOpen, Edit3, Eye, Save, CheckCircle2 } from 'lucide-react';
 import { AIService } from '../../services/aiService';
 import Markdown from 'react-markdown';
 import { cn } from '../../lib/utils';
@@ -31,12 +31,15 @@ export function ProfessorSAPlanner() {
   const [loading, setLoading] = useState(false);
   const [generatedSA, setGeneratedSA] = useState('');
   const [error, setError] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
 
   const handleGenerate = async () => {
     if (!tema) return alert('Por favor, informe o Tema da Situação de Aprendizagem.');
     
     setLoading(true);
     setError('');
+    setIsSaved(false);
     
     try {
        const prompt = `Você é um Especialista em Gamificação Educacional Sênior e Estruturador Pedagógico no sistema NEXUSINTAI.
@@ -63,12 +66,22 @@ A estrutura de sua resposta em Markdown DEVE conter:
        // Usando o SDK Gemni (Flash ou Pro) dependendo da implementação em aiService
        const responseText = await AIService.generate(prompt);
        setGeneratedSA(responseText);
+       setIsEditing(true); // Abre em modo edição por padrão para poder revisar
     } catch (err: any) {
        console.error("Erro ao gerar IA:", err);
        setError(err.message || "Não foi possível gerar no momento. Tente novamente.");
     } finally {
        setLoading(false);
     }
+  };
+
+  const handleSave = () => {
+    setIsSaved(true);
+    setIsEditing(false);
+    // Aqui seria feita a integração com o backend para salvar a SA gerada.
+    setTimeout(() => {
+      setIsSaved(false);
+    }, 3000);
   };
 
   return (
@@ -199,9 +212,46 @@ A estrutura de sua resposta em Markdown DEVE conter:
                    <motion.div 
                      initial={{ opacity: 0, y: 10 }}
                      animate={{ opacity: 1, y: 0 }}
-                     className="prose prose-indigo max-w-none prose-h1:text-3xl prose-h1:font-black prose-h1:italic prose-h1:uppercase prose-h1:tracking-tighter prose-h3:uppercase prose-h3:tracking-widest prose-h3:text-xs prose-h3:font-black prose-h3:text-indigo-500"
+                     className="h-full flex flex-col"
                    >
-                     <Markdown>{generatedSA}</Markdown>
+                     {/* Toolbar de Ações da SA Gerada */}
+                     <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
+                        <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-lg">
+                           <button 
+                             onClick={() => setIsEditing(true)}
+                             className={cn("px-4 py-2 rounded-md text-sm font-bold tracking-wide transition-all flex items-center gap-2", isEditing ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-700")}
+                           >
+                             <Edit3 className="w-4 h-4" /> Editar
+                           </button>
+                           <button 
+                             onClick={() => setIsEditing(false)}
+                             className={cn("px-4 py-2 rounded-md text-sm font-bold tracking-wide transition-all flex items-center gap-2", !isEditing ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-700")}
+                           >
+                             <Eye className="w-4 h-4" /> Prévia
+                           </button>
+                        </div>
+                        <button
+                           onClick={handleSave}
+                           disabled={isSaved}
+                           className={cn("px-6 py-2 rounded-lg text-sm font-bold text-white transition-all flex items-center gap-2 shadow-sm", isSaved ? "bg-emerald-500" : "bg-indigo-600 hover:bg-indigo-700")}
+                        >
+                           {isSaved ? <><CheckCircle2 className="w-4 h-4" /> Salvo com Sucesso</> : <><Save className="w-4 h-4" /> Salvar Plano</>}
+                        </button>
+                     </div>
+
+                     {/* Conteúdo (Editor ou Prévia) */}
+                     {isEditing ? (
+                        <textarea
+                           value={generatedSA}
+                           onChange={(e) => setGeneratedSA(e.target.value)}
+                           className="flex-1 w-full h-[500px] p-6 bg-slate-50 border border-slate-200 rounded-xl font-mono text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                           placeholder="Edite o markdown da Situação de Aprendizagem aqui..."
+                        />
+                     ) : (
+                        <div className="flex-1 overflow-auto bg-white p-6 rounded-xl border border-slate-100 prose prose-indigo max-w-none prose-h1:text-3xl prose-h1:font-black prose-h1:italic prose-h1:uppercase prose-h1:tracking-tighter prose-h3:uppercase prose-h3:tracking-widest prose-h3:text-xs prose-h3:font-black prose-h3:text-indigo-500">
+                           <Markdown>{generatedSA}</Markdown>
+                        </div>
+                     )}
                    </motion.div>
                  )
                )}

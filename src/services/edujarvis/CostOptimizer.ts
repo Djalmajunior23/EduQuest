@@ -38,7 +38,7 @@ export class CostOptimizer {
 
   public static getModelByTier(tier: AITier): string {
     switch (tier) {
-      case 'PREMIUM': return 'gemini-2.0-flash-exp'; // Imagine being Pro/Thinking here
+      case 'PREMIUM': return 'gemini-2.5-flash'; // Imagine being Pro/Thinking here
       case 'PROMO': return 'gemini-2.0-flash-exp';
       case 'LOCAL': return 'gemini-2.0-flash-exp'; // In real world would be 'ollama-llama3'
       default: return 'gemini-2.0-flash-exp';

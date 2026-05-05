@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useAuth } from '../lib/AuthContext';
 import { 
   User, 
@@ -21,12 +21,29 @@ export default function Profile() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     nome: profile?.nome || '',
     telefone: profile?.telefone || '',
     fotoUrl: profile?.fotoUrl || ''
   });
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        setError('A imagem deve ter no máximo 2MB.');
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData(prev => ({ ...prev, fotoUrl: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,15 +76,31 @@ export default function Profile() {
         {/* Profile Stats/Info Sidebar */}
         <aside className="space-y-8">
            <div className="industrial-card p-8 flex flex-col items-center text-center">
-              <div className="relative group mb-6">
-                 <div className="w-32 h-32 rounded-[2.5rem] bg-slate-900 flex items-center justify-center text-indigo-400 text-4xl font-black italic uppercase shadow-2xl overflow-hidden">
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                className="hidden" 
+                accept="image/*" 
+                onChange={handleImageUpload} 
+              />
+              <div 
+                className="relative group mb-6 cursor-pointer transform hover:scale-105 transition-all duration-300"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                 <div className="w-32 h-32 rounded-[2.5rem] bg-slate-900 flex items-center justify-center text-indigo-400 text-4xl font-black italic uppercase shadow-2xl overflow-hidden group-hover:shadow-indigo-500/20 group-hover:ring-4 ring-indigo-50/50 transition-all">
                     {formData.fotoUrl ? (
-                      <img src={formData.fotoUrl} alt="Avatar" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                      <img src={formData.fotoUrl} alt="Avatar" className="w-full h-full object-cover group-hover:opacity-80 transition-opacity" referrerPolicy="no-referrer" />
                     ) : (
                       profile?.nome?.[0]
                     )}
                  </div>
-                 <button className="absolute -bottom-2 -right-2 p-3 bg-white border border-slate-200 rounded-2xl shadow-lg text-slate-600 hover:text-blue-600 transition-all active:scale-90">
+                 <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 rounded-[2.5rem] flex items-center justify-center transition-opacity backdrop-blur-[2px]">
+                   <Camera className="w-8 h-8 text-white" />
+                 </div>
+                 <button 
+                  type="button"
+                  className="absolute -bottom-2 -right-2 p-3 bg-white border border-slate-200 rounded-2xl shadow-lg text-slate-600 hover:text-indigo-600 transition-all active:scale-95 z-10"
+                 >
                     <Camera className="w-5 h-5" />
                  </button>
               </div>

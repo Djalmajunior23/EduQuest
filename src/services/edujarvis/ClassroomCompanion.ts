@@ -15,7 +15,7 @@ export class ClassroomCompanion {
     Retorne o tempo estimado (ex: 5 min) e a atividade em formato JSON: {"activity": "", "estimatedTimeMin": 0}`;
 
     const result = await ai.models.generateContent({
-      model: "gemini-2.0-flash-exp",
+      model: "gemini-2.5-flash",
       contents: [{ role: "user", parts: [{ text: prompt }] }],
       config: { responseMimeType: "application/json" }
     });

@@ -37,7 +37,7 @@ Para cada questão gerada, inclua:
 `;
 
     const result = await ai.models.generateContent({
-      model: "gemini-2.0-flash-exp",
+      model: "gemini-2.5-flash",
       contents: [{ role: "user", parts: [{ text: `${systemPrompt}\n\nTema: ${context.tema || message}\nNível: ${context.nivel || "médio"}\nQuantidade: ${context.quantidade || 1}` }] }]
     });
     

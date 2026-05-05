@@ -61,6 +61,13 @@ import FlippedModuleManager from './modules/professor/flipped/FlippedModuleManag
 import LiveMonitoring from './modules/professor/classroom/LiveMonitoring';
 import { useTenant } from './lib/TenantContext';
 
+import ActivitiesDashboard from './components/activities/ActivitiesDashboard';
+import ActivityCreateView from './components/activities/ActivityCreateView';
+import ActivityDetailsView from './components/activities/ActivityDetailsView';
+import ActivityCorrectionView from './components/activities/ActivityCorrectionView';
+import StudentActivityView from './components/activities/StudentActivityView';
+import ActivityRubricBuilder from './components/activities/ActivityRubricBuilder';
+
 function TenantSpecificIntelligence() {
   const { tenant } = useTenant();
   return <EduJarvisIntelligencePlatform tenantId={tenant?.id || 'public'} />;
@@ -481,6 +488,54 @@ export default function App() {
               <AuthGuard>
                 <Layout>
                   <Profile />
+                </Layout>
+              </AuthGuard>
+            } />
+
+            <Route path="/activities" element={
+              <AuthGuard requiredRole="PROFESSOR">
+                <Layout>
+                  <ActivitiesDashboard />
+                </Layout>
+              </AuthGuard>
+            } />
+
+            <Route path="/activities/new" element={
+              <AuthGuard requiredRole="PROFESSOR">
+                <Layout>
+                  <ActivityCreateView />
+                </Layout>
+              </AuthGuard>
+            } />
+
+            <Route path="/activities/rubric/new" element={
+              <AuthGuard requiredRole="PROFESSOR">
+                <Layout>
+                  <ActivityRubricBuilder />
+                </Layout>
+              </AuthGuard>
+            } />
+
+            <Route path="/activities/:id" element={
+              <AuthGuard requiredRole="PROFESSOR">
+                <Layout>
+                  <ActivityDetailsView />
+                </Layout>
+              </AuthGuard>
+            } />
+
+            <Route path="/activities/:id/correction/:submissionId" element={
+              <AuthGuard requiredRole="PROFESSOR">
+                <Layout>
+                  <ActivityCorrectionView />
+                </Layout>
+              </AuthGuard>
+            } />
+
+            <Route path="/my-activities" element={
+              <AuthGuard requiredRole="ALUNO">
+                <Layout>
+                  <StudentActivityView />
                 </Layout>
               </AuthGuard>
             } />

@@ -18,7 +18,7 @@ export class AIService {
   }
 
   // Método unificado para geração de texto com suporte a sistema e usuário
-  public static async generate(prompt: string, systemInstruction?: string, modelId: string = 'gemini-2.0-flash-exp') {
+  public static async generate(prompt: string, systemInstruction?: string, modelId: string = 'gemini-2.5-flash') {
     const ai = this.getAI();
     if (!ai) return "IA Temporariamente Indisponível.";
 
@@ -47,7 +47,7 @@ export class AIService {
     const ai = this.getAI();
     if (!ai) throw new Error("IA_OFFLINE");
 
-    const modelId = modelTier === 'PREMIUM' ? 'gemini-2.0-flash-exp' : 'gemini-2.0-flash-exp';
+    const modelId = modelTier === 'PREMIUM' ? 'gemini-2.5-flash' : 'gemini-2.5-flash';
 
     try {
       const fullPrompt = `${prompt}\n\nResponda estritamente em JSON seguindo este schema: ${JSON.stringify(schema)}`;

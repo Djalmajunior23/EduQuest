@@ -26,7 +26,7 @@ Retorne um JSON:
 `;
 
     const result = await this.ai.models.generateContent({
-      model: "gemini-2.0-flash-exp",
+      model: "gemini-2.5-flash",
       contents: [{ role: "user", parts: [{ text: prompt }] }],
       config: { responseMimeType: "application/json" }
     });

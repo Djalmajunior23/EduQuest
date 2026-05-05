@@ -36,7 +36,7 @@ Sua missão é levar o aluno da base até o nível sênior através de desafios 
 `;
 
     const result = await ai.models.generateContent({
-      model: "gemini-2.0-flash-exp",
+      model: "gemini-2.5-flash",
       contents: [{ role: "user", parts: [{ text: `${systemPrompt}\n\nUsuário: ${message}\nContexto: ${JSON.stringify(context)}` }] }]
     });
 

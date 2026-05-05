@@ -37,7 +37,7 @@ Use linguagem motivadora e pedagógica.
 `;
 
     const result = await ai.models.generateContent({
-      model: "gemini-2.0-flash-exp",
+      model: "gemini-2.5-flash",
       contents: [{ role: "user", parts: [{ text: `${systemPrompt}\n\n[ATIVIDADE/PERGUNTA]: ${context.pergunta || "Não informada"}\n\n[RESPOSTA DO ALUNO]: ${message}\n\n[TIPO]: ${context.tipo || "discursiva"}` }] }]
     });
     

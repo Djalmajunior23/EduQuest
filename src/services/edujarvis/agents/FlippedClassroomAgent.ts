@@ -31,7 +31,7 @@ O professor deixa de ser o "transmissor" e passa a ser o "facilitador". O aluno 
 `;
 
     const result = await ai.models.generateContent({
-      model: "gemini-2.0-flash-exp",
+      model: "gemini-2.5-flash",
       contents: [{ role: "user", parts: [{ text: `${systemPrompt}\n\n[CONTEÚDO/TÓPICO]: ${message}\n\n[PERFIL TURMA]: ${JSON.stringify(context.profile || {})}` }] }]
     });
     
