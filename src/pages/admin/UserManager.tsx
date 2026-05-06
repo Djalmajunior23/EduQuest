@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs, query, orderBy, addDoc, updateDoc, doc } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
+import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../lib/AuthContext';
 import { 
   Users, 
@@ -22,7 +21,6 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../../lib/utils';
 import { inviteUser } from '../../services/userManagementService';
-
 import { BulkImportModal } from '../../components/admin/BulkImportModal';
 
 const PermissionModal = ({isOpen, onClose, user, permissions, toggle, onSave}: any) => {
@@ -67,9 +65,13 @@ export default function UserManager() {
 
   const fetchUsers = async () => {
     try {
-      const q = query(collection(db, 'usuarios'), orderBy('createdAt', 'desc'));
-      const snap = await getDocs(q);
-      setUsers(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      const { data, error } = await supabase
+        .from('usuarios')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      setUsers(data || []);
     } catch (error) {
       console.error(error);
     } finally {
@@ -87,10 +89,10 @@ export default function UserManager() {
     
     setIsInviting(true);
     try {
-      await inviteUser(inviteData, currentUser.uid || 'ADMIN');
+      await inviteUser(inviteData, currentUser.id || 'ADMIN');
       setIsModalOpen(false);
       setInviteData({ nome: '', email: '', perfil: 'ALUNO', turmaId: '' });
-      fetchUsers(); // Refresh list to show potential changes (though users are only created upon acceptance usually, we log invitations)
+      fetchUsers();
     } catch (error) {
       console.error('Failed to invite user:', error);
     } finally {
@@ -107,9 +109,14 @@ export default function UserManager() {
   const savePermissions = async () => {
     if (!selectedUser) return;
     try {
-      await updateDoc(doc(db, 'usuarios', selectedUser.id), {
-        permissoesGranulares: newPermissions
-      });
+      const { error } = await supabase
+        .from('usuarios')
+        .update({
+          permissoes_granulares: newPermissions
+        })
+        .eq('id', selectedUser.id);
+      
+      if (error) throw error;
       setIsPermissionModalOpen(false);
       fetchUsers();
     } catch (e) {
@@ -119,7 +126,7 @@ export default function UserManager() {
 
   const openPermissionModal = (user: any) => {
     setSelectedUser(user);
-    setNewPermissions(user.permissoesGranulares || []);
+    setNewPermissions(user.permissoes_granulares || []);
     setIsPermissionModalOpen(true);
   };
 
@@ -132,12 +139,13 @@ export default function UserManager() {
     if (filterDate === 'LAST_30') {
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-        const createdAt = u.createdAt?.toDate ? u.createdAt.toDate() : new Date(u.createdAt);
+        const createdAt = new Date(u.created_at);
         matchesDate = createdAt >= thirtyDaysAgo;
     }
     
     return matchesSearch && matchesRole && matchesStatus && matchesDate;
   });
+
 
   return (
     <div className="space-y-8 pb-12 relative">

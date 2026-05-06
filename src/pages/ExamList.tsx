@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/AuthContext';
 import { 
   BookOpen, 
@@ -32,20 +31,25 @@ export default function ExamList() {
       (filterActive === 'all' || (filterActive === 'active' ? exam.active : !exam.active))
     )
     .sort((a, b) => {
-      if (sortBy === 'newest') return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
-      if (sortBy === 'questions') return (b.questionIds?.length || 0) - (a.questionIds?.length || 0);
+      if (sortBy === 'newest') return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+      if (sortBy === 'questions') return (b.question_ids?.length || 0) - (a.question_ids?.length || 0);
       return 0;
     });
 
   useEffect(() => {
     async function fetchExams() {
       try {
-        const q = profile?.role === 'student' 
-          ? query(collection(db, 'exams'), where('active', '==', true))
-          : query(collection(db, 'exams'), where('teacherId', '==', profile?.uid));
+        let query = supabase.from('exams').select('*');
         
-        const snap = await getDocs(q);
-        setExams(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        if (profile?.role === 'student') {
+          query = query.eq('active', true);
+        } else {
+          query = query.eq('teacher_id', profile?.id);
+        }
+        
+        const { data, error } = await query;
+        if (error) throw error;
+        setExams(data || []);
       } catch (error) {
         console.error('Error fetching exams:', error);
       } finally {
@@ -142,11 +146,11 @@ export default function ExamList() {
               <div className="flex items-center gap-4 text-sm text-slate-600">
                 <div className="flex items-center gap-1">
                   <Clock className="w-4 h-4" />
-                  {exam.timeLimit} min
+                  {exam.time_limit} min
                 </div>
                 <div className="flex items-center gap-1">
                   <FileText className="w-4 h-4" />
-                  {exam.questionIds?.length || 0} questões
+                  {exam.question_ids?.length || 0} questões
                 </div>
               </div>
 
@@ -187,18 +191,19 @@ export default function ExamList() {
                 const newExam = {
                   title: formData.get('title') as string,
                   description: formData.get('description') as string,
-                  timeLimit: parseInt(formData.get('timeLimit') as string),
-                  numQuestions: parseInt(formData.get('numQuestions') as string),
+                  time_limit: parseInt(formData.get('timeLimit') as string),
+                  num_questions: parseInt(formData.get('numQuestions') as string),
                   active: true,
-                  teacherId: profile?.uid,
-                  createdAt: new Date().toISOString(),
-                  questionIds: [] // In a real scenario, we would pick these or generate them
+                  teacher_id: profile?.id,
+                  created_at: new Date().toISOString(),
+                  question_ids: [] // In a real scenario, we would pick these or generate them
                 };
 
                 try {
                   setLoading(true);
-                  const docRef = await addDoc(collection(db, 'exams'), newExam);
-                  setExams(prev => [{ id: docRef.id, ...newExam }, ...prev]);
+                  const { data, error } = await supabase.from('exams').insert(newExam).select().single();
+                  if (error) throw error;
+                  setExams(prev => [data, ...prev]);
                   setIsCreateModalOpen(false);
                 } catch (err) {
                   console.error(err);

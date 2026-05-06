@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, orderBy, onSnapshot, where, getDocs, doc } from 'firebase/firestore';
-import { db } from '../../../lib/firebase';
+import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../lib/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -37,61 +36,80 @@ export default function StudentAdaptiveJourney() {
     if (!user) return;
 
     // Conecta no Motor Inteligente para pegar Perfil Atual
-    const unsubscribeProfile = onSnapshot(doc(db, 'perfil_aluno', user.uid), (docSnap) => {
-        if(docSnap.exists()) {
-            setPerfil(docSnap.data());
-        } else {
-            // Valores padrão neutros para quando o perfil ainda não foi gerado pela IA/n8n
+    const subscribeProfile = async () => {
+        const { data: docData } = await supabase
+            .from('perfis_aluno')
+            .select('*')
+            .eq('uid', user.id)
+            .single();
+
+        if (docData) {
             setPerfil({
-               classificacaoAtual: 'ALUNO_EM_DESCOBERTA',
-               taxaAcertoGeral: 0,
-               pontosFortes: [],
-               pontosFracos: [],
-               xpMotor: profile?.xp || 0
+                classificacaoAtual: docData.classificacao_atual,
+                taxaAcertoGeral: docData.taxa_acerto_geral,
+                pontosFortes: docData.pontos_fortes,
+                pontosFracos: docData.pontos_fracos,
+                xpMotor: docData.xp || profile?.xp || 0
+            });
+        } else {
+            setPerfil({
+                classificacaoAtual: 'ALUNO_EM_DESCOBERTA',
+                taxaAcertoGeral: 0,
+                pontosFortes: [],
+                pontosFracos: [],
+                xpMotor: profile?.xp || 0
             });
         }
-    });
-
-    const qPlan = query(
-      collection(db, 'planos_estudo'),
-      where('studentId', '==', user.uid),
-      where('status', '==', 'ATIVO')
-    );
-
-    const unsubscribePlan = onSnapshot(qPlan, (snap) => {
-       if(!snap.empty) {
-           setPlano(snap.docs[0].data());
-       } else {
-           // Estado inicial de espera
-           setPlano({
-              semana: 1,
-              focoPrincipal: 'Aguardando diagnóstico inicial...',
-              tarefasRecomendadas: []
-           });
-       }
-    });
-
-    // Busca missões da gamificação baseadas no tenant
-    let unsubscribeMissions = () => {};
-    if (profile?.tenantId) {
-      const qMissions = query(
-        collection(db, 'missoes'),
-        where('tenantId', '==', profile.tenantId),
-        orderBy('createdAt', 'desc')
-      );
-      unsubscribeMissions = onSnapshot(qMissions, (snap) => {
-        setMissoes(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-        setLoading(false);
-      });
-    } else {
-      setLoading(false);
-    }
-
-    return () => {
-        unsubscribeProfile();
-        unsubscribePlan();
-        unsubscribeMissions();
     };
+
+    const fetchPlan = async () => {
+        const { data: planData } = await supabase
+            .from('planos_estudo')
+            .select('*')
+            .eq('student_id', user.id)
+            .eq('status', 'ATIVO')
+            .single();
+
+        if (planData) {
+            setPlano({
+                semana: planData.semana,
+                focoPrincipal: planData.foco_principal,
+                tarefasRecomendadas: planData.tarefas_recomendadas || []
+            });
+        } else {
+            setPlano({
+                semana: 1,
+                focoPrincipal: 'Aguardando diagnóstico inicial...',
+                tarefasRecomendadas: []
+            });
+        }
+    };
+
+    const fetchMissions = async () => {
+        if (profile?.tenant_id) {
+            const { data: missionsData } = await supabase
+                .from('missoes')
+                .select('*')
+                .eq('tenant_id', profile.tenant_id)
+                .order('created_at', { ascending: false });
+
+            if (missionsData) {
+                setMissoes(missionsData.map(d => ({
+                    id: d.id,
+                    titulo: d.titulo,
+                    type: d.tipo,
+                    xp: d.xp,
+                    aiTokens: d.ai_tokens
+                })));
+            }
+        }
+    };
+
+    subscribeProfile();
+    fetchPlan();
+    fetchMissions();
+
+    setLoading(false);
   }, [user, profile]);
 
   if(loading) {

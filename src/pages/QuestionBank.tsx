@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { collection, query, where, getDocs, addDoc, deleteDoc, doc, writeBatch, updateDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/AuthContext';
 import { 
   Plus, 
@@ -50,7 +49,7 @@ export default function QuestionBank() {
     const matchesSearch = q.text.toLowerCase().includes(search.toLowerCase()) || 
                           q.competence?.toLowerCase().includes(search.toLowerCase());
     const matchesDifficulty = filterDifficulty === 'all' || q.difficulty === filterDifficulty;
-    const matchesBloom = filterBloom === 'all' || q.bloomTaxonomy === filterBloom;
+    const matchesBloom = filterBloom === 'all' || q.bloom_taxonomy === filterBloom;
     const matchesTag = !filterTag || q.tags?.includes(filterTag);
     return matchesSearch && matchesDifficulty && matchesBloom && matchesTag;
   });
@@ -72,9 +71,13 @@ export default function QuestionBank() {
   useEffect(() => {
     async function fetchQuestions() {
       try {
-        const q = query(collection(db, 'questions'), where('teacherId', '==', profile?.uid));
-        const snap = await getDocs(q);
-        setQuestions(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        const { data, error } = await supabase
+          .from('questions')
+          .select('*')
+          .eq('teacher_id', profile?.id);
+        
+        if (error) throw error;
+        setQuestions(data || []);
       } catch (error) {
         console.error('Error fetching questions:', error);
       } finally {
@@ -101,22 +104,37 @@ export default function QuestionBank() {
         : formData.tags;
 
       const questionData = {
-        ...formData,
+        text: formData.text,
+        options: formData.options,
+        correct_option_index: formData.correctOptionIndex,
+        difficulty: formData.difficulty,
         tags: tagsArray,
-        teacherId: profile.uid,
-        updatedAt: new Date().toISOString()
+        competence: formData.competence,
+        discipline: formData.discipline,
+        bloom_taxonomy: formData.bloomTaxonomy,
+        explanation: formData.explanation,
+        teacher_id: profile.id,
+        updated_at: new Date().toISOString()
       };
 
       if (editingId) {
-        await updateDoc(doc(db, 'questions', editingId), questionData);
-        setQuestions(questions.map(q => q.id === editingId ? { id: editingId, ...questionData } : q));
+        const { error } = await supabase
+          .from('questions')
+          .update(questionData)
+          .eq('id', editingId);
+        if (error) throw error;
+        setQuestions(questions.map(q => q.id === editingId ? { ...q, ...questionData } : q));
       } else {
-        const newQuestion = {
-          ...questionData,
-          createdAt: new Date().toISOString()
-        };
-        const docRef = await addDoc(collection(db, 'questions'), newQuestion);
-        setQuestions([{ id: docRef.id, ...newQuestion }, ...questions]);
+        const { data, error } = await supabase
+          .from('questions')
+          .insert({
+            ...questionData,
+            created_at: new Date().toISOString()
+          })
+          .select()
+          .single();
+        if (error) throw error;
+        setQuestions([data, ...questions]);
       }
       
       setIsModalOpen(false);
@@ -173,12 +191,12 @@ export default function QuestionBank() {
     setFormData({
       text: question.text || '',
       options: question.options || ['', '', '', ''],
-      correctOptionIndex: question.correctOptionIndex || 0,
+      correctOptionIndex: question.correct_option_index || 0,
       difficulty: question.difficulty || 'medium',
       tags: Array.isArray(question.tags) ? question.tags.join(', ') : '',
       competence: question.competence || '',
       discipline: question.discipline || '',
-      bloomTaxonomy: question.bloomTaxonomy || 'Entender',
+      bloomTaxonomy: question.bloom_taxonomy || 'Entender',
       explanation: question.explanation || ''
     });
     setIsModalOpen(true);
@@ -208,24 +226,24 @@ export default function QuestionBank() {
   const handleSaveAIQuestions = async () => {
     setIsGenerating(true);
     try {
-      const batch = writeBatch(db);
-      const newQuestions: any[] = [];
+      const newQuestionsData = generatedQuestions.map((q: any) => ({
+        ...q,
+        correct_option_index: q.correctOptionIndex,
+        bloom_taxonomy: q.bloomTaxonomy,
+        teacher_id: profile.id,
+        created_at: new Date().toISOString(),
+        discipline: formData.discipline || 'Geral',
+        competence: aiPrompt
+      }));
 
-      generatedQuestions.forEach((q: any) => {
-        const qRef = doc(collection(db, 'questions'));
-        const qData = {
-          ...q,
-          teacherId: profile.uid,
-          createdAt: new Date().toISOString(),
-          discipline: formData.discipline || 'Geral',
-          competence: aiPrompt
-        };
-        batch.set(qRef, qData);
-        newQuestions.push({ id: qRef.id, ...qData });
-      });
+      const { data, error } = await supabase
+        .from('questions')
+        .insert(newQuestionsData)
+        .select();
 
-      await batch.commit();
-      setQuestions([...newQuestions, ...questions]);
+      if (error) throw error;
+      
+      setQuestions([...(data || []), ...questions]);
       setIsAIModalOpen(false);
       setAiPrompt('');
       setGeneratedQuestions([]);
@@ -239,14 +257,23 @@ export default function QuestionBank() {
 
   const handleDelete = async (id: string) => {
     if (confirm('Deseja excluir esta questão?')) {
-      await deleteDoc(doc(db, 'questions', id));
+      const { error } = await supabase.from('questions').delete().eq('id', id);
+      if (error) {
+        console.error('Error deleting question:', error);
+        alert('Erro ao excluir questão.');
+        return;
+      }
       setQuestions(questions.filter(q => q.id !== id));
     }
   };
 
   const handleUpdateDifficulty = async (id: string, newDifficulty: string) => {
     try {
-      await updateDoc(doc(db, 'questions', id), { difficulty: newDifficulty });
+      const { error } = await supabase
+        .from('questions')
+        .update({ difficulty: newDifficulty })
+        .eq('id', id);
+      if (error) throw error;
       setQuestions(questions.map(q => q.id === id ? { ...q, difficulty: newDifficulty } : q));
     } catch (error) {
       console.error('Error updating difficulty:', error);
@@ -257,34 +284,35 @@ export default function QuestionBank() {
     if (!quickExamConfig.title || !quickExamConfig.tag) return;
     setIsGenerating(true);
     try {
-      const q = query(
-        collection(db, 'questions'),
-        where('teacherId', '==', profile.uid),
-        where('tags', 'array-contains', quickExamConfig.tag)
-      );
-      const snap = await getDocs(q);
-      const taggedQuestions = snap.docs.map(doc => doc.id);
+      const { data: taggedQuestions, error } = await supabase
+        .from('questions')
+        .select('id')
+        .eq('teacher_id', profile.id)
+        .contains('tags', [quickExamConfig.tag]);
       
-      if (taggedQuestions.length === 0) {
+      if (error || !taggedQuestions || taggedQuestions.length === 0) {
         alert('Nenhuma questão encontrada com esta tag.');
         return;
       }
       
-      const selectedIds = taggedQuestions.sort(() => 0.5 - Math.random())
-        .slice(0, Math.min(quickExamConfig.count, taggedQuestions.length));
+      const taggedQuestionIds = taggedQuestions.map(q => q.id);
+      const selectedIds = taggedQuestionIds.sort(() => 0.5 - Math.random())
+        .slice(0, Math.min(quickExamConfig.count, taggedQuestionIds.length));
       
       const newExam = {
         title: quickExamConfig.title,
         description: `Simulado rápido sobre ${quickExamConfig.tag}`,
-        questionIds: selectedIds,
+        question_ids: selectedIds,
         active: true,
-        timeLimit: selectedIds.length * 2,
-        passingScore: quickExamConfig.passingScore,
-        teacherId: profile.uid,
-        createdAt: new Date().toISOString()
+        time_limit: selectedIds.length * 2,
+        passing_score: quickExamConfig.passingScore,
+        teacher_id: profile.id,
+        created_at: new Date().toISOString()
       };
       
-      await addDoc(collection(db, 'exams'), newExam);
+      const { error: examError } = await supabase.from('exams').insert(newExam);
+      if (examError) throw examError;
+
       setIsQuickExamModalOpen(false);
       setQuickExamConfig({ title: '', tag: '', count: 5, passingScore: 6 });
       alert('Simulado gerado com sucesso!');
@@ -439,20 +467,20 @@ export default function QuestionBank() {
                 </div>
                 <div className="flex items-center gap-1.5 px-2 py-1 bg-slate-100/50 rounded-lg">
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Erro:</span>
-                  <span className="text-[10px] font-black text-slate-900">{(q.difficultyReal * 100 || 12).toFixed(0)}%</span>
+                  <span className="text-[10px] font-black text-slate-900">{(q.difficulty_real * 100 || 12).toFixed(0)}%</span>
                 </div>
                 <div className="flex items-center gap-1.5 px-2 py-1 bg-slate-100/50 rounded-lg">
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Qualidade:</span>
-                  <span className="text-[10px] font-black text-slate-900">{q.qualityScore || 92}/100</span>
+                  <span className="text-[10px] font-black text-slate-900">{q.quality_score || 92}/100</span>
                 </div>
                 <div className="flex items-center gap-1.5 px-2 py-1 bg-violet-50 rounded-lg">
                   <span className="text-[10px] font-black text-violet-400 uppercase tracking-tighter">v</span>
                   <span className="text-[10px] font-black text-violet-700">{q.version || 1}</span>
                 </div>
-                {q.bloomTaxonomy && (
+                {q.bloom_taxonomy && (
                   <span className="px-2 py-1 bg-indigo-50 text-indigo-600 rounded text-xs font-bold uppercase flex items-center gap-1">
                     <Layers className="w-3 h-3" />
-                    {q.bloomTaxonomy}
+                    {q.bloom_taxonomy}
                   </span>
                 )}
                 {q.discipline && (
@@ -478,9 +506,9 @@ export default function QuestionBank() {
               {q.options.map((opt: string, idx: number) => (
                 <div key={idx} className={cn(
                   "p-3 rounded-lg border text-sm flex items-center gap-2",
-                  idx === q.correctOptionIndex ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-slate-100 bg-slate-50 text-slate-500"
+                  idx === q.correct_option_index ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-slate-100 bg-slate-50 text-slate-500"
                 )}>
-                  {idx === q.correctOptionIndex && <CheckCircle2 className="w-4 h-4" />}
+                  {idx === q.correct_option_index && <CheckCircle2 className="w-4 h-4" />}
                   {opt}
                 </div>
               ))}

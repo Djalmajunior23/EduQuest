@@ -5,8 +5,7 @@ import {
   Target, Calendar, Users, CheckCircle2, AlertCircle,
   MoreVertical, Edit, Trash2, Brain
 } from 'lucide-react';
-import { collection, query, where, onSnapshot, addDoc, serverTimestamp, updateDoc, doc } from 'firebase/firestore';
-import { db } from '../../../lib/firebase';
+import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../lib/AuthContext';
 import { cn } from '../../../lib/utils';
 
@@ -22,24 +21,56 @@ interface ABPProject {
 }
 
 export default function ABPManager() {
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const [projects, setProjects] = useState<ABPProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    const q = profile?.perfil === 'PROFESSOR' 
-      ? query(collection(db, 'abp_projetos'), where('professorResponsavelId', '==', profile.uid))
-      : query(collection(db, 'abp_projetos'), where('turmaId', '==', profile?.turmaId || ''));
+    if (!profile) return;
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const projs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ABPProject));
-      setProjects(projs);
+    const fetchProjects = async () => {
+      let query = supabase.from('abp_projetos').select('*');
+      
+      if (profile.perfil === 'PROFESSOR') {
+        query = query.eq('professor_responsavel_id', user?.id);
+      } else {
+        query = query.eq('turma_id', profile.turmaId || '');
+      }
+
+      const { data, error } = await query;
+      
+      if (error) {
+        console.error('Error fetching ABP projects:', error);
+      } else {
+        setProjects((data || []).map(p => ({
+          ...p,
+          turmaId: p.turma_id,
+          professorResponsavelId: p.professor_responsavel_id,
+          createdAt: p.created_at
+        } as ABPProject)));
+      }
       setLoading(false);
-    });
+    };
 
-    return () => unsubscribe();
+    fetchProjects();
+
+    // Subscribe to changes
+    const channel = supabase
+      .channel('abp_projetos_changes')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'abp_projetos' 
+      }, () => {
+        fetchProjects();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [profile]);
 
   return (

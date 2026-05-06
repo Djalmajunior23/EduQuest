@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../../../lib/firebase';
+import { supabase } from '../../../lib/supabase';
 
 interface Simulation {
   id: string;
@@ -13,8 +12,19 @@ export default function SimulationManager() {
 
   useEffect(() => {
     const fetchSimulations = async () => {
-      const querySnapshot = await getDocs(collection(db, 'simulations'));
-      setSimulations(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Simulation)));
+      const { data, error } = await supabase
+        .from('simulations')
+        .select('*');
+      
+      if (error) {
+        console.error('Error fetching simulations:', error);
+      } else {
+        setSimulations((data || []).map(doc => ({ 
+          id: doc.id, 
+          title: doc.title, 
+          passingScore: doc.passing_score 
+        } as Simulation)));
+      }
     };
     fetchSimulations();
   }, []);

@@ -6,7 +6,7 @@ import { Loader2, Plus, ShieldAlert, Edit, Power, History, X } from 'lucide-reac
 import { motion, AnimatePresence } from 'motion/react';
 
 export const PaymentConfigManager = () => {
-    const { profile } = useAuth();
+    const { profile, user } = useAuth();
     const [providers, setProviders] = useState<PaymentProviderConfig[]>([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
@@ -25,8 +25,8 @@ export const PaymentConfigManager = () => {
     };
 
     const handleSave = async (data: Partial<PaymentProviderConfig>) => {
-        if (!profile?.tenantId || !profile?.uid) return;
-        await paymentConfigService.saveProvider({ ...data, tenantId: profile.tenantId }, profile.uid);
+        if (!profile?.tenantId || !user?.id) return;
+        await paymentConfigService.saveProvider({ ...data, tenantId: profile.tenantId }, user.id);
         setShowForm(false);
         setEditingProvider(null);
         loadProviders();

@@ -15,7 +15,7 @@ import { caseStudyService, CaseStudy } from '../../../services/caseStudyService'
 import { useAuth } from '../../../lib/AuthContext';
 
 export default function CaseStudyManager() {
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const [cases, setCases] = useState<CaseStudy[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
@@ -44,14 +44,14 @@ export default function CaseStudyManager() {
     setAiLoading(true);
     try {
       const generated = await caseStudyService.generateWithIA(topic);
-      if (generated && profile) {
+      if (generated && user && profile) {
         await caseStudyService.createCaseStudy({
           tenantId: profile.tenantId,
           titulo: generated.titulo!,
           descricao: generated.descricao!,
           cenario: generated.cenario!,
           questoesDiscursivas: generated.questoesDiscursivas!,
-          createdBy: profile.uid
+          createdBy: user.id
         });
         setIsCreating(false);
         setTopic('');

@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../lib/AuthContext';
 import { activityService } from '../../services/activityService';
-import { universalActivityCorrectionEngine } from '../../services/correction/UniversalActivityCorrectionEngine';
+import { UniversalActivityCorrectionEngine } from '../../services/UniversalActivityCorrectionEngine';
 import { activityCorrectionService } from '../../services/activityCorrectionService';
 import { Activity, ActivitySubmission } from '../../types/activities';
-import { ArrowLeft, BrainCircuit, CheckCircle2, MessageSquare, Target, Code, AlertTriangle, Lightbulb, Terminal } from 'lucide-react';
+import { ArrowLeft, BrainCircuit, CheckCircle2, MessageSquare, Target, Code, AlertTriangle, Lightbulb, Terminal, ChevronDown, ChevronRight, Star } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 
 export default function ActivityCorrectionView() {
   const { id, submissionId } = useParams();
@@ -17,6 +18,7 @@ export default function ActivityCorrectionView() {
   const [aiLoading, setAiLoading] = useState(false);
   const [teacherScore, setTeacherScore] = useState<number>(0);
   const [teacherFeedback, setTeacherFeedback] = useState<string>('');
+  const [showDetailedAI, setShowDetailedAI] = useState(true);
 
   useEffect(() => {
     if (id && submissionId && user) {
@@ -26,7 +28,7 @@ export default function ActivityCorrectionView() {
 
   const loadData = async () => {
     try {
-      const actDocs = await activityService.getActivitiesByTeacher(user!.uid);
+      const actDocs = await activityService.getActivitiesByTeacher(user!.id);
       const act = actDocs.find(a => a.id === id);
       if (act) {
         setActivity(act);
@@ -49,39 +51,16 @@ export default function ActivityCorrectionView() {
     if (!activity || !sub) return;
     setAiLoading(true);
     try {
-      const aiResult = await universalActivityCorrectionEngine.correct({
-          activityId: activity.id!,
-          submissionId: sub.id!,
-          studentId: sub.studentId,
-          teacherId: activity.teacherId,
-          activityType: activity.type as any,
-          title: activity.title,
-          description: activity.description,
-          studentAnswer: sub.answerText,
-          studentCode: sub.studentCode || sub.codeAnswer,
-          maxScore: activity.maxScore,
-          correctionMode: activity.correctionMode || 'evaluative',
-          programmingLanguage: sub.programmingLanguage as any
-      });
+      const aiResult = await UniversalActivityCorrectionEngine.correct(activity, sub);
       
-      // Update local state to reflect new data
-      setSub(prev => ({
-        ...prev!,
-        aiScore: aiResult.finalSuggestedScore,
-        aiFeedback: aiResult.studentFeedback,
-        teacherFeedback: aiResult.teacherFeedback,
-        strengths: aiResult.strengths,
-        weaknesses: aiResult.weaknesses,
-        improvementPlan: aiResult.improvementPlan,
-        competencyResults: aiResult.competencyResults,
-        rubricResults: aiResult.rubricResults,
-        codeAnalysis: aiResult.codeAnalysis,
-        executionResult: aiResult.executionResult,
-        nextSteps: aiResult.nextSteps,
-        status: 'corrected'
-      }));
-      setTeacherScore(aiResult.finalSuggestedScore);
-      setTeacherFeedback(aiResult.teacherFeedback || aiResult.studentFeedback);
+      // Fetch updated sub from DB or update local state
+      const subs = await activityService.getSubmissionsByActivity(activity.id!);
+      const targetSub = subs.find(s => s.id === submissionId);
+      if (targetSub) {
+        setSub(targetSub);
+        setTeacherScore(targetSub.aiScore || 0);
+        setTeacherFeedback(targetSub.teacherFeedback || targetSub.aiFeedback || '');
+      }
       
       alert('Correção automática com Universal Engine concluída!');
     } catch (e) {
@@ -96,7 +75,7 @@ export default function ActivityCorrectionView() {
     if (!activity || !sub || !user) return;
     try {
       await activityCorrectionService.teacherReview(
-        sub.id!, activity.id!, sub.studentId, user.uid, teacherScore, teacherFeedback, sub.finalScore
+        sub.id!, activity.id!, sub.studentId, user.id, teacherScore, teacherFeedback, sub.finalScore
       );
       alert('Avaliação salva com sucesso!');
       navigate(`/activities/${activity.id}`);
@@ -170,167 +149,208 @@ export default function ActivityCorrectionView() {
         {/* Right Col: Correction & Feedback */}
         <div className="space-y-6">
           {sub.status !== 'submitted' && (
-            <div className="bg-indigo-50 p-6 rounded-2xl border border-indigo-100">
-              <h3 className="text-sm font-bold text-indigo-500 uppercase tracking-widest flex items-center gap-2 mb-4"><BrainCircuit className="w-4 h-4"/> Diagnóstico IA</h3>
-              
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div className="bg-white p-4 rounded-xl shadow-sm border border-indigo-50">
-                  <p className="text-xs font-bold text-slate-400 uppercase">Nota IA Sugerida</p>
-                  <p className="text-2xl font-black text-indigo-600">{sub.aiScore} / {activity.maxScore}</p>
-                </div>
-                {sub.executionResult && sub.executionResult.executed && (
-                  <div className="bg-white p-4 rounded-xl shadow-sm border border-indigo-50">
-                    <p className="text-xs font-bold text-slate-400 uppercase">Testes Passados</p>
-                    <p className="text-2xl font-black text-emerald-600">{sub.executionResult.passedTests} / {sub.executionResult.totalTests}</p>
+            <div className="bg-slate-50 rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+              <button 
+                onClick={() => setShowDetailedAI(!showDetailedAI)}
+                className="w-full flex items-center justify-between p-6 bg-indigo-600 text-white hover:bg-indigo-700 transition"
+              >
+                <div className="flex items-center gap-3">
+                  <BrainCircuit className="w-6 h-6 animate-pulse" />
+                  <div className="text-left">
+                    <h3 className="font-bold text-lg leading-tight">Análise Universal Inteligente</h3>
+                    <p className="text-xs text-indigo-100 opacity-80 uppercase tracking-widest">Motor EduQuest v2.5</p>
                   </div>
+                </div>
+                {showDetailedAI ? <ChevronDown className="w-6 h-6" /> : <ChevronRight className="w-6 h-6" />}
+              </button>
+
+              <AnimatePresence>
+                {showDetailedAI && (
+                  <motion.div 
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="p-6 space-y-6"
+                  >
+                    {/* Score and Stats */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+                        <div className="flex items-center gap-2 mb-1 text-slate-400">
+                          <CheckCircle2 className="w-4 h-4" />
+                          <span className="text-[10px] font-bold uppercase tracking-wider">Nota Sugerida</span>
+                        </div>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-3xl font-black text-indigo-600">{sub.aiScore}</span>
+                          <span className="text-slate-300 font-bold">/ {activity.maxScore}</span>
+                        </div>
+                      </div>
+                      <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+                        <div className="flex items-center gap-2 mb-1 text-slate-400">
+                          <Target className="w-4 h-4" />
+                          <span className="text-[10px] font-bold uppercase tracking-wider">Confiança</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-sm font-bold uppercase px-2 py-0.5 rounded ${
+                            sub.executionResult?.totalTests ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                          }`}>
+                            {sub.executionResult?.totalTests ? 'Alta' : 'Média'}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+                        <div className="flex items-center gap-2 mb-1 text-slate-400">
+                          <Star className="w-4 h-4" />
+                          <span className="text-[10px] font-bold uppercase tracking-wider">Status IA</span>
+                        </div>
+                        <span className="text-sm font-bold text-slate-600">Completo</span>
+                      </div>
+                    </div>
+
+                    {/* Code Analysis Detailed */}
+                    {sub.codeAnalysis && (
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2">
+                          <div className="h-px bg-slate-200 flex-1"></div>
+                          <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Raio-X do Código</h4>
+                          <div className="h-px bg-slate-200 flex-1"></div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className={`p-3 rounded-lg border flex items-center justify-between ${sub.codeAnalysis.syntaxOk ? 'bg-emerald-50 border-emerald-100' : 'bg-red-50 border-red-100'}`}>
+                            <span className="text-xs font-bold text-slate-600">Sintaxe</span>
+                            <span className={`text-[10px] font-black uppercase ${sub.codeAnalysis.syntaxOk ? 'text-emerald-600' : 'text-red-600'}`}>
+                              {sub.codeAnalysis.syntaxOk ? 'Válida' : 'Erro'}
+                            </span>
+                          </div>
+                          <div className={`p-3 rounded-lg border flex items-center justify-between ${sub.codeAnalysis.logicalIssues?.length ? 'bg-amber-50 border-amber-100' : 'bg-emerald-50 border-emerald-100'}`}>
+                            <span className="text-xs font-bold text-slate-600">Lógica</span>
+                            <span className={`text-[10px] font-black uppercase ${sub.codeAnalysis.logicalIssues?.length ? 'text-amber-600' : 'text-emerald-600'}`}>
+                              {sub.codeAnalysis.logicalIssues?.length ? `${sub.codeAnalysis.logicalIssues.length} Alertas` : 'Sólida'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {sub.codeAnalysis.lineByLine && (
+                          <div className="bg-slate-900 rounded-xl overflow-hidden shadow-lg border border-slate-800">
+                            <div className="bg-slate-800 px-4 py-2 border-b border-slate-700 flex justify-between items-center">
+                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                <Terminal className="w-3 h-3" /> Debug Pedagógico
+                              </span>
+                              <span className="text-[10px] text-slate-500 font-mono italic">{sub.programmingLanguage || 'detectada'}</span>
+                            </div>
+                            <div className="p-0 font-mono text-xs">
+                              {sub.codeAnalysis.lineByLine.map((line: any, idx: number) => (
+                                <div key={idx} className={`group border-b border-slate-800/50 last:border-0`}>
+                                  <div className="flex bg-slate-900/50 px-4 py-2 hover:bg-slate-800/80 transition">
+                                    <span className="w-8 text-slate-600 select-none border-r border-slate-800 mr-4">{line.line || line.linha}</span>
+                                    <span className="text-indigo-300 truncate">{line.code || line.codigo}</span>
+                                  </div>
+                                  <div className={`px-4 py-2 flex gap-3 ${
+                                    line.type === 'erro' ? 'bg-red-900/20 text-red-300' : 
+                                    line.type === 'alerta' ? 'bg-amber-900/20 text-amber-300' : 
+                                    line.type === 'melhoria' ? 'bg-indigo-900/20 text-indigo-300' : 'bg-emerald-900/10 text-emerald-300'
+                                  }`}>
+                                    <div className="mt-0.5">
+                                      {line.type === 'erro' ? <AlertTriangle className="w-3 h-3" /> : 
+                                       line.type === 'alerta' ? <Lightbulb className="w-3 h-3" /> : 
+                                       line.type === 'melhoria' ? <BrainCircuit className="w-3 h-3" /> : <CheckCircle2 className="w-3 h-3" />}
+                                    </div>
+                                    <p className="text-[11px] leading-relaxed italic">{line.comment || line.comentario}</p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Rubric and Criteria Grid */}
+                    {(sub.rubricResults || sub.competencyResults) && (
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2">
+                          <div className="h-px bg-slate-200 flex-1"></div>
+                          <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Desempenho por Critério</h4>
+                          <div className="h-px bg-slate-200 flex-1"></div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {sub.rubricResults?.map((r: any, idx: number) => (
+                            <div key={idx} className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition">
+                              <div className="flex justify-between items-start mb-2">
+                                <span className="text-xs font-bold text-slate-700">{r.criterion}</span>
+                                <span className="bg-indigo-50 text-indigo-600 text-[10px] font-black px-2 py-0.5 rounded-full">{r.score} pts</span>
+                              </div>
+                              <p className="text-[10px] text-slate-500 leading-relaxed italic">{r.feedback}</p>
+                            </div>
+                          ))}
+                          
+                          {sub.competencyResults?.map((c: any, idx: number) => (
+                            <div key={idx} className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm relative overflow-hidden group">
+                              <div className={`absolute top-0 left-0 w-1 h-full ${
+                                c.performance === 'alto' ? 'bg-emerald-400' : c.performance === 'médio' ? 'bg-amber-400' : 'bg-red-400'
+                              }`}></div>
+                              <div className="flex justify-between items-center mb-1">
+                                <span className="text-xs font-bold text-slate-800">{c.competency}</span>
+                                <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded ${
+                                  c.performance === 'alto' ? 'bg-emerald-100 text-emerald-700' : c.performance === 'médio' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'
+                                }`}>
+                                  {c.performance}
+                                </span>
+                              </div>
+                              <p className="text-[10px] text-slate-500 line-clamp-2">{c.recommendation}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Strengths & Gaps */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-3">
+                         <h5 className="text-[10px] font-black text-emerald-600 uppercase tracking-widest flex items-center gap-2">
+                           <Star className="w-3 h-3" /> Pontos Fortes
+                         </h5>
+                         <div className="space-y-2">
+                           {sub.strengths?.map((s: string, idx: number) => (
+                             <div key={idx} className="flex gap-2 text-[11px] text-slate-600 bg-emerald-50/50 p-2 rounded-lg border border-emerald-100/50">
+                               <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1 flex-shrink-0"></div>
+                               {s}
+                             </div>
+                           ))}
+                         </div>
+                      </div>
+                      <div className="space-y-3">
+                         <h5 className="text-[10px] font-black text-amber-600 uppercase tracking-widest flex items-center gap-2">
+                           <AlertTriangle className="w-3 h-3" /> Gaps Técnicos
+                         </h5>
+                         <div className="space-y-2">
+                           {sub.weaknesses?.map((w: string, idx: number) => (
+                             <div key={idx} className="flex gap-2 text-[11px] text-slate-600 bg-amber-50/50 p-2 rounded-lg border border-amber-100/50">
+                               <div className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1 flex-shrink-0"></div>
+                               {w}
+                             </div>
+                           ))}
+                         </div>
+                      </div>
+                    </div>
+
+                    {/* Next Steps */}
+                    {sub.nextSteps && sub.nextSteps.length > 0 && (
+                      <div className="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100/50">
+                        <h5 className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-3">Roteiro de Evolução</h5>
+                        <div className="flex flex-wrap gap-2">
+                          {sub.nextSteps.map((step: string, idx: number) => (
+                            <span key={idx} className="bg-white px-3 py-1.5 rounded-lg border border-indigo-100 text-[10px] font-medium text-indigo-700 shadow-sm flex items-center gap-2">
+                              <Target className="w-3 h-3 text-indigo-300" /> {step}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </motion.div>
                 )}
-              </div>
-
-              {sub.executionResult && sub.executionResult.testResults && sub.executionResult.testResults.length > 0 && (
-                <div className="mb-6 bg-slate-900 p-4 rounded-xl border border-slate-700 shadow-lg font-mono">
-                  <h4 className="font-bold text-emerald-400 mb-3 flex items-center gap-2 text-sm uppercase tracking-widest"><Terminal className="w-4 h-4"/> Console de Testes</h4>
-                  <div className="space-y-3">
-                    {sub.executionResult.testResults.map((test: any, i: number) => (
-                      <div key={i} className="border-l-2 border-slate-700 pl-3 py-1">
-                        <div className="flex justify-between items-center mb-1">
-                          <span className="text-xs font-bold text-slate-500">Teste #{i+1}</span>
-                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${test.passed ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>
-                            {test.passed ? 'PASS' : 'FAIL'}
-                          </span>
-                        </div>
-                        <div className="text-xs space-y-1">
-                          <p className="text-slate-400"><span className="text-indigo-400">IN:</span> {test.input}</p>
-                          <p className="text-slate-400"><span className="text-emerald-400">EXP:</span> {test.expectedOutput}</p>
-                          <p className={`${test.passed ? 'text-emerald-300' : 'text-red-300'}`}><span className="text-amber-400">OUT:</span> {test.actualOutput}</p>
-                          {test.error && <p className="text-red-500 italic mt-1 font-sans">{test.error}</p>}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {sub.codeAnalysis && (
-                <div className="mb-6 bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
-                  <h4 className="font-bold text-slate-800 mb-2 flex items-center gap-2"><Code className="w-4 h-4 text-indigo-500"/> Análise de Código</h4>
-                  <div className="flex gap-2 mb-3">
-                    <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${sub.codeAnalysis.syntaxOk ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
-                      {sub.codeAnalysis.syntaxOk ? 'Sintaxe Correta' : 'Erro Sintático'}
-                    </span>
-                    <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${sub.codeAnalysis.logicalIssues && sub.codeAnalysis.logicalIssues.length > 0 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                      {sub.codeAnalysis.logicalIssues && sub.codeAnalysis.logicalIssues.length > 0 ? 'Erro Lógico' : 'Lógica Correta'}
-                    </span>
-                  </div>
-                  {sub.codeAnalysis.lineByLine && sub.codeAnalysis.lineByLine.length > 0 && (
-                    <div className="space-y-2 mt-4">
-                      {sub.codeAnalysis.lineByLine.map((linha: any, i: number) => (
-                        <div key={i} className="text-sm bg-slate-50 p-2 rounded">
-                          <span className="font-mono text-xs text-slate-400 mr-2">L{linha.line}:</span>
-                          <span className="font-mono text-indigo-900">{linha.code}</span>
-                          <p className={`mt-1 text-xs font-medium ${linha.type === 'erro' ? 'text-red-600' : linha.type === 'alerta' ? 'text-amber-600' : 'text-slate-600'}`}>
-                            {linha.type === 'erro' && <AlertTriangle className="w-3 h-3 inline mr-1" />}
-                            {linha.type === 'alerta' && <Lightbulb className="w-3 h-3 inline mr-1" />}
-                            {linha.comment}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {sub.improvementPlan && (
-                <div className="mb-6 bg-amber-50 p-6 rounded-2xl border border-amber-100 shadow-sm">
-                  <h4 className="text-sm font-bold text-amber-600 uppercase tracking-widest flex items-center gap-2 mb-3">
-                    <BrainCircuit className="w-4 h-4"/> Plano de Melhoria
-                  </h4>
-                  <p className="text-slate-700 text-sm leading-relaxed">{sub.improvementPlan}</p>
-                </div>
-              )}
-
-              {sub.saAnalysis && (
-                <div className="mb-6 bg-white p-4 rounded-xl border border-indigo-100 shadow-sm space-y-3">
-                  <h4 className="font-bold text-slate-800 mb-2">Análise de Situação de Aprendizagem</h4>
-                  {sub.saAnalysis.compreensaoProblema && (
-                    <div>
-                      <p className="text-xs font-bold text-slate-400 uppercase">Compreensão do Problema</p>
-                      <p className="text-sm text-slate-700">{sub.saAnalysis.compreensaoProblema}</p>
-                    </div>
-                  )}
-                  {sub.saAnalysis.aplicacaoPratica && (
-                    <div>
-                      <p className="text-xs font-bold text-slate-400 uppercase">Aplicação Prática</p>
-                      <p className="text-sm text-slate-700">{sub.saAnalysis.aplicacaoPratica}</p>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {sub.strengths && sub.strengths.length > 0 && (
-                <div className="mb-4">
-                  <p className="text-xs font-bold text-emerald-500 uppercase mb-2">Pontos Fortes</p>
-                  <ul className="text-sm text-slate-700 list-disc pl-5">
-                    {sub.strengths.map((s, i) => <li key={i}>{s}</li>)}
-                  </ul>
-                </div>
-              )}
-              {sub.weaknesses && sub.weaknesses.length > 0 && (
-                <div className="mb-4">
-                  <p className="text-xs font-bold text-amber-500 uppercase mb-2">Gaps Identificados</p>
-                  <ul className="text-sm text-slate-700 list-disc pl-5">
-                    {sub.weaknesses.map((w, i) => <li key={i}>{w}</li>)}
-                  </ul>
-                </div>
-              )}
-              {sub.rubricResults && sub.rubricResults.length > 0 && (
-                <div className="mb-6 bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
-                  <h4 className="font-bold text-slate-800 mb-3 flex items-center gap-2">
-                    <Target className="w-4 h-4 text-indigo-500" /> Resultados por Rubrica
-                  </h4>
-                  <div className="space-y-3">
-                    {sub.rubricResults.map((r: any, i: number) => (
-                      <div key={i} className="p-3 bg-slate-50 rounded-lg border border-slate-100">
-                        <div className="flex justify-between items-start mb-1">
-                          <span className="font-bold text-slate-700 text-sm">{r.criterion}</span>
-                          <span className="font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded text-xs">
-                            {r.score} pts
-                          </span>
-                        </div>
-                        {r.feedback && <p className="text-xs text-slate-500 italic">{r.feedback}</p>}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {sub.competencyResults && sub.competencyResults.length > 0 && (
-                <div className="mb-4">
-                   <p className="text-xs font-bold text-indigo-400 uppercase mb-2">Análise de Competência</p>
-                   {sub.competencyResults.map((c: any, i: number) => (
-                     <div key={i} className="mb-2 p-3 bg-white rounded-lg text-sm border border-indigo-50">
-                        <div className="flex justify-between items-center mb-1">
-                          <span className="font-bold text-slate-700">{c.competency}</span>
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase 
-                            ${c.performance === 'alto' || c.performance === 'alto' ? 'bg-emerald-100 text-emerald-700' : 
-                               c.performance === 'médio' || c.performance === 'medio' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>
-                            {c.performance}
-                          </span>
-                        </div>
-                        {c.recommendation && <p className="text-slate-500 text-xs mt-1 leading-relaxed border-t border-slate-50 pt-1">{c.recommendation}</p>}
-                        {c.evidence && <p className="text-[10px] text-slate-400 mt-1 italic">Evidência: {c.evidence}</p>}
-                     </div>
-                   ))}
-                </div>
-              )}
-
-              {sub.nextSteps && sub.nextSteps.length > 0 && (
-                <div className="mb-4 bg-emerald-50 p-4 rounded-xl">
-                  <p className="text-xs font-bold text-emerald-600 uppercase mb-2">Próximos Passos</p>
-                  <ul className="text-sm text-emerald-800 list-disc pl-5">
-                    {sub.nextSteps.map((s, i) => <li key={i}>{s}</li>)}
-                  </ul>
-                </div>
-              )}
+              </AnimatePresence>
             </div>
           )}
 

@@ -1,6 +1,5 @@
 // src/services/caseStudyService.ts
-import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { supabase } from '../lib/supabase';
 import { AIService } from './aiService';
 
 export interface CaseStudy {
@@ -17,17 +16,43 @@ export interface CaseStudy {
 
 export const caseStudyService = {
   async createCaseStudy(cs: Omit<CaseStudy, 'id' | 'createdAt'>) {
-    const docRef = await addDoc(collection(db, 'estudos_caso'), {
-      ...cs,
-      createdAt: serverTimestamp()
-    });
-    return docRef.id;
+    const { data, error } = await supabase
+      .from('estudos_caso')
+      .insert({
+        tenant_id: cs.tenantId,
+        titulo: cs.titulo,
+        descricao: cs.descricao,
+        cenario: cs.cenario,
+        questoes_discursivas: cs.questoesDiscursivas,
+        materiais_apoio: cs.materiaisApoio,
+        created_by: cs.createdBy,
+        created_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data.id;
   },
 
   async listCaseStudies(tenantId: string): Promise<CaseStudy[]> {
-    const q = query(collection(db, 'estudos_caso'), where('tenantId', '==', tenantId));
-    const snap = await getDocs(q);
-    return snap.docs.map(d => ({ id: d.id, ...d.data() } as CaseStudy));
+    const { data, error } = await supabase
+      .from('estudos_caso')
+      .select('*')
+      .eq('tenant_id', tenantId);
+    
+    if (error) throw error;
+    return (data || []).map(d => ({
+      id: d.id,
+      tenantId: d.tenant_id,
+      titulo: d.titulo,
+      descricao: d.descricao,
+      cenario: d.cenario,
+      questoesDiscursivas: d.questoes_discursivas,
+      materiaisApoio: d.materiais_apoio,
+      createdBy: d.created_by,
+      createdAt: d.created_at
+    } as CaseStudy));
   },
 
   async generateWithIA(topic: string): Promise<Partial<CaseStudy>> {

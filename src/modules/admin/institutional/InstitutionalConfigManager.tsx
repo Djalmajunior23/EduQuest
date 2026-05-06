@@ -5,13 +5,12 @@ import {
   Save, Database, History, Bell, Globe,
   CheckCircle2, AlertCircle, Loader2, Bot
 } from 'lucide-react';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../../lib/firebase';
+import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../lib/AuthContext';
 import { cn } from '../../../lib/utils';
 
 export default function InstitutionalConfigManager() {
-  const { profile } = useAuth();
+  const { user } = useAuth();
   const [config, setConfig] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -19,13 +18,18 @@ export default function InstitutionalConfigManager() {
 
   useEffect(() => {
     async function fetchConfig() {
-      const docRef = doc(db, 'configuracoes_institucionais', 'global');
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        setConfig(docSnap.data());
+      const { data, error } = await supabase
+        .from('configuracoes_institucionais')
+        .select('*')
+        .eq('id', 'global')
+        .single();
+
+      if (data) {
+        setConfig(data);
       } else {
         // Initial setup
         setConfig({
+          id: 'global',
           nomeInstituicao: 'Inteligência Educacional Interativa - Unidade Industrial',
           logoUrl: '',
           iaRules: {
@@ -50,11 +54,15 @@ export default function InstitutionalConfigManager() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await setDoc(doc(db, 'configuracoes_institucionais', 'global'), {
-        ...config,
-        updatedAt: serverTimestamp(),
-        updatedBy: profile?.uid
-      });
+      const { error } = await supabase
+        .from('configuracoes_institucionais')
+        .upsert({
+          ...config,
+          id: 'global',
+          updated_at: new Date().toISOString(),
+          updated_by: user?.id
+        });
+      if (error) throw error;
       // Simulate success toast
     } catch (error) {
       console.error(error);

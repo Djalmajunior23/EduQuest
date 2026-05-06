@@ -1,8 +1,7 @@
 import { AIService } from './aiService';
 import { Activity, ActivitySubmission, Rubric } from '../types/activities';
-import { db } from '../lib/firebase';
-import { doc, updateDoc, addDoc, collection } from 'firebase/firestore';
-import { universalActivityCorrectionEngine } from './correction/UniversalActivityCorrectionEngine';
+import { supabase } from '../lib/supabase';
+import { UniversalActivityCorrectionEngine } from './UniversalActivityCorrectionEngine';
 import { CorrectionRequest } from '../types/correction';
 
 export const activityCorrectionService = {
@@ -27,44 +26,52 @@ export const activityCorrectionService = {
       competencies: activity.competencies,
       skills: activity.skills,
       rubric: rubric ? {
-          criteria: rubric.criteria.map(c => ({
-              name: c.criterion,
-              description: c.description,
-              maxPoints: c.maxScore
-          }))
+          criteria: (rubric.criteria || []).map((c: any) => ({
+          name: c.name || c.nome || c.criterion || 'Critério',
+          description: c.description || c.descricao || '',
+          maxPoints: c.maxPoints || c.pontos || c.maxScore || 0
+        }))
       } : undefined
     };
 
-    const aiResult = await universalActivityCorrectionEngine.correct(request);
+    const aiResult = await UniversalActivityCorrectionEngine.correct(activity, submission, rubric);
     
-    // Save to Firestore
+    // Save to Supabase
     if (submission.id) {
-      const docRef = doc(db, 'activity_submissions', submission.id);
-      await updateDoc(docRef, {
-        aiScore: aiResult.finalSuggestedScore,
-        aiFeedback: aiResult.studentFeedback,
-        teacherFeedback: aiResult.teacherFeedback,
-        strengths: aiResult.strengths,
-        weaknesses: aiResult.weaknesses,
-        improvementPlan: aiResult.improvementPlan,
-        competencyResults: aiResult.competencyResults || [],
-        executionResult: aiResult.executionResult || null,
-        codeAnalysis: aiResult.codeAnalysis || null,
-        status: 'corrected',
-        correctedAt: new Date().toISOString()
-      });
+      const { error: updateError } = await supabase
+        .from('activity_submissions')
+        .update({
+          ai_score: aiResult.finalSuggestedScore,
+          ai_feedback: aiResult.studentFeedback,
+          teacher_feedback: aiResult.teacherFeedback,
+          strengths: aiResult.strengths,
+          weaknesses: aiResult.weaknesses,
+          improvement_plan: aiResult.improvementPlan,
+          competency_results: aiResult.competencyResults || [],
+          execution_result: aiResult.executionResult || null,
+          code_analysis: aiResult.codeAnalysis || null,
+          status: 'corrected',
+          corrected_at: new Date().toISOString()
+        })
+        .eq('id', submission.id);
+
+      if (updateError) console.error('Error updating submission:', updateError);
 
       // Log action
-      await addDoc(collection(db, 'correction_logs'), {
-        submissionId: submission.id,
-        activityId: activity.id,
-        studentId: submission.studentId,
-        teacherId: activity.teacherId,
-        action: 'ai_correction',
-        newScore: aiResult.finalSuggestedScore,
-        details: 'Correção automática com Universal Engine',
-        createdAt: new Date().toISOString()
-      });
+      const { error: logError } = await supabase
+        .from('correction_logs')
+        .insert({
+          submission_id: submission.id,
+          activity_id: activity.id,
+          student_id: submission.studentId,
+          teacher_id: activity.teacherId,
+          action: 'ai_correction',
+          new_score: aiResult.finalSuggestedScore,
+          details: 'Correção automática com Universal Engine',
+          created_at: new Date().toISOString()
+        });
+      
+      if (logError) console.error('Error logging correction:', logError);
     }
 
     return aiResult;
@@ -79,25 +86,33 @@ export const activityCorrectionService = {
     feedback: string,
     oldScore?: number
   ) {
-    const docRef = doc(db, 'activity_submissions', submissionId);
-    await updateDoc(docRef, {
-      teacherScore: finalScore,
-      finalScore: finalScore,
-      teacherFeedback: feedback,
-      status: 'reviewed',
-      reviewedAt: new Date().toISOString()
-    });
+    const { error: updateError } = await supabase
+      .from('activity_submissions')
+      .update({
+        teacher_score: finalScore,
+        final_score: finalScore,
+        teacher_feedback: feedback,
+        status: 'reviewed',
+        reviewed_at: new Date().toISOString()
+      })
+      .eq('id', submissionId);
 
-    await addDoc(collection(db, 'correction_logs'), {
-      submissionId,
-      activityId,
-      studentId,
-      teacherId,
-      action: 'teacher_review',
-      oldScore: oldScore,
-      newScore: finalScore,
-      details: feedback,
-      createdAt: new Date().toISOString()
-    });
+    if (updateError) throw updateError;
+
+    const { error: logError } = await supabase
+      .from('correction_logs')
+      .insert({
+        submission_id: submissionId,
+        activity_id: activityId,
+        student_id: studentId,
+        teacher_id: teacherId,
+        action: 'teacher_review',
+        old_score: oldScore,
+        new_score: finalScore,
+        details: feedback,
+        created_at: new Date().toISOString()
+      });
+    
+    if (logError) console.error('Error logging teacher review:', logError);
   }
 };

@@ -1,6 +1,5 @@
 // src/services/simulationService.ts
-import { collection, addDoc, serverTimestamp, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { supabase } from '../lib/supabase';
 import { AIService } from './aiService';
 
 export interface Simulation {
@@ -29,17 +28,41 @@ export interface SimulationStep {
 
 export const simulationService = {
   async createSimulation(sim: Omit<Simulation, 'id' | 'createdAt'>) {
-    const docRef = await addDoc(collection(db, 'simuladores'), {
-      ...sim,
-      createdAt: serverTimestamp()
-    });
-    return docRef.id;
+    const { data, error } = await supabase
+      .from('simuladores')
+      .insert({
+        tenant_id: sim.tenantId,
+        titulo: sim.titulo,
+        tipo: sim.tipo,
+        cenario: sim.cenario,
+        etapas: sim.etapas,
+        created_by: sim.createdBy,
+        created_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data.id;
   },
 
   async listSimulations(tenantId: string): Promise<Simulation[]> {
-    const q = query(collection(db, 'simuladores'), where('tenantId', '==', tenantId));
-    const snap = await getDocs(q);
-    return snap.docs.map(d => ({ id: d.id, ...d.data() } as Simulation));
+    const { data, error } = await supabase
+      .from('simuladores')
+      .select('*')
+      .eq('tenant_id', tenantId);
+    
+    if (error) throw error;
+    return (data || []).map(d => ({
+      id: d.id,
+      tenantId: d.tenant_id,
+      titulo: d.titulo,
+      tipo: d.tipo,
+      cenario: d.cenario,
+      etapas: d.etapas,
+      createdBy: d.created_by,
+      createdAt: d.created_at
+    } as Simulation));
   },
 
   async generateWithIA(topic: string, type: Simulation['tipo']): Promise<Partial<Simulation>> {

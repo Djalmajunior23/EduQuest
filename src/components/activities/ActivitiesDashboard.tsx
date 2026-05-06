@@ -22,9 +22,9 @@ export default function ActivitiesDashboard() {
   const loadData = async () => {
     if (!user) return;
     try {
-      const docs = await activityService.getActivitiesByTeacher(user.uid);
+      const docs = await activityService.getActivitiesByTeacher(user.id);
       setActivities(docs);
-      const metricsData = await activityAnalyticsService.getTeacherDashboardMetrics(user.uid);
+      const metricsData = await activityAnalyticsService.getTeacherDashboardMetrics(user.id);
       setMetrics(metricsData);
     } catch (e) {
       console.error(e);

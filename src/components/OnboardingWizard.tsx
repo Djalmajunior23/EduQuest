@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../lib/AuthContext';
-import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { supabase } from '../lib/supabase';
 import { CheckCircle2, ShieldCheck, UserCircle, Rocket } from 'lucide-react';
 
 export function OnboardingWizard() {
@@ -12,15 +11,19 @@ export function OnboardingWizard() {
   const [loading, setLoading] = useState(false);
 
   // If already complete or loading, don't show.
-  // Actually, the AuthGuard will only render this if it IS incomplete.
   if (profile?.primeiroAcessoCompleto) return null;
 
   const handleAcceptTerms = async () => {
     setLoading(true);
     try {
-      await updateDoc(doc(db, 'usuarios', user!.uid), {
-        termosAceitosEm: serverTimestamp(),
-      });
+      const { error } = await supabase
+        .from('usuarios')
+        .update({
+          termos_aceitos_em: new Date().toISOString(),
+        })
+        .eq('id', user!.id);
+      
+      if (error) throw error;
       setStep(2);
     } catch (error) {
       console.error(error);
@@ -31,9 +34,14 @@ export function OnboardingWizard() {
   const handleUpdateProfile = async () => {
     setLoading(true);
     try {
-      await updateDoc(doc(db, 'usuarios', user!.uid), {
-        telefone,
-      });
+      const { error } = await supabase
+        .from('usuarios')
+        .update({
+          telefone,
+        })
+        .eq('id', user!.id);
+      
+      if (error) throw error;
       setStep(3);
     } catch (error) {
       console.error(error);
@@ -44,10 +52,15 @@ export function OnboardingWizard() {
   const handleFinish = async () => {
     setLoading(true);
     try {
-      await updateDoc(doc(db, 'usuarios', user!.uid), {
-        primeiroAcessoCompleto: true,
-      });
-      // Auth data reloads automatically via snapshot
+      const { error } = await supabase
+        .from('usuarios')
+        .update({
+          primeiro_acesso_completo: true,
+        })
+        .eq('id', user!.id);
+      
+      if (error) throw error;
+      // Auth data reloads automatically via subscription in AuthContext
     } catch (error) {
       console.error(error);
     }

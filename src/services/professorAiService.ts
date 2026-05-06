@@ -1,5 +1,4 @@
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { supabase } from '../lib/supabase';
 import { AIService } from './aiService';
 
 export const professorAiService = {

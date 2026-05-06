@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, orderBy, onSnapshot, addDoc, updateDoc, doc, serverTimestamp, where } from 'firebase/firestore';
-import { db } from '../../../lib/firebase';
+import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../lib/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -33,30 +32,53 @@ export default function UCManager() {
   useEffect(() => {
     if (!profile?.tenantId) return;
 
-    // Escuta sincronizada de Cursos e UCs para o administrador
-    const qUcs = query(
-      collection(db, 'unidades_curriculares'), 
-      where('tenantId', '==', profile.tenantId),
-      orderBy('createdAt', 'desc')
-    );
-    const qCourses = query(
-      collection(db, 'cursos'), 
-      where('tenantId', '==', profile.tenantId),
-      orderBy('nome', 'asc')
-    );
+    const fetchData = async () => {
+      // Fetch UCs
+      const { data: ucData } = await supabase
+        .from('unidades_curriculares')
+        .select('*')
+        .eq('tenant_id', profile.tenantId)
+        .order('created_at', { ascending: false });
+      
+      if (ucData) {
+        setUcs(ucData.map(d => ({
+          ...d,
+          cursoId: d.curso_id,
+          cargaHoraria: d.carga_horaria,
+          createdAt: d.created_at,
+          updatedAt: d.updated_at,
+          tenantId: d.tenant_id
+        })));
+      }
 
-    const unsubscribeUcs = onSnapshot(qUcs, (snap) => {
-      setUcs(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      // Fetch Courses
+      const { data: courseData } = await supabase
+        .from('cursos')
+        .select('*')
+        .eq('tenant_id', profile.tenantId)
+        .order('nome', { ascending: true });
+      
+      if (courseData) setCourses(courseData);
+
       setLoading(false);
-    });
+    };
 
-    const unsubscribeCourses = onSnapshot(qCourses, (snap) => {
-       setCourses(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    });
+    fetchData();
+
+    // Subscribe to UCs
+    const ucChannel = supabase.channel('unidades_curriculares_changes')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'unidades_curriculares',
+        filter: `tenant_id=eq.${profile.tenantId}`
+      }, () => {
+        fetchData();
+      })
+      .subscribe();
 
     return () => {
-       unsubscribeUcs();
-       unsubscribeCourses();
+      supabase.removeChannel(ucChannel);
     };
   }, [profile]);
 
@@ -76,7 +98,7 @@ export default function UCManager() {
         nome: '',
         descricao: '',
         cargaHoraria: 0,
-        cursoId: selectedCourseFilter !== 'ALL' ? selectedCourseFilter : '',
+        cursoId: selectedCourseFilter !== 'ALL' && selectedCourseFilter !== 'ORPHAN' ? selectedCourseFilter : '',
         status: 'ATIVO'
       });
     }
@@ -90,19 +112,29 @@ export default function UCManager() {
     setSaving(true);
     try {
       const ucData = {
-        ...formData,
-        cargaHoraria: Number(formData.cargaHoraria),
-        updatedAt: serverTimestamp()
+        nome: formData.nome,
+        descricao: formData.descricao,
+        carga_horaria: Number(formData.cargaHoraria),
+        curso_id: formData.cursoId || null,
+        status: formData.status,
+        updated_at: new Date().toISOString()
       };
 
       if (editingUc) {
-        await updateDoc(doc(db, 'unidades_curriculares', editingUc.id), ucData);
+        const { error } = await supabase
+          .from('unidades_curriculares')
+          .update(ucData)
+          .eq('id', editingUc.id);
+        if (error) throw error;
       } else {
-        await addDoc(collection(db, 'unidades_curriculares'), {
-          ...ucData,
-          tenantId: profile.tenantId,
-          createdAt: serverTimestamp()
-        });
+        const { error } = await supabase
+          .from('unidades_curriculares')
+          .insert({
+            ...ucData,
+            tenant_id: profile.tenantId,
+            created_at: new Date().toISOString()
+          });
+        if (error) throw error;
       }
       setIsPanelOpen(false);
     } catch (error) {

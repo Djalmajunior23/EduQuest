@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, orderBy, onSnapshot, where, getDocs } from 'firebase/firestore';
-import { db } from '../../../lib/firebase';
+import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../lib/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -28,24 +27,44 @@ export default function ProfessorInsights() {
   useEffect(() => {
     if (!user) return;
 
-    // Escuta os alertas injetados pelo Motor Inteligente
-    const q = query(
-      collection(db, 'alertas_pedagogicos'),
-      where('targetProfessorId', '==', user.uid),
-      orderBy('createdAt', 'desc')
-    );
-
-    const unsubscribe = onSnapshot(q, (snap) => {
-      if(!snap.empty) {
-         setAlertas(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    const fetchAlerts = async () => {
+      const { data, error } = await supabase
+        .from('alertas_pedagogicos')
+        .select('*')
+        .eq('target_professor_id', user.id)
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching alerts:', error);
       } else {
-         // Sem alertas reais do motor no momento
-         setAlertas([]);
+        setAlertas((data || []).map(d => ({
+          ...d,
+          targetProfessorId: d.target_professor_id,
+          alunoNome: d.aluno_nome,
+          createdAt: d.created_at
+        })));
       }
       setLoading(false);
-    });
+    };
 
-    return () => unsubscribe();
+    fetchAlerts();
+
+    // Subscribe to alerts
+    const channel = supabase
+      .channel('alertas_pedagogicos_changes')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'alertas_pedagogicos',
+        filter: `target_professor_id=eq.${user.id}`
+      }, () => {
+        fetchAlerts();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user]);
 
   if (loading) {

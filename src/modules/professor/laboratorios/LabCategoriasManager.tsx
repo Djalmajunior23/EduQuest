@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, orderBy, onSnapshot, where, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../../lib/firebase';
+import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../lib/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -32,31 +31,61 @@ export default function LabCategoriasManager() {
   useEffect(() => {
     if (!profile?.tenantId) return;
 
-    const qCats = query(
-      collection(db, 'laboratorio_categorias'), 
-      where('tenantId', '==', profile.tenantId),
-      orderBy('createdAt', 'desc')
-    );
-    const qCourses = query(collection(db, 'cursos'), where('tenantId', '==', profile.tenantId));
-    const qUcs = query(collection(db, 'unidades_curriculares'), where('tenantId', '==', profile.tenantId));
+    const fetchData = async () => {
+      // Fetch Categorias
+      const { data: catData } = await supabase
+        .from('laboratorio_categorias')
+        .select('*')
+        .eq('tenant_id', profile.tenantId)
+        .order('created_at', { ascending: false });
+      
+      if (catData) {
+        setCategorias(catData.map(d => ({
+          ...d,
+          tenantId: d.tenant_id,
+          cursoId: d.curso_id,
+          unidadeCurricularId: d.unidade_curricular_id,
+          createdAt: d.created_at
+        } as LaboratorioCategoria)));
+      }
 
-    const unsubscribeCats = onSnapshot(qCats, (snap) => {
-      setCategorias(snap.docs.map(d => ({ id: d.id, ...d.data() } as LaboratorioCategoria)));
+      // Fetch Courses
+      const { data: courseData } = await supabase
+        .from('cursos')
+        .select('*')
+        .eq('tenant_id', profile.tenantId);
+      
+      if (courseData) setCourses(courseData);
+
+      // Fetch UCs
+      const { data: ucData } = await supabase
+        .from('unidades_curriculares')
+        .select('*')
+        .eq('tenant_id', profile.tenantId);
+      
+      if (ucData) {
+        setUcs(ucData.map(u => ({ ...u, cursoId: u.curso_id })));
+      }
+
       setLoading(false);
-    });
+    };
 
-    const unsubscribeCourses = onSnapshot(qCourses, (snap) => {
-       setCourses(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    });
+    fetchData();
 
-    const unsubscribeUcs = onSnapshot(qUcs, (snap) => {
-       setUcs(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    });
+    // Subscribe to categories
+    const catChannel = supabase.channel('laboratorio_categorias_changes')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'laboratorio_categorias',
+        filter: `tenant_id=eq.${profile.tenantId}`
+      }, () => {
+        fetchData();
+      })
+      .subscribe();
 
     return () => {
-       unsubscribeCats();
-       unsubscribeCourses();
-       unsubscribeUcs();
+      supabase.removeChannel(catChannel);
     };
   }, [profile]);
 

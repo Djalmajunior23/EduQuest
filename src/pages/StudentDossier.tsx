@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { doc, getDoc, collection, query, where, getDocs, orderBy } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { supabase } from '../lib/supabase';
 import { 
   User, 
   TrendingUp, 
@@ -37,10 +36,14 @@ export default function StudentDossier() {
 
   const fetchStudentData = async () => {
     try {
-      const studentDoc = await getDoc(doc(db, 'usuarios', studentId!));
-      if (studentDoc.exists()) {
-        setStudent({ id: studentDoc.id, ...studentDoc.data() });
-      }
+      const { data, error } = await supabase
+        .from('usuarios')
+        .select('*')
+        .eq('id', studentId!)
+        .single();
+      
+      if (error) throw error;
+      setStudent(data);
     } catch (error) {
       console.error('Error fetching student:', error);
     } finally {
@@ -53,20 +56,20 @@ export default function StudentDossier() {
     setAnalyzing(true);
     try {
       // Fetch performance data for AI
-      const q = query(
-        collection(db, 'resultados'),
-        where('studentId', '==', student.id),
-        orderBy('createdAt', 'desc')
-      );
-      const snap = await getDocs(q);
-      const history = snap.docs.map(d => d.data());
+      const { data: history, error } = await supabase
+        .from('resultados')
+        .select('*')
+        .eq('student_id', student.id)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
 
       const data = {
         profile: student,
-        examHistory: history,
+        examHistory: history || [],
         engagement: {
-          lastLogin: student.ultimoLogin,
-          totalTokens: student.saldoTokensIA
+          lastLogin: student.ultimo_login,
+          totalTokens: student.saldo_tokens_ia
         }
       };
 
@@ -94,7 +97,7 @@ export default function StudentDossier() {
         </button>
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center ring-4 ring-white shadow-sm overflow-hidden text-indigo-600 font-bold text-2xl">
-            {student.fotoUrl ? <img src={student.fotoUrl} alt={student.nome} className="w-full h-full object-cover" /> : student.nome.charAt(0)}
+            {student.foto_url ? <img src={student.foto_url} alt={student.nome} className="w-full h-full object-cover" /> : student.nome.charAt(0)}
           </div>
           <div>
             <h1 className="text-3xl font-bold text-slate-900">{student.nome}</h1>
@@ -161,7 +164,7 @@ export default function StudentDossier() {
               <div>
                 <div className="flex justify-between text-xs font-bold text-slate-500 mb-1 uppercase">
                   <span>Engajamento</span>
-                  <span>{student.saldoTokensIA > 500 ? '92%' : '45%'}</span>
+                  <span>{student.saldo_tokens_ia > 500 ? '92%' : '45%'}</span>
                 </div>
                 <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
                   <div className="h-full bg-indigo-500 w-[92%] rounded-full shadow-lg shadow-indigo-100" />

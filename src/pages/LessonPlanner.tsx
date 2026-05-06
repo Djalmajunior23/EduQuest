@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Plus, 
   Sparkles, 
@@ -20,8 +20,11 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
 import { generateLessonPlan } from '../services/aiAssistantService';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../lib/AuthContext';
 
 export default function LessonPlanner() {
+  const { profile } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [plans, setPlans] = useState<any[]>([]);
@@ -36,8 +39,30 @@ export default function LessonPlanner() {
     aiInsights: true
   });
 
+  useEffect(() => {
+    if (profile) {
+      fetchPlans();
+    }
+  }, [profile]);
+
+  const fetchPlans = async () => {
+    if (!profile) return;
+    try {
+      const { data, error } = await supabase
+        .from('planos_aula')
+        .select('*')
+        .eq('teacher_id', profile.id)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      setPlans(data || []);
+    } catch (error) {
+      console.error('Error fetching plans:', error);
+    }
+  };
+
   const handleGenerate = async () => {
-    if (!formData.title || !formData.uc || !formData.theme) return;
+    if (!formData.title || !formData.uc || !formData.theme || !profile) return;
     setLoading(true);
     try {
       const classInsights = { 
@@ -55,12 +80,26 @@ export default function LessonPlanner() {
 
       if (plan) {
         const newPlan = {
-          id: Date.now().toString(),
-          ...formData,
-          ...plan,
-          createdAt: new Date().toISOString()
+          title: formData.title,
+          uc: formData.uc,
+          theme: formData.theme,
+          level: formData.level,
+          discipline: formData.discipline,
+          objectives: formData.objectives,
+          ai_insights: formData.aiInsights,
+          ai_recommendation: plan.aiRecommendation,
+          activities: plan.activities,
+          teacher_id: profile.id,
+          created_at: new Date().toISOString()
         };
-        setPlans([newPlan, ...plans]);
+
+        const { error } = await supabase
+          .from('planos_aula')
+          .insert(newPlan);
+        
+        if (error) throw error;
+        
+        fetchPlans();
         setIsModalOpen(false);
         setFormData({ 
           title: '', 
@@ -162,10 +201,10 @@ export default function LessonPlanner() {
                     <div>
                       <h4 className="text-sm font-black text-slate-400 uppercase mb-4 tracking-tighter">Objetivos Pedagógicos</h4>
                       <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-wrap">{plan.theme}</p>
-                      {plan.aiRecommendation && (
+                      {plan.ai_recommendation && (
                         <div className="mt-4 p-4 bg-indigo-50 rounded-2xl border border-indigo-100 italic text-indigo-700 text-xs">
                           <Sparkles className="w-4 h-4 mb-2" />
-                          {plan.aiRecommendation}
+                          {plan.ai_recommendation}
                         </div>
                       )}
                     </div>

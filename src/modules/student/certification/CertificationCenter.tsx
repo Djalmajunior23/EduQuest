@@ -5,8 +5,7 @@ import {
   Download, Share2, ShieldCheck, Zap, Target,
   Sparkles, History, GraduationCap
 } from 'lucide-react';
-import { collection, query, where, onSnapshot, getDocs } from 'firebase/firestore';
-import { db } from '../../../lib/firebase';
+import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../lib/AuthContext';
 import { cn } from '../../../lib/utils';
 import confetti from 'canvas-confetti';

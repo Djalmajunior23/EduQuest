@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { collection, query, where, onSnapshot, orderBy, updateDoc, doc } from 'firebase/firestore';
-import { db } from './firebase';
+import { supabase } from './supabase';
 import { useAuth } from './AuthContext';
 
 export interface AppNotification {
@@ -29,42 +28,88 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const unreadCount = notifications.filter(n => !n.read).length;
 
+  const fetchNotifications = async () => {
+    if (!user || !profile || !profile.tenantId) return;
+
+    const { data, error } = await supabase
+      .from('notificacoes')
+      .select('*')
+      .eq('tenant_id', profile.tenantId)
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (data) {
+      setNotifications(data.map(d => ({
+        id: d.id,
+        userId: d.user_id,
+        title: d.title,
+        body: d.body,
+        type: d.type,
+        read: d.read,
+        actionUrl: d.action_url,
+        senderId: d.sender_id,
+        createdAt: d.created_at
+      })));
+    }
+  };
+
   useEffect(() => {
     if (!user) {
       setNotifications([]);
       return;
     }
 
-    // Listens to 1:1 Notifications. (Broadcast filtering will be left for Phase 2/App integration).
     if (!profile || !profile.tenantId) return;
 
-    const q = query(
-      collection(db, 'notificacoes_gamificacao'),
-      where('tenantId', '==', profile.tenantId),
-      where('userId', '==', user.uid),
-      orderBy('createdAt', 'desc')
-    );
+    fetchNotifications();
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const notifs = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as AppNotification));
-      setNotifications(notifs);
-    });
+    const channel = supabase
+      .channel('notifications')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notificacoes',
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          fetchNotifications();
+        }
+      )
+      .subscribe();
 
-    return () => unsubscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user, profile]);
 
   const markAsRead = async (id: string) => {
     try {
-      await updateDoc(doc(db, 'notificacoes_gamificacao', id), { read: true });
+      const { error } = await supabase
+        .from('notificacoes')
+        .update({ read: true })
+        .eq('id', id);
+      
+      if (error) throw error;
+      fetchNotifications();
     } catch (e) {
       console.error("Error marking notification as read:", e);
     }
   };
 
   const markAllAsRead = async () => {
-    const unread = notifications.filter(n => !n.read);
-    for (const notif of unread) {
-       await markAsRead(notif.id);
+    try {
+      const { error } = await supabase
+        .from('notificacoes')
+        .update({ read: true })
+        .eq('user_id', user?.id)
+        .eq('read', false);
+      
+      if (error) throw error;
+      fetchNotifications();
+    } catch (e) {
+      console.error("Error marking all notifications as read:", e);
     }
   };
 

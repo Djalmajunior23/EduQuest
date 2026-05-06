@@ -20,7 +20,7 @@ import { useAuth } from '../../../lib/AuthContext';
 import { AIService } from '../../../services/aiService';
 
 export default function SimulationManager() {
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const [sims, setSims] = useState<Simulation[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
@@ -57,7 +57,7 @@ export default function SimulationManager() {
           tipo: simType,
           cenario: generated.cenario!,
           etapas: generated.etapas!,
-          createdBy: profile.uid
+          createdBy: user?.id || ''
         });
         setIsCreating(false);
         setTopic('');

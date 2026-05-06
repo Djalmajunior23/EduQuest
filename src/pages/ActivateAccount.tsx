@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
-import { collection, query, where, getDocs, updateDoc, doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { db, auth } from '../lib/firebase';
+import { supabase } from '../lib/supabase';
 import { 
   ShieldCheck, 
   Lock, 
@@ -43,26 +41,23 @@ export default function ActivateAccount() {
       }
 
       try {
-        const q = query(
-          collection(db, 'convites'), 
-          where('token', '==', token),
-          where('email', '==', email),
-          where('status', '==', 'ENVIADO')
-        );
-        const snap = await getDocs(q);
+        const { data, error } = await supabase
+          .from('convites')
+          .select('*')
+          .eq('token', token)
+          .eq('email', email)
+          .eq('status', 'ENVIADO')
+          .single();
 
-        if (snap.empty) {
+        if (error || !data) {
           setError('Convite inválido, expirado ou já utilizado.');
         } else {
-          const inviteDoc = snap.docs[0];
-          const inviteData = inviteDoc.data();
-          
           // Check expiration
-          const expiresAt = inviteData.expiresAt.toDate();
+          const expiresAt = new Date(data.expires_at);
           if (new Date() > expiresAt) {
             setError('Este convite expirou. Solicite um novo convite ao administrador.');
           } else {
-            setInvitation({ id: inviteDoc.id, ...inviteData });
+            setInvitation(data);
           }
         }
       } catch (err) {
@@ -92,38 +87,50 @@ export default function ActivateAccount() {
 
     try {
       // 1. Create Auth User
-      const userCredential = await createUserWithEmailAndPassword(auth, email!, password);
-      const user = userCredential.user;
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        email: email!,
+        password: password,
+        options: {
+          data: {
+            nome: invitation.nome,
+          }
+        }
+      });
 
-      // 2. Set Display Name
-      await updateProfile(user, { displayName: invitation.nome });
+      if (signUpError) throw signUpError;
+      const user = signUpData.user;
+      if (!user) throw new Error('Falha ao criar usuário.');
 
-      // 3. Create Firestore User Profile
-      await setDoc(doc(db, 'usuarios', user.uid), {
+      // 2. Create User Profile
+      const { error: profileError } = await supabase.from('usuarios').upsert({
+        id: user.id,
         nome: invitation.nome,
         email: invitation.email,
         perfil: invitation.perfil,
-        turmaId: invitation.turmaId || '',
+        turma_id: invitation.turma_id || null,
         status: 'ATIVO',
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-        ultimoLogin: serverTimestamp()
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        ultimo_login: new Date().toISOString()
       });
 
-      // 4. Update Invitation Status
-      await updateDoc(doc(db, 'convites', invitation.id), {
-        status: 'ACEITO',
-        acceptedAt: serverTimestamp()
-      });
+      if (profileError) throw profileError;
+
+      // 3. Update Invitation Status
+      const { error: inviteError } = await supabase
+        .from('convites')
+        .update({
+          status: 'ACEITO',
+          accepted_at: new Date().toISOString()
+        })
+        .eq('id', invitation.id);
+
+      if (inviteError) throw inviteError;
 
       setSuccess(true);
     } catch (err: any) {
       console.error(err);
-      if (err.code === 'auth/email-already-in-use') {
-        setError('Este e-mail já possui uma conta ativa. Tente fazer login.');
-      } else {
-        setError('Algo deu errado na ativação. Contate o suporte.');
-      }
+      setError(err.message || 'Algo deu errado na ativação. Contate o suporte.');
     } finally {
       setActivating(false);
     }

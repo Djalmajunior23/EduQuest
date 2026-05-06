@@ -101,12 +101,12 @@ export default function StudentGamification() {
       }
 
       const fetchAll = async () => {
-        const missionsData = await missionService.getMissionsWithProgress(user.uid, tenant.id).catch((e: any) => {
+        const missionsData = await missionService.getMissionsWithProgress(user.id, tenant.id).catch((e: any) => {
           console.error("Erro missões:", e);
           return [];
         });
 
-        const adaptiveData = await adaptiveMissionService.getActiveAdaptiveMissions(user.uid, tenant.id).catch((e: any) => {
+        const adaptiveData = await adaptiveMissionService.getActiveAdaptiveMissions(user.id, tenant.id).catch((e: any) => {
           console.error("Erro missões adaptativas:", e);
           return [];
         });
@@ -151,7 +151,7 @@ export default function StudentGamification() {
 
   useEffect(() => {
     loadGamificationData();
-  }, [user?.uid, tenant?.id]);
+  }, [user?.id, tenant?.id]);
 
   if (loading) {
     return (
@@ -350,7 +350,7 @@ export default function StudentGamification() {
                            <img src={`https://picsum.photos/seed/${player?.id || idx}/100/100`} alt="p" className="w-full h-full object-cover" />
                         </div>
                         <div className="flex-1 min-w-0">
-                           <p className="text-sm font-bold truncate">{player?.id === user?.uid ? 'VOCÊ' : (player?.nome || 'Operador')}</p>
+                           <p className="text-sm font-bold truncate">{player?.id === user?.id ? 'VOCÊ' : (player?.nome || 'Operador')}</p>
                            <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">{player?.xp || 0} XP</p>
                         </div>
                       </div>
@@ -462,8 +462,8 @@ export default function StudentGamification() {
                     <button 
                       onClick={async () => {
                          if (!tenant) return;
-                         await adaptiveMissionService.generateAdaptiveMissions(user!.uid, 'DEV_ACADEMY', tenant.id);
-                         const fresh = await adaptiveMissionService.getActiveAdaptiveMissions(user!.uid, tenant.id);
+                         await adaptiveMissionService.generateAdaptiveMissions(user!.id, 'DEV_ACADEMY', tenant.id);
+                         const fresh = await adaptiveMissionService.getActiveAdaptiveMissions(user!.id, tenant.id);
                          setAdaptiveMissions(fresh);
                       }}
                       className="bg-indigo-600/10 border border-indigo-500/20 text-indigo-400 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all flex items-center gap-2"
@@ -944,14 +944,14 @@ export default function StudentGamification() {
                      {(ranking || []).map((user_rank, idx) => (
                        <div key={user_rank?.id || idx} className={cn(
                          "flex items-center gap-6 p-6 rounded-[2rem] border transition-all",
-                         user_rank?.id === user?.uid ? "bg-indigo-600 border-white/20 shadow-2xl" : "bg-slate-900 border-white/5 hover:bg-slate-800"
+                         user_rank?.id === user?.id ? "bg-indigo-600 border-white/20 shadow-2xl" : "bg-slate-900 border-white/5 hover:bg-slate-800"
                        )}>
                           <span className="text-2xl font-black italic w-10 text-slate-500">{idx + 1}</span>
                           <div className="w-16 h-16 rounded-2xl bg-slate-800 overflow-hidden border border-white/10">
                              <img src={`https://picsum.photos/seed/${user_rank?.id || idx}/100/100`} alt="profile" className="w-full h-full object-cover" />
                           </div>
                           <div className="flex-1 min-w-0">
-                             <h4 className="text-xl font-black tracking-tight truncate">{user_rank?.id === user?.uid ? 'VOCÊ (Soberano)' : (user_rank?.nome || 'Novato')}</h4>
+                             <h4 className="text-xl font-black tracking-tight truncate">{user_rank?.id === user?.id ? 'VOCÊ (Soberano)' : (user_rank?.nome || 'Novato')}</h4>
                              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Operador Nível {Math.floor((user_rank?.xp || 0) / 1000) + 1}</p>
                           </div>
                           <div className="text-right">

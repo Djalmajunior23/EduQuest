@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../lib/AuthContext';
-import { doc, getDoc, collection, query, orderBy, limit, getDocs, where } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { supabase } from '../lib/supabase';
 import { Loader2, Trophy, Rocket, Target, Sparkles } from 'lucide-react';
 import { StudentGamificationHeader, MissionList, RankingBoard } from '../modules/gamification/GamificationUI';
 import { motion } from 'motion/react';
@@ -18,17 +17,20 @@ export default function Gamification() {
       if (!profile) return;
       try {
         // 1. Perfil de Gamificação
-        const gamRef = doc(db, 'gamificacao', profile.uid);
-        const gamSnap = await getDoc(gamRef);
+        const { data: gamData, error: gamError } = await supabase
+          .from('gamificacao')
+          .select('*')
+          .eq('id', profile.id)
+          .single();
         
-        if (gamSnap.exists()) {
-          setGamificationData(gamSnap.data());
+        if (gamData && !gamError) {
+          setGamificationData(gamData);
         } else {
           // Fallback para renderização de demo
           setGamificationData({
             level: 8,
-            currentXp: 4500,
-            maxXp: 10000,
+            current_xp: 4500,
+            max_xp: 10000,
             points: 1250,
             streak: 5,
             rank: 12
@@ -36,26 +38,34 @@ export default function Gamification() {
         }
 
         // 2. Ranking Top 10
-        const rankQuery = query(collection(db, 'ranking'), orderBy('xpTotal', 'desc'), limit(10));
-        const rankSnap = await getDocs(rankQuery);
-        if (!rankSnap.empty) {
-          setRankings(rankSnap.docs.map(d => d.data()));
+        const { data: rankData, error: rankError } = await supabase
+          .from('ranking')
+          .select('*')
+          .order('xp_total', { ascending: false })
+          .limit(10);
+
+        if (rankData && !rankError) {
+          setRankings(rankData);
         } else {
           // Mock rankings
           setRankings([
-            { alunoId: '1', nome: 'Djalma B.', level: 15, xpTotal: 15000 },
-            { alunoId: '2', nome: 'Ana Silva', level: 14, xpTotal: 14200 },
-            { alunoId: '3', nome: 'Carlos Tech', level: 12, xpTotal: 12800 },
-            { alunoId: '4', nome: 'Beatriz DEV', level: 10, xpTotal: 10500 },
-            { alunoId: '5', nome: 'Erik Cyber', level: 9, xpTotal: 9200 },
+            { aluno_id: '1', nome: 'Djalma B.', level: 15, xp_total: 15000 },
+            { aluno_id: '2', nome: 'Ana Silva', level: 14, xp_total: 14200 },
+            { aluno_id: '3', nome: 'Carlos Tech', level: 12, xp_total: 12800 },
+            { aluno_id: '4', nome: 'Beatriz DEV', level: 10, xp_total: 10500 },
+            { aluno_id: '5', nome: 'Erik Cyber', level: 9, xp_total: 9200 },
           ]);
         }
 
         // 3. Missões Ativas
-        const missionQuery = query(collection(db, 'progresso_missao'), where('alunoId', '==', profile.uid), where('status', '==', 'ATIVA'));
-        const missionSnap = await getDocs(missionQuery);
-        if (!missionSnap.empty) {
-           setActiveMissions(missionSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+        const { data: missionData, error: missionError } = await supabase
+          .from('progresso_missao')
+          .select('*')
+          .eq('aluno_id', profile.id)
+          .eq('status', 'ATIVA');
+
+        if (missionData && !missionError) {
+           setActiveMissions(missionData);
         } else {
           setActiveMissions([
             { id: 'm1', title: 'Comandos Básicos de CLI', type: 'DIARIA', xp: 150, completed: false },

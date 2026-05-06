@@ -28,7 +28,7 @@ export default function StudentActivityView() {
     try {
       const allActs = await activityService.getActivitiesByClass('default'); // Fetch all published
       setActivities(allActs);
-      const mySubs = await activityService.getStudentSubmissions(user!.uid);
+      const mySubs = await activityService.getStudentSubmissions(user!.id);
       setSubmissions(mySubs);
     } catch (e) {
       console.error(e);
@@ -48,7 +48,7 @@ export default function StudentActivityView() {
       
       const newSub: Omit<ActivitySubmission, 'id' | 'createdAt'> = {
         activityId: activeActivity.id!,
-        studentId: user.uid,
+        studentId: user.id,
         classId: activeActivity.classId,
         answerText,
         studentCode,

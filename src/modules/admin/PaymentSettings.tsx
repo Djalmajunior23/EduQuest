@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
+import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../lib/AuthContext';
 
 export function PaymentSettings() {
@@ -16,10 +15,15 @@ export function PaymentSettings() {
 
   const loadConfig = async () => {
     if (!profile?.tenantId) return;
-    const docRef = doc(db, 'tenants', profile.tenantId, 'config', 'payments');
-    const snap = await getDoc(docRef);
-    if (snap.exists()) {
-      setConfig(snap.data() as any);
+    const { data, error } = await supabase
+      .from('tenant_configs')
+      .select('*')
+      .eq('tenant_id', profile.tenantId)
+      .eq('config_key', 'payments')
+      .single();
+    
+    if (data) {
+      setConfig(data.config_value);
     }
   };
 
@@ -27,8 +31,16 @@ export function PaymentSettings() {
     if (!profile?.tenantId) return;
     setLoading(true);
     try {
-      const docRef = doc(db, 'tenants', profile.tenantId, 'config', 'payments');
-      await setDoc(docRef, { ...config, tenantId: profile.tenantId }, { merge: true });
+      const { error } = await supabase
+        .from('tenant_configs')
+        .upsert({
+          tenant_id: profile.tenantId,
+          config_key: 'payments',
+          config_value: config,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'tenant_id,config_key' });
+      
+      if (error) throw error;
       alert('Configurações salvas com sucesso!');
     } catch (e) {
       console.error(e);

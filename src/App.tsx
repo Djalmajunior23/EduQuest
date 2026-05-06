@@ -14,8 +14,8 @@ import StudentDossier from './pages/StudentDossier';
 import LessonPlanner from './pages/LessonPlanner';
 import Evaluations from './pages/Evaluations';
 import VirtualMentor from './pages/VirtualMentor';
-import { doc, getDocFromServer } from 'firebase/firestore';
-import { db } from './lib/firebase';
+import { SAPanel, SAEditor, SAView } from './modules/professor/sa';
+import { NotificationProvider } from './lib/NotificationContext';
 
 import { StudentGamification } from './modules/student/gamification';
 import ProfessorGamification from './modules/professor/gamification/ProfessorGamification';
@@ -35,8 +35,7 @@ import ProfessorInsights from './modules/professor/insights/ProfessorInsights';
 import StudentAdaptiveJourney from './modules/student/adaptive/StudentAdaptiveJourney';
 import Profile from './pages/Profile';
 import ActivateAccount from './pages/ActivateAccount';
-import { SAPanel, SAEditor, SAView } from './modules/professor/sa';
-import { NotificationProvider } from './lib/NotificationContext';
+import OAuthCallback from './pages/OAuthCallback';
 
 // New Advanced Modules
 import ABPManager from './modules/pedagogical/abp/ABPManager';
@@ -84,19 +83,6 @@ function TenantSpecificHyperOS() {
 }
 
 export default function App() {
-  useEffect(() => {
-    async function testConnection() {
-      try {
-        await getDocFromServer(doc(db, 'test', 'connection'));
-      } catch (error) {
-        if (error instanceof Error && error.message.includes('the client is offline')) {
-          console.error("Please check your Firebase configuration.");
-        }
-      }
-    }
-    testConnection();
-  }, []);
-
   return (
     <AuthProvider>
       <TenantProvider>
@@ -105,6 +91,7 @@ export default function App() {
             <EduJarvisChat />
             <Routes>
               <Route path="/login" element={<Login />} />
+              <Route path="/auth/callback" element={<OAuthCallback />} />
             <Route path="/activate" element={<ActivateAccount />} />
             
             <Route path="/" element={

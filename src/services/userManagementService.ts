@@ -1,5 +1,4 @@
-import { collection, addDoc, serverTimestamp, updateDoc, doc, writeBatch } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { supabase } from '../lib/supabase';
 
 export interface AuditLog {
   acao: string;
@@ -14,9 +13,9 @@ export interface AuditLog {
  */
 export async function logAction(log: AuditLog) {
   try {
-    await addDoc(collection(db, 'logs'), {
+    await supabase.from('logs').insert({
       ...log,
-      dataHora: serverTimestamp()
+      data_hora: new Date().toISOString()
     });
   } catch (error) {
     console.error('Failed to log action:', error);
@@ -27,12 +26,16 @@ export async function logAction(log: AuditLog) {
  * Updates a user's profile and logs the change.
  */
 export async function updateUserProfile(userId: string, data: any, responsibleId: string) {
-  const userRef = doc(db, 'usuarios', userId);
-  await updateDoc(userRef, {
-    ...data,
-    updatedAt: serverTimestamp(),
-    updatedBy: responsibleId
-  });
+  const { error } = await supabase
+    .from('usuarios')
+    .update({
+      ...data,
+      updatedAt: new Date().toISOString(),
+      updatedBy: responsibleId
+    })
+    .eq('uid', userId);
+
+  if (error) throw error;
 
   await logAction({
     acao: 'USER_UPDATE',
@@ -47,12 +50,16 @@ export async function updateUserProfile(userId: string, data: any, responsibleId
  * Changes a user's status (Activate/Deactivate).
  */
 export async function toggleUserStatus(userId: string, newStatus: string, responsibleId: string) {
-  const userRef = doc(db, 'usuarios', userId);
-  await updateDoc(userRef, {
-    status: newStatus,
-    updatedAt: serverTimestamp(),
-    updatedBy: responsibleId
-  });
+  const { error } = await supabase
+    .from('usuarios')
+    .update({
+      status: newStatus,
+      updatedAt: new Date().toISOString(),
+      updatedBy: responsibleId
+    })
+    .eq('uid', userId);
+
+  if (error) throw error;
 
   await logAction({
     acao: 'STATUS_CHANGE',
@@ -65,27 +72,24 @@ export async function toggleUserStatus(userId: string, newStatus: string, respon
 
 /**
  * Creates an invitation and registers it in the system.
- * This triggers a hypothetical email sending process (via n8n or generic API).
  */
 export async function inviteUser(data: { nome: string; email: string; perfil: string; turmaId?: string }, responsibleId: string) {
-  // 1. Create a invitation token (mocked simple token)
   const invitationToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
   
-  // 2. Register invitation in Firestore
-  const invitationRef = await addDoc(collection(db, 'convites'), {
-    ...data,
-    token: invitationToken,
-    status: 'ENVIADO',
-    createdAt: serverTimestamp(),
-    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-    createdBy: responsibleId
-  });
+  const { data: invitation, error } = await supabase
+    .from('convites')
+    .insert({
+      ...data,
+      token: invitationToken,
+      status: 'ENVIADO',
+      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      created_by: responsibleId
+    })
+    .select()
+    .single();
 
-  // 3. Register user as PENDING (if doesn't exist)
-  // Note: For now, we only create the invitation record.
-  // In a real system, we might pre-create the user or just wait for the invitation to be accepted.
-  
-  // 4. Log the action
+  if (error) throw error;
+
   await logAction({
     acao: 'USER_INVITED',
     usuarioAfetadoId: 'NEW_USER',
@@ -94,11 +98,7 @@ export async function inviteUser(data: { nome: string; email: string; perfil: st
     detalhes: { ...data, invitationToken }
   });
 
-  // 5. Trigger n8n integration (Hypothetical)
-  // For this environment, we simulate the fetch
-  // Email sending mocked out
-  
-  return invitationRef.id;
+  return invitation.id;
 }
 
 /**
@@ -106,13 +106,17 @@ export async function inviteUser(data: { nome: string; email: string; perfil: st
  */
 export async function setBlockAccount(userId: string, isBlocked: boolean, responsibleId: string, reason: string) {
   const newStatus = isBlocked ? 'BLOQUEADO' : 'ATIVO';
-  const userRef = doc(db, 'usuarios', userId);
-  await updateDoc(userRef, { 
-    status: newStatus,
-    observacoes: `[${new Date().toLocaleDateString()}] ${reason}`,
-    updatedAt: serverTimestamp(),
-    updatedBy: responsibleId
-  });
+  const { error } = await supabase
+    .from('usuarios')
+    .update({ 
+      status: newStatus,
+      observacoes: `[${new Date().toLocaleDateString()}] ${reason}`,
+      updatedAt: new Date().toISOString(),
+      updatedBy: responsibleId
+    })
+    .eq('uid', userId);
+
+  if (error) throw error;
 
   await logAction({
     acao: isBlocked ? 'ACCOUNT_BLOCKED' : 'ACCOUNT_UNBLOCKED',
@@ -124,39 +128,31 @@ export async function setBlockAccount(userId: string, isBlocked: boolean, respon
 }
 
 /**
- * Batch import users from CSV/JSON (Concept Architecture)
+ * Batch import users from CSV/JSON
  */
 export async function importUsersBatch(users: any[], responsibleId: string) {
-  const batch = writeBatch(db);
-  const results = { success: 0, failed: 0 };
-  
-  for (const user of users) {
-    try {
-      const newUserRef = doc(collection(db, 'usuarios'));
-      batch.set(newUserRef, {
-        ...user,
-        status: 'PENDENTE',
-        createdAt: serverTimestamp(),
-        createdBy: responsibleId
-      });
-      results.success++;
-    } catch {
-      results.failed++;
-    }
-  }
+  const preparedUsers = users.map(user => ({
+    ...user,
+    status: 'PENDENTE',
+    created_at: new Date().toISOString(),
+    created_by: responsibleId
+  }));
 
-  await batch.commit();
+  const { data, error } = await supabase
+    .from('usuarios')
+    .insert(preparedUsers);
+
+  if (error) throw error;
+
+  const successCount = preparedUsers.length;
 
   await logAction({
     acao: 'BATCH_IMPORT',
     usuarioAfetadoId: 'MULTIPLE',
     usuarioResponsavelId: responsibleId,
-    descricao: `Importação em lote concluída: ${results.success} registros`,
-    detalhes: { importedCount: results.success }
+    descricao: `Importação em lote concluída: ${successCount} registros`,
+    detalhes: { importedCount: successCount }
   });
 
-  // Hypothetical n8n Trigger for batch welcome emails
-  // Trigger hypotetical n8n webhook (mocked)
-
-  return results;
+  return { success: successCount, failed: 0 };
 }

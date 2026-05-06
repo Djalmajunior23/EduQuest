@@ -30,7 +30,7 @@ export default function ActivityCreateView() {
   useEffect(() => {
     async function fetchRubrics() {
       if (user) {
-        const docs = await rubricService.getTeacherRubrics(user.uid);
+        const docs = await rubricService.getTeacherRubrics(user.id);
         setRubrics(docs);
       }
     }
@@ -47,7 +47,7 @@ export default function ActivityCreateView() {
       }
       await activityService.createActivity({
         ...formData,
-        teacherId: user.uid,
+        teacherId: user.id,
       } as Omit<Activity, 'id' | 'createdAt' | 'updatedAt'>);
       navigate('/activities');
     } catch (err) {
@@ -194,7 +194,7 @@ export default function ActivityCreateView() {
             </select>
           </div>
 
-          {(formData.type === 'code' || formData.type === 'sql') && (
+          {(formData.type === 'code' || formData.type === 'database') && (
             <div className="md:col-span-2 bg-slate-50 p-6 rounded-2xl border border-dashed border-slate-300">
               <h3 className="text-sm font-bold text-slate-500 uppercase mb-4 flex items-center gap-2">
                 <Terminal className="w-4 h-4" /> Casos de Teste (Sugestão de Autocorreção)

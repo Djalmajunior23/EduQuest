@@ -1,85 +1,97 @@
-import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs, query, where, getDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { supabase } from '../lib/supabase';
 import { Rubric } from '../types/activities';
-
-enum OperationType {
-  CREATE = 'create',
-  UPDATE = 'update',
-  DELETE = 'delete',
-  LIST = 'list',
-  GET = 'get',
-}
-
-interface FirestoreErrorInfo {
-  error: string;
-  operationType: OperationType;
-  path: string | null;
-}
-
-function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
-  const errInfo: FirestoreErrorInfo = {
-    error: error instanceof Error ? error.message : String(error),
-    operationType,
-    path
-  };
-  console.error('Firestore Error: ', JSON.stringify(errInfo));
-  throw new Error(JSON.stringify(errInfo));
-}
 
 const RUBRICS_COLLECTION = 'rubrics';
 
 export const rubricService = {
   async createRubric(rubric: Omit<Rubric, 'id' | 'createdAt'>): Promise<string> {
     try {
-      const docRef = await addDoc(collection(db, RUBRICS_COLLECTION), {
-        ...rubric,
-        createdAt: new Date().toISOString()
-      });
-      return docRef.id;
+      const { data, error } = await supabase
+        .from(RUBRICS_COLLECTION)
+        .insert({
+          ...rubric,
+          teacher_id: rubric.teacherId,
+          created_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data.id;
     } catch (e) {
-      handleFirestoreError(e, OperationType.CREATE, RUBRICS_COLLECTION);
+      console.error('Supabase Error (rubric create):', e);
       throw e;
     }
   },
 
   async getTeacherRubrics(teacherId: string): Promise<Rubric[]> {
     try {
-      const q = query(collection(db, RUBRICS_COLLECTION), where('teacherId', '==', teacherId));
-      const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Rubric));
+      const { data, error } = await supabase
+        .from(RUBRICS_COLLECTION)
+        .select('*')
+        .eq('teacher_id', teacherId);
+      
+      if (error) throw error;
+      return (data || []).map(r => ({
+        ...r,
+        teacherId: r.teacher_id,
+        createdAt: r.created_at
+      } as Rubric));
     } catch (e) {
-      handleFirestoreError(e, OperationType.LIST, RUBRICS_COLLECTION);
+      console.error('Supabase Error (rubric list):', e);
       return [];
     }
   },
 
   async getRubric(id: string): Promise<Rubric | null> {
     try {
-      const docSnap = await getDoc(doc(db, RUBRICS_COLLECTION, id));
-      if (docSnap.exists()) {
-        return { ...docSnap.data(), id: docSnap.id } as Rubric;
-      }
-      return null;
+      const { data, error } = await supabase
+        .from(RUBRICS_COLLECTION)
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      if (error) throw error;
+      if (!data) return null;
+
+      return {
+        ...data,
+        teacherId: data.teacher_id,
+        createdAt: data.created_at
+      } as Rubric;
     } catch (e) {
-      handleFirestoreError(e, OperationType.GET, `${RUBRICS_COLLECTION}/${id}`);
+      console.error('Supabase Error (rubric get):', e);
       return null;
     }
   },
 
   async updateRubric(id: string, updates: Partial<Rubric>): Promise<void> {
      try {
-       await updateDoc(doc(db, RUBRICS_COLLECTION, id), updates);
+       const { error } = await supabase
+         .from(RUBRICS_COLLECTION)
+         .update({
+           ...updates,
+           teacher_id: updates.teacherId,
+         })
+         .eq('id', id);
+       
+       if (error) throw error;
      } catch (e) {
-       handleFirestoreError(e, OperationType.UPDATE, `${RUBRICS_COLLECTION}/${id}`);
+       console.error('Supabase Error (rubric update):', e);
        throw e;
      }
   },
 
   async deleteRubric(id: string): Promise<void> {
     try {
-      await deleteDoc(doc(db, RUBRICS_COLLECTION, id));
+      const { error } = await supabase
+        .from(RUBRICS_COLLECTION)
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
     } catch (e) {
-      handleFirestoreError(e, OperationType.DELETE, `${RUBRICS_COLLECTION}/${id}`);
+      console.error('Supabase Error (rubric delete):', e);
       throw e;
     }
   }

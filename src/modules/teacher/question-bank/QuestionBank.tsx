@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { collection, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../../lib/firebase';
+import { supabase } from '../../../lib/supabase';
 import { motion, AnimatePresence } from 'motion/react';
 import { Plus, Sparkles, X, Loader2, Save, Trash2, Edit2, Search, Filter } from 'lucide-react';
 
@@ -35,8 +34,18 @@ export default function QuestionBank() {
   const fetchQuestions = async () => {
     setLoading(true);
     try {
-      const querySnapshot = await getDocs(collection(db, 'questions'));
-      setQuestions(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Question)));
+      const { data, error } = await supabase
+        .from('questions')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      setQuestions((data || []).map(doc => ({
+        ...doc,
+        ucId: doc.uc_id,
+        bloomTaxonomy: doc.bloom_taxonomy,
+        correctOptionIndex: doc.correct_option_index
+      } as Question)));
     } catch (error) {
       console.error("Error fetching questions:", error);
     } finally {
@@ -69,11 +78,22 @@ export default function QuestionBank() {
   const handleSaveQuestion = async (index: number) => {
     const q = suggestedQuestions[index];
     try {
-      await addDoc(collection(db, 'questions'), {
-        ...q,
-        createdAt: serverTimestamp(),
-        status: 'PUBLISHED'
-      });
+      const { error } = await supabase
+        .from('questions')
+        .insert({
+          text: q.text,
+          options: q.options,
+          correct_option_index: q.correctOptionIndex,
+          bloom_taxonomy: q.bloomTaxonomy,
+          difficulty: q.difficulty,
+          uc_id: q.ucId,
+          tags: q.tags,
+          created_at: new Date().toISOString(),
+          status: 'PUBLISHED'
+        });
+      
+      if (error) throw error;
+
       setSuggestedQuestions(prev => prev.filter((_, i) => i !== index));
       fetchQuestions();
     } catch (error) {

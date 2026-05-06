@@ -25,7 +25,7 @@ interface Message {
 }
 
 export default function StudentAITutor() {
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome',
@@ -45,7 +45,7 @@ export default function StudentAITutor() {
   }, [messages, isTyping]);
 
   const handleSend = async () => {
-    if (!input.trim() || isTyping) return;
+    if (!input.trim() || isTyping || !user) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -60,7 +60,7 @@ export default function StudentAITutor() {
 
     try {
       const response = await studentAiService.askTutor(
-        profile.uid, 
+        user.id, 
         profile.saldoTokensIA || 0, 
         input
       );

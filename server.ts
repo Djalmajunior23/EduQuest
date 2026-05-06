@@ -21,6 +21,11 @@ async function startServer() {
 
   app.use(express.json());
 
+  // Health check route for Nginx/Traefik
+  app.get('/health', (req, res) => {
+    res.status(200).send('UP');
+  });
+
   // API Routes
   app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });

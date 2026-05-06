@@ -55,7 +55,7 @@ export default function ActivityRubricBuilder() {
     try {
       await rubricService.createRubric({
         title,
-        teacherId: user.uid,
+        teacherId: user.id,
         criteria,
       });
       alert('Rubrica salva com sucesso!');

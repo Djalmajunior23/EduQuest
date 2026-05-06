@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { doc, onSnapshot } from 'firebase/firestore';
-import { db } from './firebase';
+import { supabase } from './supabase';
 import { useAuth } from './AuthContext';
 
 export interface TenantConfig {
@@ -28,6 +27,23 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
   const [tenant, setTenant] = useState<TenantConfig | null>(null);
   const [loadingTenant, setLoadingTenant] = useState(true);
 
+  const fetchTenant = async () => {
+    if (!profile?.tenantId) return;
+
+    const { data, error } = await supabase
+      .from('tenants')
+      .select('*')
+      .eq('id', profile.tenantId)
+      .single();
+
+    if (data) {
+      setTenant(data as TenantConfig);
+    } else {
+      setTenant(null);
+    }
+    setLoadingTenant(false);
+  };
+
   useEffect(() => {
     if (!profile?.tenantId) {
       setTenant(null);
@@ -36,25 +52,29 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
     }
 
     setLoadingTenant(true);
-    const tenantRef = doc(db, 'tenants', profile.tenantId);
+    fetchTenant();
     
-    const unsubscribe = onSnapshot(tenantRef, (docSnap) => {
-      if (docSnap.exists()) {
-        setTenant({ id: docSnap.id, ...docSnap.data() } as TenantConfig);
-      } else {
-        setTenant(null);
-      }
-      setLoadingTenant(false);
-    }, (error) => {
-      console.error("Error loading tenant data", error);
-      setTenant(null);
-      setLoadingTenant(false);
-    });
+    const channel = supabase
+      .channel(`tenant-${profile.tenantId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'tenants',
+          filter: `id=eq.${profile.tenantId}`,
+        },
+        (payload) => {
+          setTenant(payload.new as TenantConfig);
+        }
+      )
+      .subscribe();
 
-    return () => unsubscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [profile?.tenantId]);
 
-  // Se o SaaS block está ativo para esse tenant
   const isBlockedByBilling = tenant?.statusAssinatura === 'INADIMPLENTE';
 
   return (

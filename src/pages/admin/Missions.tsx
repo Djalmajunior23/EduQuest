@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../lib/AuthContext';
-import { db } from '../../lib/firebase';
-import { collection, addDoc, serverTimestamp, query, where, onSnapshot, orderBy, deleteDoc, doc } from 'firebase/firestore';
+import { supabase } from '../../lib/supabase';
 import { PlusCircle, Zap, Rocket, Cpu, Trophy, Trash2, ListTodo, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../../lib/utils';
@@ -13,34 +12,61 @@ export default function MissionManager() {
   const [missions, setMissions] = useState<any[]>([]);
   const [newMission, setNewMission] = useState({ titulo: '', type: 'DIARIA', xp: 100, aiTokens: 0 });
 
+  const fetchMissions = async () => {
+    if (!profile?.tenantId) return;
+    try {
+      const { data, error } = await supabase
+        .from('missoes')
+        .select('*')
+        .eq('tenant_id', profile.tenantId)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      setMissions(data || []);
+    } catch (error) {
+      console.error('Error fetching missions:', error);
+    } finally {
+      setFetching(false);
+    }
+  };
+
   useEffect(() => {
     if (!profile?.tenantId) return;
-    const q = query(
-      collection(db, 'missoes'),
-      where('tenantId', '==', profile.tenantId),
-      orderBy('createdAt', 'desc')
-    );
-    const unsubscribe = onSnapshot(q, (snap) => {
-      setMissions(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-      setFetching(false);
-    });
-    return () => unsubscribe();
+    fetchMissions();
+
+    const channel = supabase
+      .channel('missions-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'missoes',
+          filter: `tenant_id=eq.${profile.tenantId}`,
+        },
+        () => {
+          fetchMissions();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [profile]);
 
   const addDefaultMissions = async () => {
     if (!profile?.tenantId) return;
     setLoading(true);
     const defaultMissions = [
-      { titulo: 'Primeiros Passos no CLI', type: 'DIARIA', xp: 100, aiTokens: 2, tenantId: profile.tenantId },
-      { titulo: 'Desafio de Lógica de Redes', type: 'SEMANAL', xp: 500, aiTokens: 10, tenantId: profile.tenantId },
-      { titulo: 'Completar 3 laboratórios práticos sobre redes', type: 'SEMANAL', xp: 800, aiTokens: 20, tenantId: profile.tenantId },
-      { titulo: 'Mestre da Documentação', type: 'ESPECIAL', xp: 1000, aiTokens: 50, tenantId: profile.tenantId },
+      { titulo: 'Primeiros Passos no CLI', type: 'DIARIA', xp: 100, ai_tokens: 2, tenant_id: profile.tenantId },
+      { titulo: 'Desafio de Lógica de Redes', type: 'SEMANAL', xp: 500, ai_tokens: 10, tenant_id: profile.tenantId },
+      { titulo: 'Completar 3 laboratórios práticos sobre redes', type: 'SEMANAL', xp: 800, ai_tokens: 20, tenant_id: profile.tenantId },
+      { titulo: 'Mestre da Documentação', type: 'ESPECIAL', xp: 1000, ai_tokens: 50, tenant_id: profile.tenantId },
     ];
     try {
-      const colRef = collection(db, 'missoes');
-      for (const mission of defaultMissions) {
-        await addDoc(colRef, { ...mission, createdAt: serverTimestamp() });
-      }
+      const { error } = await supabase.from('missoes').insert(defaultMissions.map(m => ({ ...m, created_at: new Date().toISOString() })));
+      if (error) throw error;
     } catch (e) {
       console.error(e);
       alert('Erro ao adicionar missões');
@@ -53,11 +79,15 @@ export default function MissionManager() {
     if (!profile?.tenantId) return;
     setLoading(true);
     try {
-      await addDoc(collection(db, 'missoes'), {
-        ...newMission,
-        tenantId: profile.tenantId,
-        createdAt: serverTimestamp()
+      const { error } = await supabase.from('missoes').insert({
+        titulo: newMission.titulo,
+        type: newMission.type,
+        xp: newMission.xp,
+        ai_tokens: newMission.aiTokens,
+        tenant_id: profile.tenantId,
+        created_at: new Date().toISOString()
       });
+      if (error) throw error;
       setNewMission({ titulo: '', type: 'DIARIA', xp: 100, aiTokens: 0 });
     } catch (e) {
       console.error(e);
@@ -68,7 +98,11 @@ export default function MissionManager() {
 
   const deleteMission = async (id: string) => {
     if (confirm('Deseja excluir esta missão?')) {
-       await deleteDoc(doc(db, 'missoes', id));
+       const { error } = await supabase.from('missoes').delete().eq('id', id);
+       if (error) {
+         console.error('Error deleting mission:', error);
+         alert('Erro ao excluir missão.');
+       }
     }
   }
 
@@ -219,7 +253,7 @@ export default function MissionManager() {
                                </div>
                                <div className="flex items-center gap-2 text-slate-500">
                                   <Cpu className="w-4 h-4 text-indigo-500" />
-                                  <span className="text-xs font-black italic tracking-widest">+{mission.aiTokens || 0} Tokens</span>
+                                  <span className="text-xs font-black italic tracking-widest">+{mission.ai_tokens || 0} Tokens</span>
                                </div>
                             </div>
                             <button 

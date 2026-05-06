@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { db } from '../../../lib/firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { supabase } from '../../../lib/supabase';
 
 export default function SAProducer() {
   const [prompt, setPrompt] = useState({ tema: '', conhecimentos: '', capacidades: '', objetivos: '' });
@@ -33,12 +32,16 @@ export default function SAProducer() {
 
   const handleSave = async () => {
     try {
-      await addDoc(collection(db, 'situacoes_aprendizagem'), {
-        titulo: prompt.tema,
-        versao_professor: saContent,
-        createdAt: new Date(),
-        status: 'DRAFT'
-      });
+      const { error } = await supabase
+        .from('situacoes_aprendizagem')
+        .insert({
+          titulo: prompt.tema,
+          versao_professor: saContent,
+          created_at: new Date().toISOString(),
+          status: 'DRAFT'
+        });
+      
+      if (error) throw error;
       alert('SA salva com sucesso!');
     } catch (error) {
       console.error(error);

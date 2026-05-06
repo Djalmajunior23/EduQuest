@@ -1,5 +1,4 @@
-import { collection, addDoc, updateDoc, doc, getDoc, getDocs, query, where, serverTimestamp } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { supabase } from '../lib/supabase';
 import { AIService } from './aiService';
 import { Type } from '@google/genai';
 
@@ -30,37 +29,51 @@ export interface LearningSituation {
 
 export const saService = {
   async createSA(sa: Omit<LearningSituation, 'id' | 'createdAt' | 'updatedAt'>) {
-    const docRef = await addDoc(collection(db, 'situacoes_aprendizagem'), {
-      ...sa,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    });
-    return docRef.id;
+    const { data, error } = await supabase
+      .from('situacoes_aprendizagem')
+      .insert({
+        ...sa,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data.id;
   },
 
   async updateSA(id: string, sa: Partial<LearningSituation>) {
-    const docRef = doc(db, 'situacoes_aprendizagem', id);
-    await updateDoc(docRef, {
-      ...sa,
-      updatedAt: serverTimestamp()
-    });
+    const { error } = await supabase
+      .from('situacoes_aprendizagem')
+      .update({
+        ...sa,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id);
+
+    if (error) throw error;
   },
 
   async getSA(id: string): Promise<LearningSituation | null> {
-    const docSnap = await getDoc(doc(db, 'situacoes_aprendizagem', id));
-    if (docSnap.exists()) {
-      return { id: docSnap.id, ...docSnap.data() } as LearningSituation;
-    }
-    return null;
+    const { data, error } = await supabase
+      .from('situacoes_aprendizagem')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) return null;
+    return data as LearningSituation;
   },
 
   async listSAs(professorId?: string): Promise<LearningSituation[]> {
-    let q = query(collection(db, 'situacoes_aprendizagem'));
+    let query = supabase.from('situacoes_aprendizagem').select('*');
     if (professorId) {
-      q = query(q, where('createdBy', '==', professorId));
+      query = query.eq('created_by', professorId);
     }
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as LearningSituation));
+    const { data, error } = await query;
+    if (error) throw error;
+    return data as LearningSituation[] || [];
   },
 
   async generateSAWithIA(prompt: string, ucInfo?: string): Promise<Partial<LearningSituation>> {

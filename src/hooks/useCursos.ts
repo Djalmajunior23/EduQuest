@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/AuthContext';
 
 export function useCursos() {
@@ -12,14 +11,39 @@ export function useCursos() {
   useEffect(() => {
     if (!tenantId) return;
 
-    const q = query(collection(db, 'cursos'), where('tenantId', '==', tenantId));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setCursos(data);
+    const fetchCursos = async () => {
+      const { data, error } = await supabase
+        .from('cursos')
+        .select('*')
+        .eq('tenant_id', tenantId);
+      
+      if (!error && data) {
+        setCursos(data);
+      }
       setLoading(false);
-    });
+    };
 
-    return () => unsubscribe();
+    fetchCursos();
+
+    const channel = supabase
+      .channel('cursos-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'cursos',
+          filter: `tenant_id=eq.${tenantId}`,
+        },
+        () => {
+          fetchCursos();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [tenantId]);
 
   return { cursos, loading };

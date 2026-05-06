@@ -1,5 +1,4 @@
-import { collection, addDoc, doc, updateDoc, increment, serverTimestamp } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { supabase } from '../lib/supabase';
 import { AIService } from './aiService';
 
 export const studentAiService = {
@@ -16,22 +15,29 @@ export const studentAiService = {
       // Call architectural Socratic layer from central AIService
       const tutorResponse = await AIService.generate(prompt, subjectContext);
 
-      // Record usage and deduct tokens
-      const usageRef = collection(db, 'uso_ia');
-      await addDoc(usageRef, {
-        userId,
-        prompt,
-        response: tutorResponse,
-        tokensConsumed: 5,
-        actionType: 'EXPLANATION',
-        createdAt: serverTimestamp()
-      });
+      // Record usage and deduct tokens in Supabase
+      const { error: usageError } = await supabase
+        .from('uso_ia')
+        .insert({
+          user_id: userId,
+          prompt,
+          response: tutorResponse,
+          tokens_consumed: 5,
+          action_type: 'EXPLANATION',
+          created_at: new Date().toISOString()
+        });
+      
+      if (usageError) console.error("Error logging AI usage:", usageError);
 
-      const userRef = doc(db, 'usuarios', userId);
-      await updateDoc(userRef, {
-        saldoTokensIA: increment(-5),
-        updatedAt: serverTimestamp()
-      });
+      const { error: userError } = await supabase
+        .from('usuarios')
+        .update({
+          saldo_tokens_ia: currentTokens - 5,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', userId);
+      
+      if (userError) throw userError;
 
       return tutorResponse;
     } catch (error) {

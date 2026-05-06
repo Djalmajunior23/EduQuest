@@ -1,6 +1,5 @@
 // src/services/sessionService.ts
-import { collection, addDoc, serverTimestamp, query, where, getDocs, onSnapshot, updateDoc, doc, setDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { supabase } from '../lib/supabase';
 
 export interface ClassSession {
   id?: string;
@@ -24,37 +23,87 @@ export interface ClassSession {
 
 export const sessionService = {
   async startSession(session: Omit<ClassSession, 'id' | 'startedAt' | 'studentsProgress'>) {
-    const docRef = await addDoc(collection(db, 'sessoes_ativas'), {
-      ...session,
-      startedAt: serverTimestamp(),
-      studentsProgress: {}
-    });
-    return docRef.id;
+    const { data, error } = await supabase
+      .from('sessoes_ativas')
+      .insert({
+        ...session,
+        started_at: new Date().toISOString(),
+        students_progress: {}
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data.id;
   },
 
   async finishSession(sessionId: string) {
-    const docRef = doc(db, 'sessoes_ativas', sessionId);
-    await updateDoc(docRef, { status: 'FINISHED', finishedAt: serverTimestamp() });
+    const { error } = await supabase
+      .from('sessoes_ativas')
+      .update({ 
+        status: 'FINISHED', 
+        finished_at: new Date().toISOString() 
+      })
+      .eq('id', sessionId);
+    
+    if (error) throw error;
   },
 
   subscribeToSession(sessionId: string, callback: (session: ClassSession) => void) {
-    const docRef = doc(db, 'sessoes_ativas', sessionId);
-    return onSnapshot(docRef, (snapshot) => {
-      if (snapshot.exists()) {
-        callback({ id: snapshot.id, ...snapshot.data() } as ClassSession);
-      }
-    });
+    const fetchSession = async () => {
+      const { data } = await supabase
+        .from('sessoes_ativas')
+        .select('*')
+        .eq('id', sessionId)
+        .single();
+      if (data) callback(data as ClassSession);
+    };
+
+    fetchSession();
+
+    const channel = supabase
+      .channel(`session-${sessionId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'sessoes_ativas',
+          filter: `id=eq.${sessionId}`,
+        },
+        (payload) => {
+          callback(payload.new as ClassSession);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   },
 
   async updateStudentProgress(sessionId: string, studentId: string, progress: any) {
-    const docRef = doc(db, 'sessoes_ativas', sessionId);
-    await setDoc(docRef, {
-      studentsProgress: {
-        [studentId]: {
-          ...progress,
-          lastUpdate: serverTimestamp()
-        }
-      }
-    }, { merge: true });
+    // Para atualizar JSONB parcial em Supabase sem RPC complexo, 
+    // o ideal é buscar e atualizar ou usar a lógica de merge no cliente
+    const { data: session } = await supabase
+      .from('sessoes_ativas')
+      .select('students_progress')
+      .eq('id', sessionId)
+      .single();
+
+    const currentProgress = session?.students_progress || {};
+    currentProgress[studentId] = {
+      ...progress,
+      lastUpdate: new Date().toISOString()
+    };
+
+    const { error } = await supabase
+      .from('sessoes_ativas')
+      .update({
+        students_progress: currentProgress
+      })
+      .eq('id', sessionId);
+    
+    if (error) throw error;
   }
 };

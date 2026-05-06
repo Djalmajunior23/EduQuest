@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, addDoc, doc, updateDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/AuthContext';
 import { 
   FileCheck, 
@@ -29,25 +28,43 @@ export default function Evaluations() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('all');
 
-  useEffect(() => {
-    fetchEvaluations();
-  }, [profile]);
-
   const fetchEvaluations = async () => {
     if (!profile) return;
     try {
-      const q = query(
-        collection(db, 'avaliacoes'),
-        where('createdBy', '==', profile.uid)
-      );
-      const snap = await getDocs(q);
-      setEvaluations(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      const { data, error } = await supabase
+        .from('avaliacoes')
+        .select('*')
+        .eq('created_by', profile.id)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      setEvaluations(data || []);
     } catch (error) {
       console.error('Error fetching evaluations:', error);
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!profile) return;
+    fetchEvaluations();
+
+    const channel = supabase.channel('avaliacoes_changes')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'avaliacoes',
+        filter: `created_by=eq.${profile.id}`
+      }, () => {
+        fetchEvaluations();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [profile]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -161,7 +178,7 @@ export default function Evaluations() {
                 <h3 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-indigo-600 transition-all">{evalItem.titulo}</h3>
                 <div className="flex items-center gap-2 text-xs font-bold text-slate-400 mb-6">
                   <Users className="w-3.5 h-3.5" />
-                  Turmas: {evalItem.turmaIds?.length || 0}
+                  Turmas: {evalItem.turma_ids?.length || 0}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 mb-8">
@@ -171,14 +188,14 @@ export default function Evaluations() {
                   </div>
                   <div className="p-4 bg-slate-50 rounded-2xl">
                     <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Questões</p>
-                    <p className="text-sm font-bold text-slate-700">{evalItem.questionIds?.length || 0}</p>
+                    <p className="text-sm font-bold text-slate-700">{evalItem.question_ids?.length || 0}</p>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between pt-6 border-t border-slate-50">
                    <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
                      <Calendar className="w-4 h-4 text-indigo-500" />
-                     Expira em {new Date(evalItem.dataFim).toLocaleDateString()}
+                     Expira em {new Date(evalItem.data_fim).toLocaleDateString()}
                    </div>
                    <button className="p-2 bg-indigo-50 text-indigo-600 rounded-xl hover:bg-indigo-600 hover:text-white transition-all">
                      <BarChart2 className="w-5 h-5" />

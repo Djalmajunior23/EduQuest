@@ -22,7 +22,7 @@ export default function SAEditor() {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const isIAMode = searchParams.get('ia') === 'true';
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const navigate = useNavigate();
   
   const [loading, setLoading] = useState(false);
@@ -66,7 +66,7 @@ export default function SAEditor() {
       if (id) {
         await saService.updateSA(id, sa);
       } else {
-        await saService.createSA({ ...sa, createdBy: profile.uid } as any);
+        await saService.createSA({ ...sa, createdBy: user?.id } as any);
       }
       navigate('/sa');
     } catch (error) {

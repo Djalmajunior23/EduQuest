@@ -8,8 +8,7 @@ import {
   CheckCircle2, Clock, Brain, LayoutDashboard, FileText
 } from 'lucide-react';
 import { motion } from 'motion/react';
-import { collection, query, where, getDocs, limit, orderBy } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/AuthContext';
 import { cn } from '../lib/utils';
 

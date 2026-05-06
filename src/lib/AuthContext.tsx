@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
-import { auth, db } from './firebase';
+import { User } from '@supabase/supabase-js';
+import { supabase } from './supabase';
 import { SAAS_PLANS } from '../constants/saas';
 
 const DEFAULT_PERMISSIONS: Record<string, string[]> = {
@@ -32,6 +31,8 @@ interface AuthContextType {
   profile: any | null;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
+  signInWithEmail: (email: string, password: string) => Promise<void>;
+  signUpWithEmail: (email: string, password: string, name: string) => Promise<void>;
   logout: () => Promise<void>;
   hasPermission: (permissionName: string) => boolean;
   hasPlanFeature: (featureName: string) => boolean;
@@ -46,11 +47,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const hasPermission = (permissionName: string): boolean => {
     if (!profile) return false;
-    // 1. Checa as permissões granulares de exceção do usuário
     if (profile.permissoesGranulares && profile.permissoesGranulares.includes(permissionName)) {
        return true;
     }
-    // 2. Checa as permissões padrão do cargo associado
     const defaultRolePerms = DEFAULT_PERMISSIONS[profile.perfil] || [];
     if (defaultRolePerms.includes(permissionName)) {
        return true;
@@ -65,91 +64,162 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    let unsubscribeProfile: (() => void) | null = null;
+    const fetchProfile = async (userId: string) => {
+      const { data, error } = await supabase
+        .from('usuarios')
+        .select('*')
+        .eq('uid', userId)
+        .single();
 
-    const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
-      setUser(user);
-      
-      if (unsubscribeProfile) {
-        unsubscribeProfile();
-        unsubscribeProfile = null;
-      }
+      if (data) {
+        setProfile(data);
+      } else if (!error || error.code === 'PGRST116') {
+        // Profile doesn't exist, create it
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const adminEmails = [
+            'djalmabatistajunior@gmail.com', 
+            'djalmabatistabarbosajunior@gmail.com'
+          ];
+          const isAdmin = user.email && adminEmails.includes(user.email);
+          
+          const newProfile = {
+            uid: user.id,
+            email: user.email,
+            nome: user.user_metadata?.full_name || 'Usuário',
+            perfil: isAdmin ? 'ADMIN' : 'ALUNO',
+            plano: 'FREE',
+            tenantId: isAdmin ? 'nexus_master' : 'nexus_default',
+            status: 'ATIVO',
+            saldoTokensIA: 50,
+            xp: 0,
+            updatedAt: new Date().toISOString()
+          };
 
-      if (user) {
-        const docRef = doc(db, 'usuarios', user.uid);
-        
-        // Listen to profile changes in real-time
-        unsubscribeProfile = onSnapshot(docRef, async (docSnap) => {
-          if (docSnap.exists()) {
-            setProfile(docSnap.data());
-            setLoading(false);
+          const { data: createdProfile, error: createError } = await supabase
+            .from('usuarios')
+            .upsert(newProfile)
+            .select()
+            .single();
+
+          if (createError) {
+            console.error("Error creating user profile:", createError);
           } else {
-            // Create profile for new users based on official blueprint
-            const adminEmails = [
-              'djalmabatistajunior@gmail.com', 
-              'djalmabatistabarbosajunior@gmail.com'
-            ];
-            const isAdmin = user.email && adminEmails.includes(user.email);
-            
-            const newProfile = {
-              uid: user.uid,
-              email: user.email,
-              nome: user.displayName || 'Usuário',
-              perfil: isAdmin ? 'ADMIN' : 'ALUNO',
-              plano: 'FREE',
-              tenantId: isAdmin ? 'nexus_master' : 'nexus_default',
-              status: 'ATIVO',
-              saldoTokensIA: 50,
-              xp: 0,
-              createdAt: serverTimestamp(),
-              updatedAt: serverTimestamp()
-            };
-            
-            try {
-              await setDoc(docRef, newProfile);
-              // Profile state will be updated by onSnapshot
-            } catch (err) {
-              console.error("Error creating user profile:", err);
-              setLoading(false);
-            }
+            setProfile(createdProfile);
           }
-        });
+        }
+      }
+      setLoading(false);
+    };
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      
+      if (currentUser) {
+        fetchProfile(currentUser.id);
+        
+        // Subscribe to profile changes
+        const channel = supabase
+          .channel(`profile-${currentUser.id}`)
+          .on(
+            'postgres_changes',
+            {
+              event: 'UPDATE',
+              schema: 'public',
+              table: 'usuarios',
+              filter: `uid=eq.${currentUser.id}`,
+            },
+            (payload) => {
+              setProfile(payload.new);
+            }
+          )
+          .subscribe();
+
+        return () => {
+          supabase.removeChannel(channel);
+        };
       } else {
         setProfile(null);
         setLoading(false);
       }
     });
 
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'OAUTH_AUTH_SUCCESS') {
+        // Trigger generic getSession to ensure state is updated
+        supabase.auth.getSession();
+      }
+    };
+    window.addEventListener('message', handleMessage);
+
     return () => {
-      unsubscribeAuth();
-      if (unsubscribeProfile) unsubscribeProfile();
+      window.removeEventListener('message', handleMessage);
+      subscription.unsubscribe();
     };
   }, []);
 
   const signInWithGoogle = async () => {
     try {
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-    } catch (error: any) {
-      if (error.code === 'auth/unauthorized-domain') {
-        const domain = window.location.hostname;
-        const msg = `ERRO DE CONFIGURAÇÃO: O domínio "${domain}" não está autorizado no Console do Firebase. ` +
-                    `Por favor, acesse o Console do Firebase -> Authentication -> Settings -> Authorized domains e adicione "${domain}".`;
-        console.error(msg);
-        alert(msg);
-      } else {
-        console.error("Login Error:", error);
-        throw error;
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          skipBrowserRedirect: true,
+          redirectTo: `${window.location.origin}/auth/callback`
+        }
+      });
+      if (error) throw error;
+      
+      if (data?.url) {
+        window.open(data.url, 'oauth_popup', 'width=600,height=700');
       }
+    } catch (error: any) {
+      console.error("Login Error:", error);
+      throw error;
+    }
+  };
+
+  const signInWithEmail = async (email: string, password: string) => {
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) throw error;
+    } catch (error: any) {
+      console.error("Email Login Error:", error);
+      throw error;
+    }
+  };
+
+  const signUpWithEmail = async (email: string, password: string, name: string) => {
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: name,
+          }
+        }
+      });
+      if (error) throw error;
+      
+      // Optionally alert the user if email confirmation is required by Supabase settings:
+      // alert("Verifique seu e-mail para confirmar a conta.");
+    } catch (error: any) {
+      console.error("Email Sign Up Error:", error);
+      throw error;
     }
   };
 
   const logout = async () => {
-    await signOut(auth);
+    await supabase.auth.signOut();
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signInWithGoogle, logout, hasPermission, hasPlanFeature }}>
+    <AuthContext.Provider value={{ user, profile, loading, signInWithGoogle, signInWithEmail, signUpWithEmail, logout, hasPermission, hasPlanFeature }}>
       {children}
     </AuthContext.Provider>
   );

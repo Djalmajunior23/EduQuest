@@ -6,8 +6,8 @@ import { cn } from '../../lib/utils';
 interface GamificationStatsProps {
   stats: {
     level: number;
-    currentXp: number;
-    maxXp: number;
+    current_xp: number;
+    max_xp: number;
     points: number;
     streak: number;
     rank: number;
@@ -15,7 +15,7 @@ interface GamificationStatsProps {
 }
 
 export function StudentGamificationHeader({ stats }: GamificationStatsProps) {
-  const xpProgress = (stats.currentXp / stats.maxXp) * 100;
+  const xpProgress = (stats.current_xp / stats.max_xp) * 100;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -38,7 +38,7 @@ export function StudentGamificationHeader({ stats }: GamificationStatsProps) {
           
           <div className="space-y-4">
             <div className="flex justify-between items-end">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">XP: {stats.currentXp} / {stats.maxXp}</span>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">XP: {stats.current_xp} / {stats.max_xp}</span>
               <span className="text-sm font-black italic text-indigo-400">Próxima Evolução: {Math.round(100 - xpProgress)}%</span>
             </div>
             <div className="h-4 w-full bg-white/5 rounded-full overflow-hidden border border-white/10">
@@ -139,7 +139,7 @@ export function RankingBoard({ rankings }: { rankings: any[] }) {
       <div className="space-y-2">
         {rankings.map((rank, idx) => (
           <div 
-            key={rank.alunoId} 
+            key={rank.aluno_id} 
             className={cn(
               "flex items-center gap-4 p-4 rounded-2xl transition-all",
               idx === 0 ? "bg-amber-50/50 border border-amber-100" : "hover:bg-slate-50"
@@ -154,14 +154,14 @@ export function RankingBoard({ rankings }: { rankings: any[] }) {
               {idx + 1}
             </div>
             <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden border-2 border-white">
-              <img src={rank.avatarUrl || `https://picsum.photos/seed/${rank.alunoId}/100/100`} alt="" referrerPolicy="no-referrer" />
+              <img src={rank.avatar_url || `https://picsum.photos/seed/${rank.aluno_id}/100/100`} alt="" referrerPolicy="no-referrer" />
             </div>
             <div className="flex-1">
               <p className="font-black italic uppercase tracking-tight text-slate-900 text-sm leading-none">{rank.nome}</p>
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Level {rank.level}</p>
             </div>
             <div className="text-right">
-              <p className="text-sm font-black italic text-blue-600 leading-none">{rank.xpTotal.toLocaleString()} XP</p>
+              <p className="text-sm font-black italic text-blue-600 leading-none">{rank.xp_total.toLocaleString()} XP</p>
             </div>
           </div>
         ))}

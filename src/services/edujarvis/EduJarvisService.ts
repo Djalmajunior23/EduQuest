@@ -1,6 +1,5 @@
 // src/services/edujarvis/EduJarvisService.ts
-import { collection, addDoc, serverTimestamp, query, where, orderBy, getDocs, limit, doc, getDoc, setDoc } from 'firebase/firestore';
-import { db, auth } from '../../lib/firebase';
+import { supabase } from '../../lib/supabase';
 import { EduJarvisOrchestrator } from './Orchestrator';
 import { ProfessorAgent } from './agents/ProfessorAgent';
 import { RecommenderAgent } from './agents/RecommenderAgent';
@@ -70,7 +69,7 @@ export class EduJarvisService {
     userProfile: any, 
     context?: any
   ): Promise<EduJarvisMessage> {
-    const user = auth.currentUser;
+    const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("AUTH_REQUIRED");
 
     const tenantId = userProfile.tenantId;
@@ -89,7 +88,7 @@ export class EduJarvisService {
        return {
          role: 'ASSISTANT',
          content: cachedResponse,
-         timestamp: serverTimestamp(),
+         timestamp: new Date().toISOString(),
          agent: 'CACHE'
        };
     }
@@ -100,7 +99,7 @@ export class EduJarvisService {
       return {
         role: 'ASSISTANT',
         content: safety.message || "Conteúdo bloqueado por segurança.",
-        timestamp: serverTimestamp(),
+        timestamp: new Date().toISOString(),
         agent: 'GUARD'
       };
     }
@@ -144,12 +143,12 @@ export class EduJarvisService {
     const assistantMessage: EduJarvisMessage = {
       role: 'ASSISTANT',
       content: responseContent,
-      timestamp: serverTimestamp(),
+      timestamp: new Date().toISOString(),
       agent: intent.agent
     };
 
     // 3. Salvar no histórico e auditoria
-    this.saveInteraction(user.uid, tenantId, text, assistantMessage);
+    this.saveInteraction(user.id, tenantId, text, assistantMessage);
     
     // 3.1 Log de Observabilidade (Phase 08)
     ObservabilityService.logEvent({
@@ -172,7 +171,7 @@ export class EduJarvisService {
     // 3.4 Data Lake Entry (Phase 11 Enterprise Data Lake)
     DataLakeService.registerEvent({
       tenantId,
-      userId: user.uid,
+      userId: user.id,
       userRole: userProfile.perfil,
       eventType: 'AI_INTERACTION',
       sourceModule: intent.agent,
@@ -187,7 +186,7 @@ export class EduJarvisService {
     // 3.5 Personalization Adaptive Loop (Phase 11)
     if (userProfile.perfil === 'student') {
       AdvancedPersonalizationService.updateProfile({
-        alunoId: user.uid,
+        alunoId: user.id,
         tenantId,
         engagementScore: 10 // Placeholder for real logic
       });
@@ -201,9 +200,10 @@ export class EduJarvisService {
 
   private static async saveToCache(hash: string, response: string) {
     try {
-      await setDoc(doc(db, this.CACHE_COLLECTION, hash), {
+      await supabase.from(this.CACHE_COLLECTION).upsert({
+        id: hash,
         response,
-        createdAt: serverTimestamp()
+        created_at: new Date().toISOString()
       });
     } catch (e) {
       console.error("Error saving to cache", e);
@@ -234,7 +234,8 @@ export class EduJarvisService {
 
     switch (agent) {
       case 'TUTOR':
-        const alunoId = profile.id || (auth.currentUser?.uid);
+        const { data: { user: tutorUser } } = await supabase.auth.getUser();
+        const alunoId = profile.id || tutorUser?.id;
         let adaptiveInstruction = "Aluno sem memória cognitiva registrada. Use abordagem iniciante e diagnóstica.";
         
         if (alunoId && profile.perfil === 'ALUNO') {
@@ -254,7 +255,8 @@ export class EduJarvisService {
         const tid = profile.turmaId || context?.turmaId || "TURMA-Geral";
         return await AnalystIA.execute(tid, tenantId, message);
       case 'RECOMMENDER':
-        const studentId = profile.id || auth.currentUser?.uid;
+        const { data: { user: recUser } } = await supabase.auth.getUser();
+        const studentId = profile.id || recUser?.id;
         let digitalTwin = null;
         if (studentId) {
           digitalTwin = await StudentDigitalTwinService.getTwin(studentId);
@@ -382,7 +384,7 @@ export class EduJarvisService {
     
     try {
       const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
+        model: "gemini-2.0-flash",
         contents: [{ role: "user", parts: [{ text: fullPrompt }] }]
       });
       return response.text || "Sem resposta.";
@@ -394,12 +396,12 @@ export class EduJarvisService {
 
   private static async saveInteraction(userId: string, tenantId: string, userText: string, assistantMsg: EduJarvisMessage) {
     try {
-      await addDoc(collection(db, this.COLLECTION), {
-        userId,
-        tenantId,
-        userMessage: userText,
-        assistantMessage: assistantMsg,
-        createdAt: serverTimestamp()
+      await supabase.from(this.COLLECTION).insert({
+        user_id: userId,
+        tenant_id: tenantId,
+        user_message: userText,
+        assistant_message: assistantMsg,
+        created_at: new Date().toISOString()
       });
     } catch (e) {
       console.error("Error saving interaction", e);
@@ -418,12 +420,16 @@ export class EduJarvisService {
 
   private static async checkCache(hash: string): Promise<string | null> {
      try {
-       const docSnap = await getDoc(doc(db, this.CACHE_COLLECTION, hash));
-       if (docSnap.exists()) {
-          const data = docSnap.data();
+       const { data, error } = await supabase
+         .from(this.CACHE_COLLECTION)
+         .select('*')
+         .eq('id', hash)
+         .single();
+       
+       if (data) {
           // TTL de 24 horas por padrão para cache global
           const now = Date.now();
-          const createdAt = data.createdAt?.toMillis() || 0;
+          const createdAt = new Date(data.created_at).getTime() || 0;
           if (now - createdAt < 86400000) {
              return data.response;
           }

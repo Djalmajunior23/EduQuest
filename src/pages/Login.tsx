@@ -1,17 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../lib/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { GraduationCap, Chrome, Mail, Lock, AlertCircle } from 'lucide-react';
+import { GraduationCap, Chrome, Mail, Lock, AlertCircle, User } from 'lucide-react';
 import { motion } from 'motion/react';
 
 export default function Login() {
-  const { signInWithGoogle, user } = useAuth();
+  const { signInWithGoogle, signInWithEmail, signUpWithEmail, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [loading, setLoading] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
+  
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  
   const [emailError, setEmailError] = useState('');
+  const [authError, setAuthError] = useState('');
 
   const from = location.state?.from?.pathname || "/";
 
@@ -39,22 +44,50 @@ export default function Login() {
   const handleGoogleLogin = async () => {
     try {
       setLoading(true);
+      setAuthError('');
       await signInWithGoogle();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login error:', error);
+      setAuthError('Ocorreu um erro ao conectar com Google. Tente novamente.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleEmailLogin = async (e: React.FormEvent) => {
+  const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateEmail(email)) {
       setEmailError('E-mail inválido.');
       return;
     }
-    // Note: Email/Password login requires enabling in Firebase Console
-    alert('O login por e-mail/senha requer configuração adicional no Firebase Console. Por favor, use o Google Login por enquanto.');
+    if (password.length < 6) {
+      setAuthError('A senha deve ter pelo menos 6 caracteres.');
+      return;
+    }
+
+    setLoading(true);
+    setAuthError('');
+
+    try {
+      if (isSignUp) {
+        if (!name.trim()) {
+           setAuthError('Informe seu nome completo.');
+           setLoading(false);
+           return;
+        }
+        await signUpWithEmail(email, password, name);
+        // Display an alert or handled state below
+        setAuthError('Conta criada! Verifique seu email se o Supabase pedir confirmação (ou faça login).');
+        setIsSignUp(false);
+      } else {
+        await signInWithEmail(email, password);
+      }
+    } catch (error: any) {
+      console.error('Auth error:', error);
+      setAuthError(error.message || 'Erro de autenticação. Verifique suas credenciais.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -74,7 +107,31 @@ export default function Login() {
           </p>
         </div>
 
-        <form onSubmit={handleEmailLogin} className="space-y-4 mb-6">
+        {authError && (
+          <div className={`p-4 rounded-xl mb-6 text-sm flex items-start gap-3 ${authError.includes('criada') ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-600 border border-red-100'}`}>
+             <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+             <p>{authError}</p>
+          </div>
+        )}
+
+        <form onSubmit={handleEmailAuth} className="space-y-4 mb-6">
+          {isSignUp && (
+             <div>
+               <label className="block text-sm font-medium text-slate-700 mb-1">Nome Completo</label>
+               <div className="relative">
+                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                 <input
+                   type="text"
+                   value={name}
+                   onChange={(e) => setName(e.target.value)}
+                   placeholder="Seu nome"
+                   className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                   required={isSignUp}
+                 />
+               </div>
+             </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">E-mail</label>
             <div className="relative">
@@ -116,11 +173,21 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading || !!emailError}
-            className="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-xl hover:bg-blue-700 transition-all active:scale-[0.98] disabled:opacity-50 shadow-lg shadow-blue-200"
+            className="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-xl hover:bg-blue-700 transition-all active:scale-[0.98] disabled:opacity-50 shadow-lg shadow-blue-200 mt-2"
           >
-            Entrar
+            {loading ? 'Aguarde...' : (isSignUp ? 'Criar Conta' : 'Entrar')}
           </button>
         </form>
+
+        <div className="text-center mb-6">
+           <button 
+             type="button" 
+             onClick={() => { setIsSignUp(!isSignUp); setAuthError(''); }}
+             className="text-sm font-medium text-slate-500 hover:text-blue-600 transition-colors"
+           >
+             {isSignUp ? 'Já tem uma conta? Fazer Login' : 'Não tem conta? Criar Conta'}
+           </button>
+        </div>
 
         <div className="relative py-4 mb-4">
           <div className="absolute inset-0 flex items-center">

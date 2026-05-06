@@ -22,7 +22,7 @@ export default function ActivityDetailsView() {
 
   const loadData = async () => {
     try {
-      const actDocs = await activityService.getActivitiesByTeacher(user!.uid);
+      const actDocs = await activityService.getActivitiesByTeacher(user!.id);
       const act = actDocs.find(a => a.id === id);
       if (act) {
         setActivity(act);

@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { doc, getDoc, collection, addDoc, query, where, getDocs } from 'firebase/firestore';
-import { db, handleFirestoreError, OperationType } from '../lib/firebase';
+import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/AuthContext';
 import { missionService } from '../services/missionService';
 import { 
@@ -36,18 +35,29 @@ export default function ExamTake() {
   useEffect(() => {
     async function fetchExamData() {
       try {
-        const examDoc = await getDoc(doc(db, 'exams', examId!));
-        if (!examDoc.exists()) {
+        const { data: examData, error: examError } = await supabase
+          .from('exams')
+          .select('*')
+          .eq('id', examId!)
+          .single();
+        
+        if (examError || !examData) {
           navigate('/exams');
           return;
         }
-        const examData = examDoc.data();
-        setExam({ id: examDoc.id, ...examData });
-        setTimeLeft(examData.timeLimit * 60);
+        
+        setExam(examData);
+        setTimeLeft(examData.time_limit * 60);
 
         // Fetch questions
-        const qSnap = await getDocs(query(collection(db, 'questions'), where('__name__', 'in', examData.questionIds)));
-        setQuestions(qSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        const { data: questionData, error: questionError } = await supabase
+          .from('questions')
+          .select('*')
+          .in('id', examData.question_ids);
+        
+        if (!questionError && questionData) {
+          setQuestions(questionData);
+        }
       } catch (error) {
         console.error('Error fetching exam:', error);
       } finally {
@@ -78,7 +88,7 @@ export default function ExamTake() {
     try {
       let correctCount = 0;
       questions.forEach((q, idx) => {
-        if (answers[idx] === q.correctOptionIndex) {
+        if (answers[idx] === q.correct_option_index) {
           correctCount++;
         }
       });
@@ -86,18 +96,19 @@ export default function ExamTake() {
       const score = Math.round((correctCount / questions.length) * 100);
       
       const attemptData = {
-        userId: profile.uid,
-        examId: exam.id,
+        user_id: profile.id,
+        exam_id: exam.id,
         score,
         answers: Object.values(answers),
-        startedAt: new Date(Date.now() - (exam.timeLimit * 60 - timeLeft) * 1000).toISOString(),
-        completedAt: new Date().toISOString()
+        started_at: new Date(Date.now() - (exam.time_limit * 60 - timeLeft) * 1000).toISOString(),
+        completed_at: new Date().toISOString()
       };
 
-      await addDoc(collection(db, 'attempts'), attemptData);
+      const { error } = await supabase.from('attempts').insert(attemptData);
+      if (error) throw error;
       
       // Check for missions completion
-      const completedMissions = await missionService.checkMissions(profile.uid, 'COMPLETE_EXAM', { 
+      const completedMissions = await missionService.checkMissions(profile.id, 'COMPLETE_EXAM', { 
         score, 
         examId: exam.id 
       });
@@ -124,7 +135,7 @@ export default function ExamTake() {
       setResult({ score, correctCount, total: questions.length });
       setFinished(true);
     } catch (error) {
-      handleFirestoreError(error, OperationType.CREATE, 'attempts');
+      console.error('Error submitting exam:', error);
     } finally {
       setSubmitting(false);
     }

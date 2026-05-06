@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, orderBy, onSnapshot, addDoc, updateDoc, doc, serverTimestamp, getDocs, where } from 'firebase/firestore';
-import { db } from '../../../lib/firebase';
+import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../lib/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -32,16 +31,45 @@ export default function CourseManager() {
 
   useEffect(() => {
     if (!profile?.tenantId) return;
-    const q = query(
-      collection(db, 'cursos'), 
-      where('tenantId', '==', profile.tenantId),
-      orderBy('createdAt', 'desc')
-    );
-    const unsubscribe = onSnapshot(q, (snap) => {
-      setCourses(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+
+    const fetchCourses = async () => {
+      const { data, error } = await supabase
+        .from('cursos')
+        .select('*')
+        .eq('tenant_id', profile.tenantId)
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching courses:', error);
+      } else {
+        setCourses((data || []).map(d => ({
+          ...d,
+          cargaHoraria: d.carga_horaria,
+          createdAt: d.created_at,
+          updatedAt: d.updated_at,
+          tenantId: d.tenant_id
+        })));
+      }
       setLoading(false);
-    });
-    return () => unsubscribe();
+    };
+
+    fetchCourses();
+
+    // Subscribe to courses
+    const channel = supabase.channel('cursos_changes')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'cursos',
+        filter: `tenant_id=eq.${profile.tenantId}`
+      }, () => {
+        fetchCourses();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [profile]);
 
   const handleOpenPanel = (course: any = null) => {
@@ -76,19 +104,30 @@ export default function CourseManager() {
     setSaving(true);
     try {
       const courseData = {
-        ...formData,
-        cargaHoraria: Number(formData.cargaHoraria),
-        updatedAt: serverTimestamp()
+        nome: formData.nome,
+        descricao: formData.descricao,
+        carga_horaria: Number(formData.cargaHoraria),
+        modalidade: formData.modalidade,
+        nivel: formData.nivel,
+        status: formData.status,
+        updated_at: new Date().toISOString()
       };
 
       if (editingCourse) {
-        await updateDoc(doc(db, 'cursos', editingCourse.id), courseData);
+        const { error } = await supabase
+          .from('cursos')
+          .update(courseData)
+          .eq('id', editingCourse.id);
+        if (error) throw error;
       } else {
-        await addDoc(collection(db, 'cursos'), {
-          ...courseData,
-          tenantId: profile.tenantId,
-          createdAt: serverTimestamp()
-        });
+        const { error } = await supabase
+          .from('cursos')
+          .insert({
+            ...courseData,
+            tenant_id: profile.tenantId,
+            created_at: new Date().toISOString()
+          });
+        if (error) throw error;
       }
       setIsPanelOpen(false);
     } catch (error) {
@@ -101,7 +140,11 @@ export default function CourseManager() {
   const handleStatusToggle = async (courseId: string, currentStatus: string) => {
     const newStatus = currentStatus === 'ATIVO' ? 'INATIVO' : 'ATIVO';
     try {
-      await updateDoc(doc(db, 'cursos', courseId), { status: newStatus, updatedAt: serverTimestamp() });
+      const { error } = await supabase
+        .from('cursos')
+        .update({ status: newStatus, updated_at: new Date().toISOString() })
+        .eq('id', courseId);
+      if (error) throw error;
     } catch (error) {
       console.error('Failed to toggle status', error);
     }

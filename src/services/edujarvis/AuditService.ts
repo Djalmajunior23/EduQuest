@@ -1,6 +1,5 @@
 // src/services/edujarvis/AuditService.ts
-import { collection, addDoc, serverTimestamp, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
+import { supabase } from '../../lib/supabase';
 
 export interface AuditLog {
   tenantId: string | null;
@@ -17,7 +16,7 @@ export interface AuditLog {
 }
 
 export class AuditService {
-  private static COLLECTION = 'ai_audit_logs';
+  private static TABLE = 'ai_audit_logs';
 
   private static async hashPrompt(prompt: string): Promise<string> {
     const msgUint8 = new TextEncoder().encode(prompt);
@@ -42,32 +41,42 @@ export class AuditService {
       const promptHash = await this.hashPrompt(data.prompt);
       const { prompt, ...rest } = data;
       
-      await addDoc(collection(db, this.COLLECTION), {
+      const { error } = await supabase.from(this.TABLE).insert({
         ...rest,
-        promptHash,
-        createdAt: serverTimestamp()
+        tenant_id: rest.tenantId,
+        user_id: rest.userId,
+        user_role: rest.userRole,
+        agent_name: rest.agentName,
+        model_used: rest.modelUsed,
+        prompt_hash: promptHash,
+        safety_score: rest.safetyScore,
+        estimated_cost: rest.estimatedCost,
+        created_at: new Date().toISOString()
       });
+
+      if (error) throw error;
     } catch (error) {
       console.error("Failed to log AI interaction audit", error);
     }
   }
 
   public static async getTenantAuditSummary(tenantId: string) {
-    const q = query(
-      collection(db, this.COLLECTION),
-      where('tenantId', '==', tenantId),
-      orderBy('createdAt', 'desc'),
-      limit(500)
-    );
+    const { data: logs, error } = await supabase
+      .from(this.TABLE)
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .order('created_at', { ascending: false })
+      .limit(500);
     
-    const snap = await getDocs(q);
-    const logs = snap.docs.map(doc => doc.data() as AuditLog);
+    if (error) throw error;
+    
+    const typedLogs = (logs || []) as AuditLog[];
     
     return {
-      total: logs.length,
-      bloqueios: logs.filter(l => l.blocked).length,
-      custoEstimado: logs.reduce((sum, l) => sum + (l.estimatedCost || 0), 0),
-      agentesMaisUsados: logs.reduce((acc: Record<string, number>, log) => {
+      total: typedLogs.length,
+      bloqueios: typedLogs.filter(l => l.blocked).length,
+      custoEstimado: typedLogs.reduce((sum, l) => sum + (l.estimatedCost || 0), 0),
+      agentesMaisUsados: typedLogs.reduce((acc: Record<string, number>, log) => {
         acc[log.agentName] = (acc[log.agentName] || 0) + 1;
         return acc;
       }, {})

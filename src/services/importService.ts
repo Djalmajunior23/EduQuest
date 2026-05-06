@@ -1,5 +1,4 @@
-import { db } from '../lib/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { supabase } from '../lib/supabase';
 
 export interface ImportResult {
   total: number;
@@ -39,15 +38,17 @@ export const importService = {
           throw new Error('Nome e Email são obrigatórios');
         }
 
-        // Adicionar ao Firestore
-        await addDoc(collection(db, 'usuarios'), {
+        // Adicionar ao Supabase
+        const { error } = await supabase.from('usuarios').insert({
           ...student,
           perfil: student.perfil || 'ALUNO',
           status: student.status || 'PENDENTE',
-          saldoTokensIA: 0,
-          createdAt: serverTimestamp(),
-          primeiroAcessoCompleto: false
+          saldo_tokens_ia: 0,
+          created_at: new Date().toISOString(),
+          primeiro_acesso_completo: false
         });
+
+        if (error) throw error;
 
         success++;
       } catch (error) {

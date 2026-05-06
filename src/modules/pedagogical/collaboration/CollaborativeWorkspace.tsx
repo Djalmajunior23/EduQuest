@@ -5,8 +5,7 @@ import {
   Send, Paperclip, MoreVertical, CheckCircle2,
   Clock, AlertCircle, Sparkles, Brain, Plus, Users, Calendar
 } from 'lucide-react';
-import { collection, query, where, onSnapshot, addDoc, serverTimestamp, getDocs } from 'firebase/firestore';
-import { db } from '../../../lib/firebase';
+import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../lib/AuthContext';
 import { cn } from '../../../lib/utils';
 
@@ -19,18 +18,47 @@ interface GroupTask {
 }
 
 export default function CollaborativeWorkspace() {
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const [activeTab, setActiveTab] = useState<'CHAT' | 'TASKS' | 'RUBRICS'>('TASKS');
   const [myGroup, setMyGroup] = useState<any>(null);
   const [tasks, setTasks] = useState<GroupTask[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Mock simulation context
-    setMyGroup(null);
-    setTasks([]);
-    setLoading(false);
-  }, []);
+    // Current collaborative workspace is in simulation/MVP mode
+    // Transitioning to SQL-backed Supabase structure
+    const fetchWorkspaceData = async () => {
+      if (!user) return;
+      
+      // Attempt to find group for user
+      const { data: groupData } = await supabase
+        .from('grupos_colaborativos')
+        .select('*, membros(*)')
+        .contains('membros_ids', [user.id])
+        .limit(1)
+        .maybeSingle();
+
+      if (groupData) {
+        setMyGroup(groupData);
+        
+        // Fetch tasks
+        const { data: taskData } = await supabase
+          .from('tarefas_grupo')
+          .select('*')
+          .eq('grupo_id', groupData.id);
+        
+        if (taskData) {
+          setTasks(taskData.map(t => ({
+            ...t,
+            responsavelId: t.responsavel_id
+          } as GroupTask)));
+        }
+      }
+      setLoading(false);
+    };
+
+    fetchWorkspaceData();
+  }, [profile]);
 
   return (
     <div className="max-w-7xl mx-auto space-y-8">

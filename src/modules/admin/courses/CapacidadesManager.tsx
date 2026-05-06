@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, orderBy, onSnapshot, addDoc, updateDoc, doc, serverTimestamp, deleteDoc, where } from 'firebase/firestore';
-import { db } from '../../../lib/firebase';
+import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../lib/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -32,30 +31,52 @@ export default function CapacidadesManager() {
   useEffect(() => {
     if (!profile?.tenantId) return;
 
-    // Escuta dupla para cruzar relacional
-    const qCaps = query(
-      collection(db, 'capacidades_tecnicas'), 
-      where('tenantId', '==', profile.tenantId),
-      orderBy('createdAt', 'desc')
-    );
-    const qUcs = query(
-      collection(db, 'unidades_curriculares'), 
-      where('tenantId', '==', profile.tenantId),
-      orderBy('nome', 'asc')
-    );
+    const fetchData = async () => {
+      // Fetch Capacidades
+      const { data: capData } = await supabase
+        .from('capacidades_tecnicas')
+        .select('*')
+        .eq('tenant_id', profile.tenantId)
+        .order('created_at', { ascending: false });
+      
+      if (capData) {
+        setCapacidades(capData.map(d => ({
+          ...d,
+          unidadeCurricularId: d.unidade_curricular_id,
+          createdAt: d.created_at,
+          updatedAt: d.updated_at,
+          tenantId: d.tenant_id
+        })));
+      }
 
-    const unsubscribeCaps = onSnapshot(qCaps, (snap) => {
-      setCapacidades(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      // Fetch UCs
+      const { data: ucData } = await supabase
+        .from('unidades_curriculares')
+        .select('*')
+        .eq('tenant_id', profile.tenantId)
+        .order('nome', { ascending: true });
+      
+      if (ucData) setUcs(ucData);
+
       setLoading(false);
-    });
+    };
 
-    const unsubscribeUcs = onSnapshot(qUcs, (snap) => {
-       setUcs(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    });
+    fetchData();
+
+    // Subscribe to Capacidades
+    const capChannel = supabase.channel('capacidades_tecnicas_changes')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'capacidades_tecnicas',
+        filter: `tenant_id=eq.${profile.tenantId}`
+      }, () => {
+        fetchData();
+      })
+      .subscribe();
 
     return () => {
-       unsubscribeCaps();
-       unsubscribeUcs();
+      supabase.removeChannel(capChannel);
     };
   }, [profile]);
 
@@ -84,7 +105,11 @@ export default function CapacidadesManager() {
 
   const handleDelete = async (id: string) => {
      if(window.confirm('Excluir esta Capacidade Técnica? Essa ação pode quebrar trilhas ou dashboards de alunos que já aprenderam isso!')) {
-         await deleteDoc(doc(db, 'capacidades_tecnicas', id));
+         const { error } = await supabase
+           .from('capacidades_tecnicas')
+           .delete()
+           .eq('id', id);
+         if (error) console.error('Error deleting capacity:', error);
      }
   };
 
@@ -95,18 +120,29 @@ export default function CapacidadesManager() {
     setSaving(true);
     try {
       const capData = {
-        ...formData,
-        updatedAt: serverTimestamp()
+        nome: formData.nome,
+        descricao: formData.descricao,
+        nivel: formData.nivel,
+        unidade_curricular_id: formData.unidadeCurricularId,
+        status: formData.status,
+        updated_at: new Date().toISOString()
       };
 
       if (editingCapacidade) {
-        await updateDoc(doc(db, 'capacidades_tecnicas', editingCapacidade.id), capData);
+        const { error } = await supabase
+          .from('capacidades_tecnicas')
+          .update(capData)
+          .eq('id', editingCapacidade.id);
+        if (error) throw error;
       } else {
-        await addDoc(collection(db, 'capacidades_tecnicas'), {
-          ...capData,
-          tenantId: profile.tenantId,
-          createdAt: serverTimestamp()
-        });
+        const { error } = await supabase
+          .from('capacidades_tecnicas')
+          .insert({
+            ...capData,
+            tenant_id: profile.tenantId,
+            created_at: new Date().toISOString()
+          });
+        if (error) throw error;
       }
       setIsPanelOpen(false);
     } catch (error) {

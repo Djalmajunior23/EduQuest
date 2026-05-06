@@ -1,17 +1,5 @@
 // src/services/edujarvis/StudentDigitalTwinService.ts
-import { 
-  doc, 
-  getDoc, 
-  setDoc, 
-  serverTimestamp, 
-  collection, 
-  query, 
-  where, 
-  orderBy, 
-  limit, 
-  getDocs 
-} from 'firebase/firestore';
-import { db } from '../../lib/firebase';
+import { supabase } from '../../lib/supabase';
 
 export interface StudentDigitalTwin {
   alunoId: string;
@@ -29,26 +17,29 @@ export interface StudentDigitalTwin {
 }
 
 export class StudentDigitalTwinService {
-  private static COLLECTION = 'student_digital_twins';
+  private static TABLE = 'student_digital_twins';
 
   public static async getTwin(alunoId: string): Promise<StudentDigitalTwin | null> {
-    const docRef = doc(db, this.COLLECTION, alunoId);
-    const snap = await getDoc(docRef);
-    
-    if (snap.exists()) {
-      return snap.data() as StudentDigitalTwin;
-    }
-    
-    return null;
+    const { data, error } = await supabase
+      .from(this.TABLE)
+      .select('*')
+      .eq('alunoId', alunoId)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data;
   }
 
   public static async updateTwin(alunoId: string, data: Partial<StudentDigitalTwin>) {
-    const docRef = doc(db, this.COLLECTION, alunoId);
-    await setDoc(docRef, {
-      ...data,
-      alunoId,
-      lastUpdate: serverTimestamp()
-    }, { merge: true });
+    const { error } = await supabase
+      .from(this.TABLE)
+      .upsert({
+        ...data,
+        alunoId,
+        last_update: new Date().toISOString()
+      }, { onConflict: 'alunoId' });
+    
+    if (error) throw error;
   }
 
   /**
@@ -56,22 +47,23 @@ export class StudentDigitalTwinService {
    */
   public static async reconstruct(alunoId: string) {
     // 1. Buscar logs de comportamento
-    const behaviorQuery = query(
-      collection(db, 'behavioral_logs'),
-      where('alunoId', '==', alunoId),
-      orderBy('createdAt', 'desc'),
-      limit(100)
-    );
-    const logs = await getDocs(behaviorQuery);
+    const { data: logs, error } = await supabase
+      .from('behavioral_logs')
+      .select('*')
+      .eq('alunoId', alunoId)
+      .order('created_at', { ascending: false })
+      .limit(100);
+
+    if (error) throw error;
     
     // 2. Buscar desempenho acadêmico (simulados, tarefas)
     // ... lógica de agregação ...
 
     // Exemplo de atualização simplificada
     const twinUpdate: Partial<StudentDigitalTwin> = {
-      engajamento: Math.min(logs.size * 5, 100),
-      riscoPedagogico: logs.size < 5 ? 'alto' : 'baixo',
-      lastUpdate: new Date()
+      engajamento: Math.min((logs?.length || 0) * 5, 100),
+      riscoPedagogico: (logs?.length || 0) < 5 ? 'alto' : 'baixo',
+      lastUpdate: new Date().toISOString()
     };
 
     await this.updateTwin(alunoId, twinUpdate);

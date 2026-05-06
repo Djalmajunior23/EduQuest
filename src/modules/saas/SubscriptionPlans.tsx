@@ -4,8 +4,8 @@ import { Check, Zap, Shield, Building2, Star, ArrowRight, Lock, Unlock, Clock, L
 import { SAAS_PLANS } from '../../constants/saas';
 import { useAuth } from '../../lib/AuthContext';
 import { cn } from '../../lib/utils';
-import { doc, getDoc, setDoc, updateDoc, onSnapshot } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
+import { supabase } from '../../lib/supabase';
+// import { doc, getDoc, setDoc, updateDoc, onSnapshot } from 'firebase/firestore'; // Removed Firebase
 
 export default function SubscriptionPlans() {
   const { profile, user } = useAuth();
@@ -14,13 +14,19 @@ export default function SubscriptionPlans() {
   const [isUpdating, setIsUpdating] = useState<string | null>(null);
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(doc(db, 'configuracoes_institucionais', 'saas'), (doc) => {
-      if (doc.exists()) {
-        setLiberatedPlans(doc.data().planosLiberados || []);
+    const fetchConfigs = async () => {
+      const { data } = await supabase
+        .from('configuracoes_institucionais')
+        .select('*')
+        .eq('id', 'saas')
+        .single();
+      
+      if (data) {
+        setLiberatedPlans(data.planos_liberados || []);
       }
-    });
+    };
 
-    return () => unsubscribe();
+    fetchConfigs();
   }, []);
 
   const handleToggleLiberation = async (planKey: string) => {
@@ -30,10 +36,14 @@ export default function SubscriptionPlans() {
       : [...liberatedPlans, planKey];
     
     try {
-      await setDoc(doc(db, 'configuracoes_institucionais', 'saas'), {
-        planosLiberados: newList,
-        updatedAt: new Date().toISOString()
-      }, { merge: true });
+      await supabase
+        .from('configuracoes_institucionais')
+        .upsert({
+          id: 'saas',
+          planos_liberados: newList,
+          updated_at: new Date().toISOString()
+        });
+      setLiberatedPlans(newList);
     } catch (err) {
       console.error("Erro ao liberar plano:", err);
     }
@@ -55,11 +65,16 @@ Deseja confirmar a assinatura?`);
     if(confirm) {
        setIsUpdating(key);
        try {
-         await updateDoc(doc(db, 'usuarios', user.uid), { 
-           plano: key,
-           planoExpiracao: months > 1 ? new Date(Date.now() + months * 30 * 24 * 60 * 60 * 1000).toISOString() : null,
-           planoDuration: months
-         });
+         const { error } = await supabase
+           .from('usuarios')
+           .update({ 
+             plano: key,
+             plano_expiracao: months > 1 ? new Date(Date.now() + months * 30 * 24 * 60 * 60 * 1000).toISOString() : null,
+             plano_duration: months
+           })
+           .eq('uid', user.id);
+         
+         if (error) throw error;
          alert('✅ Assinatura confirmada com sucesso!');
        } catch (err) {
          alert('Erro ao atualizar plano: ' + err);

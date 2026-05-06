@@ -54,7 +54,7 @@ export default function Profile() {
     setSuccess(false);
 
     try {
-      await updateUserProfile(user.uid, formData, user.uid);
+      await updateUserProfile(user.id, formData, user.id);
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err: any) {
@@ -113,7 +113,7 @@ export default function Profile() {
               <div className="space-y-4">
                  <div className="flex items-center gap-3 text-slate-500">
                     <Shield className="w-4 h-4" />
-                    <span className="text-xs font-bold uppercase tracking-wider">ID: {user?.uid.slice(0, 8)}...</span>
+                    <span className="text-xs font-bold uppercase tracking-wider">ID: {user?.id.slice(0, 8)}...</span>
                  </div>
                  <div className="flex items-center gap-3 text-slate-500">
                     <Calendar className="w-4 h-4" />

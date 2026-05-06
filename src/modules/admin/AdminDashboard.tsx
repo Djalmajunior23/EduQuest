@@ -2,8 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { Users, BookOpen, Brain, ShieldAlert, Target, Loader2, Info } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { doc, onSnapshot } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
+import { supabase } from '../../lib/supabase';
 import { cn } from '../../lib/utils';
 import { Link } from 'react-router-dom';
 
@@ -14,28 +13,49 @@ export function AdminDashboardPanel() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // In a real app, n8n consolidates this data. We mock a structure here but listen theoretically
-    // to a BI metrics document that is updated by the server logic (n8n/Cloud Functions)
-    const unsubscribe = onSnapshot(doc(db, 'indicadores_bi', 'instituicao_atual'), (snap) => {
-       if (snap.exists()) {
-          setData(snap.data());
-       } else {
-          // Valores iniciais/vazios enquanto o motor de BI não popula a coleção
-          setData({
-             totalUsersActivos: 0,
-             distribuicaoPerfis: [
-                { name: 'Alunos', value: 0 },
-                { name: 'Professores', value: 0 },
-                { name: 'Admins', value: 0 }
-             ],
-             tokensIA_Consumidos_Mes: 0,
-             riscoPedagogicoAlunos: 0,
-             onboardingPendentes: 0
-          });
-       }
-       setLoading(false);
-    });
-    return () => unsubscribe();
+    const fetchData = async () => {
+      const { data: biData, error } = await supabase
+        .from('indicadores_bi')
+        .select('*')
+        .eq('id', 'instituicao_atual')
+        .single();
+      
+      if (error) {
+        console.error('Error fetching BI data:', error);
+        // Valores iniciais/vazios enquanto o motor de BI não popula a coleção
+        setData({
+           totalUsersActivos: 0,
+           distribuicaoPerfis: [
+              { name: 'Alunos', value: 0 },
+              { name: 'Professores', value: 0 },
+              { name: 'Admins', value: 0 }
+           ],
+           tokensIA_Consumidos_Mes: 0,
+           riscoPedagogicoAlunos: 0,
+           onboardingPendentes: 0
+        });
+      } else {
+        setData(biData);
+      }
+      setLoading(false);
+    };
+
+    fetchData();
+
+    const channel = supabase.channel('indicadores_bi_changes')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'indicadores_bi',
+        filter: 'id=eq.instituicao_atual'
+      }, (payload) => {
+        setData(payload.new);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   if (loading) return (
