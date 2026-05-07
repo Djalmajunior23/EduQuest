@@ -1,8 +1,8 @@
-// src/services/caseStudyService.ts
-import { supabase } from '../lib/supabase';
-import { AIService } from './aiService';
+import { api } from '../lib/api';
 
-export interface CaseStudy {
+
+// src/services/caseStudyService.ts
+import { AIService } from './aiService';export interface CaseStudy {
   id?: string;
   tenantId: string;
   titulo: string;
@@ -16,7 +16,7 @@ export interface CaseStudy {
 
 export const caseStudyService = {
   async createCaseStudy(cs: Omit<CaseStudy, 'id' | 'createdAt'>) {
-    const { data, error } = await supabase
+    const { data, error } = await api
       .from('estudos_caso')
       .insert({
         tenant_id: cs.tenantId,
@@ -29,14 +29,14 @@ export const caseStudyService = {
         created_at: new Date().toISOString()
       })
       .select()
-      .single();
+      .maybeSingle();
     
     if (error) throw error;
     return data.id;
   },
 
   async listCaseStudies(tenantId: string): Promise<CaseStudy[]> {
-    const { data, error } = await supabase
+    const { data, error } = await api
       .from('estudos_caso')
       .select('*')
       .eq('tenant_id', tenantId);

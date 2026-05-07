@@ -1,5 +1,5 @@
 // src/services/edujarvis/BusinessCopilot.ts
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI } from "@/services/aiClient";
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 
@@ -9,7 +9,7 @@ export class BusinessCopilot {
     adminId: string;
     metrics: any;
   }) {
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+    const ai = new GoogleGenAI({});
     const prompt = `Como Copiloto de Negócios SaaS Educacional, analise: ${JSON.stringify(data.metrics)}.
     Gere um relatório JSON: {"healthAssessment": "", "churnRiskFactors": [], "growthOpportunities": []}`;
 

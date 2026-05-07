@@ -1,5 +1,7 @@
+import { api } from '../../lib/api';
+
+
 // src/services/edujarvis/StudentDigitalTwinService.ts
-import { supabase } from '../../lib/supabase';
 
 export interface StudentDigitalTwin {
   alunoId: string;
@@ -20,7 +22,7 @@ export class StudentDigitalTwinService {
   private static TABLE = 'student_digital_twins';
 
   public static async getTwin(alunoId: string): Promise<StudentDigitalTwin | null> {
-    const { data, error } = await supabase
+    const { data, error } = await api
       .from(this.TABLE)
       .select('*')
       .eq('alunoId', alunoId)
@@ -31,7 +33,7 @@ export class StudentDigitalTwinService {
   }
 
   public static async updateTwin(alunoId: string, data: Partial<StudentDigitalTwin>) {
-    const { error } = await supabase
+    const { error } = await api
       .from(this.TABLE)
       .upsert({
         ...data,
@@ -47,7 +49,7 @@ export class StudentDigitalTwinService {
    */
   public static async reconstruct(alunoId: string) {
     // 1. Buscar logs de comportamento
-    const { data: logs, error } = await supabase
+    const { data: logs, error } = await api
       .from('behavioral_logs')
       .select('*')
       .eq('alunoId', alunoId)

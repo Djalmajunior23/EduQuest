@@ -1,5 +1,5 @@
 // src/services/edujarvis/StrategicDecisionIA.ts
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI } from "@/services/aiClient";
 
 export class StrategicDecisionIA {
   private static ai: GoogleGenAI;
@@ -8,9 +8,8 @@ export class StrategicDecisionIA {
    * IA para tomada de decisão estratégica dos gestores e diretores.
    */
   public static async generateInsights(stats: any) {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) throw new Error("GEMINI_API_KEY_MISSING");
-    this.ai = new GoogleGenAI({ apiKey });
+    
+    this.ai = new GoogleGenAI({});
 
     const prompt = `
 Aja como Diretor Acadêmico Estratégico. Analise os dados da instituição e sugira 3 ações imediatas de alto impacto.

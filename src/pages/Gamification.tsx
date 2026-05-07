@@ -1,11 +1,11 @@
+import { api } from '../lib/api';
+
+
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../lib/AuthContext';
-import { supabase } from '../lib/supabase';
 import { Loader2, Trophy, Rocket, Target, Sparkles } from 'lucide-react';
 import { StudentGamificationHeader, MissionList, RankingBoard } from '../modules/gamification/GamificationUI';
-import { motion } from 'motion/react';
-
-export default function Gamification() {
+import { motion } from 'motion/react';export default function Gamification() {
   const { profile } = useAuth();
   const [loading, setLoading] = useState(true);
   const [gamificationData, setGamificationData] = useState<any>(null);
@@ -16,36 +16,42 @@ export default function Gamification() {
     async function fetchData() {
       if (!profile) return;
       try {
-        // 1. Perfil de Gamificação
-        const { data: gamData, error: gamError } = await supabase
-          .from('gamificacao')
-          .select('*')
-          .eq('id', profile.id)
-          .single();
+        // 1. Perfil de Gamificação (from profile)
+        const currentXp = profile.xp || 0;
+        const level = Math.floor(currentXp / 1000) + 1; // 1 level per 1000 xp
+        const max_xp = level * 1000;
         
-        if (gamData && !gamError) {
-          setGamificationData(gamData);
-        } else {
-          // Fallback para renderização de demo
-          setGamificationData({
-            level: 8,
-            current_xp: 4500,
-            max_xp: 10000,
-            points: 1250,
-            streak: 5,
-            rank: 12
-          });
-        }
+        setGamificationData({
+          level: level,
+          current_xp: currentXp,
+          max_xp: max_xp,
+          points: profile.ai_tokens || 0,
+          streak: profile.streak || 0,
+          rank: 0, // calculated from ranking below
+        });
 
         // 2. Ranking Top 10
-        const { data: rankData, error: rankError } = await supabase
-          .from('ranking')
-          .select('*')
-          .order('xp_total', { ascending: false })
+        const { data: rankData, error: rankError } = await api
+          .from('usuarios')
+          .select('uid, nome, xp')
+          .order('xp', { ascending: false })
           .limit(10);
 
-        if (rankData && !rankError) {
-          setRankings(rankData);
+        if (rankData && rankData.length > 0 && !rankError) {
+          const userRankIndex = rankData.findIndex(r => r.uid === profile.id);
+          
+          if (userRankIndex !== -1) {
+             setGamificationData((prev: any) => prev ? { ...prev, rank: userRankIndex + 1 } : prev);
+          } else {
+             setGamificationData((prev: any) => prev ? { ...prev, rank: '+10' } : prev);
+          }
+
+          setRankings(rankData.map(r => ({
+            aluno_id: r.uid,
+            nome: r.nome || 'Usuário Anônimo',
+            level: Math.floor((r.xp || 0) / 1000) + 1,
+            xp_total: r.xp || 0
+          })));
         } else {
           // Mock rankings
           setRankings([
@@ -58,7 +64,7 @@ export default function Gamification() {
         }
 
         // 3. Missões Ativas
-        const { data: missionData, error: missionError } = await supabase
+        const { data: missionData, error: missionError } = await api
           .from('progresso_missao')
           .select('*')
           .eq('aluno_id', profile.id)

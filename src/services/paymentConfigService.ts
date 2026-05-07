@@ -1,10 +1,10 @@
-// src/services/paymentConfigService.ts
-import { supabase } from '../lib/supabase';
-import { PaymentProviderConfig } from '../types/payment';
+import { api } from '../lib/api';
 
-export const paymentConfigService = {
+
+// src/services/paymentConfigService.ts
+import { PaymentProviderConfig } from '../types/payment';export const paymentConfigService = {
   async getProvidersByTenant(tenantId: string): Promise<PaymentProviderConfig[]> {
-    const { data, error } = await supabase
+    const { data, error } = await api
       .from('config_pagamentos')
       .select('*')
       .eq('tenant_id', tenantId);
@@ -31,14 +31,14 @@ export const paymentConfigService = {
     delete (dataToSave as any).updatedAt;
     delete (dataToSave as any).updatedBy;
 
-    const { error: saveError } = await supabase
+    const { error: saveError } = await api
       .from('config_pagamentos')
       .upsert(dataToSave);
 
     if (saveError) throw saveError;
     
     // Log audit
-    const { error: logError } = await supabase
+    const { error: logError } = await api
       .from('audit_pagamentos')
       .insert({
         tenant_id: config.tenantId,

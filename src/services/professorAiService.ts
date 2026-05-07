@@ -1,7 +1,7 @@
-import { supabase } from '../lib/supabase';
-import { AIService } from './aiService';
+import { api } from '../lib/api';
 
-export const professorAiService = {
+
+import { AIService } from './aiService';export const professorAiService = {
   /**
    * Generates complex pedagogical content based on type and context.
    * Utilizes the PREMIUM tier for heavy reasoning tasks typical for educators.

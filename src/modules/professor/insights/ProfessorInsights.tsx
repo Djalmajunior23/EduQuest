@@ -1,15 +1,14 @@
+import { api } from '../../../lib/api';
+
+
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../lib/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  BrainCircuit, ShieldAlert, Sparkles, AlertTriangle, TrendingUp, TrendingDown,
+import {   BrainCircuit, ShieldAlert, Sparkles, AlertTriangle, TrendingUp, TrendingDown,
   User, CheckCircle2, ChevronRight, XOctagon, Loader2
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { cn } from '../../../lib/utils';
-
-export default function ProfessorInsights() {
+import { cn } from '../../../lib/utils';export default function ProfessorInsights() {
   const { user } = useAuth();
   const [alertas, setAlertas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,7 +27,7 @@ export default function ProfessorInsights() {
     if (!user) return;
 
     const fetchAlerts = async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from('alertas_pedagogicos')
         .select('*')
         .eq('target_professor_id', user.id)
@@ -50,7 +49,7 @@ export default function ProfessorInsights() {
     fetchAlerts();
 
     // Subscribe to alerts
-    const channel = supabase
+    const channel = api
       .channel('alertas_pedagogicos_changes')
       .on('postgres_changes', { 
         event: '*', 
@@ -63,7 +62,7 @@ export default function ProfessorInsights() {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      api.removeChannel(channel);
     };
   }, [user]);
 

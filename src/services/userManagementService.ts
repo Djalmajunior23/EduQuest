@@ -1,4 +1,6 @@
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
+
+
 
 export interface AuditLog {
   acao: string;
@@ -13,7 +15,7 @@ export interface AuditLog {
  */
 export async function logAction(log: AuditLog) {
   try {
-    await supabase.from('logs').insert({
+    await api.from('logs').insert({
       ...log,
       data_hora: new Date().toISOString()
     });
@@ -26,7 +28,7 @@ export async function logAction(log: AuditLog) {
  * Updates a user's profile and logs the change.
  */
 export async function updateUserProfile(userId: string, data: any, responsibleId: string) {
-  const { error } = await supabase
+  const { error } = await api
     .from('usuarios')
     .update({
       ...data,
@@ -50,7 +52,7 @@ export async function updateUserProfile(userId: string, data: any, responsibleId
  * Changes a user's status (Activate/Deactivate).
  */
 export async function toggleUserStatus(userId: string, newStatus: string, responsibleId: string) {
-  const { error } = await supabase
+  const { error } = await api
     .from('usuarios')
     .update({
       status: newStatus,
@@ -76,7 +78,7 @@ export async function toggleUserStatus(userId: string, newStatus: string, respon
 export async function inviteUser(data: { nome: string; email: string; perfil: string; turmaId?: string }, responsibleId: string) {
   const invitationToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
   
-  const { data: invitation, error } = await supabase
+  const { data: invitation, error } = await api
     .from('convites')
     .insert({
       ...data,
@@ -86,7 +88,7 @@ export async function inviteUser(data: { nome: string; email: string; perfil: st
       created_by: responsibleId
     })
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
 
@@ -106,7 +108,7 @@ export async function inviteUser(data: { nome: string; email: string; perfil: st
  */
 export async function setBlockAccount(userId: string, isBlocked: boolean, responsibleId: string, reason: string) {
   const newStatus = isBlocked ? 'BLOQUEADO' : 'ATIVO';
-  const { error } = await supabase
+  const { error } = await api
     .from('usuarios')
     .update({ 
       status: newStatus,
@@ -128,17 +130,15 @@ export async function setBlockAccount(userId: string, isBlocked: boolean, respon
 }
 
 /**
- * Batch import users from CSV/JSON
- */
-export async function importUsersBatch(users: any[], responsibleId: string) {
-  const preparedUsers = users.map(user => ({
+ * Batch import users from CSV/JSON */
+export async function importUsersBatch(users: any[], responsibleId: string) {  const preparedUsers = (users || []).map(user => ({
     ...user,
     status: 'PENDENTE',
     created_at: new Date().toISOString(),
     created_by: responsibleId
   }));
 
-  const { data, error } = await supabase
+  const { data, error } = await api
     .from('usuarios')
     .insert(preparedUsers);
 
@@ -151,8 +151,7 @@ export async function importUsersBatch(users: any[], responsibleId: string) {
     usuarioAfetadoId: 'MULTIPLE',
     usuarioResponsavelId: responsibleId,
     descricao: `Importação em lote concluída: ${successCount} registros`,
-    detalhes: { importedCount: successCount }
-  });
+    detalhes: { importedCount: successCount }  });
 
   return { success: successCount, failed: 0 };
 }

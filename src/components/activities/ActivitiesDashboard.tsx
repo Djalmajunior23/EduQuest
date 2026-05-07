@@ -90,7 +90,7 @@ export default function ActivitiesDashboard() {
         <div className="p-6 border-b border-slate-100 flex items-center justify-between">
           <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2"><List className="w-5 h-5 text-indigo-500"/> Suas Atividades</h2>
         </div>
-        {activities.length === 0 ? (
+        {(activities || []).length === 0 ? (
           <div className="p-12 text-center text-slate-500">Nenhuma atividade criada ainda.</div>
         ) : (
           <table className="w-full text-left">
@@ -105,7 +105,7 @@ export default function ActivitiesDashboard() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {activities.map(act => (
+              {(activities || []).map(act => (
                 <tr key={act.id} className="hover:bg-slate-50 transition">
                   <td className="p-4 font-medium text-slate-800">{act.title}</td>
                   <td className="p-4 text-slate-600 capitalize">{act.type.replace('_', ' ')}</td>

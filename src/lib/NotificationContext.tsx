@@ -1,8 +1,8 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from './supabase';
-import { useAuth } from './AuthContext';
+import { api } from '../lib/api';
 
-export interface AppNotification {
+
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useAuth } from './AuthContext';export interface AppNotification {
   id: string;
   userId: string;
   title: string;
@@ -31,7 +31,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const fetchNotifications = async () => {
     if (!user || !profile || !profile.tenantId) return;
 
-    const { data, error } = await supabase
+    const { data, error } = await api
       .from('notificacoes')
       .select('*')
       .eq('tenant_id', profile.tenantId)
@@ -63,7 +63,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
     fetchNotifications();
 
-    const channel = supabase
+    const channel = api
       .channel('notifications')
       .on(
         'postgres_changes',
@@ -80,13 +80,13 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      api.removeChannel(channel);
     };
   }, [user, profile]);
 
   const markAsRead = async (id: string) => {
     try {
-      const { error } = await supabase
+      const { error } = await api
         .from('notificacoes')
         .update({ read: true })
         .eq('id', id);
@@ -100,7 +100,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   const markAllAsRead = async () => {
     try {
-      const { error } = await supabase
+      const { error } = await api
         .from('notificacoes')
         .update({ read: true })
         .eq('user_id', user?.id)

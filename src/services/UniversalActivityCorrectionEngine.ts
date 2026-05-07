@@ -1,8 +1,8 @@
-import { Activity, ActivitySubmission, Rubric } from '../types/activities';
-import { AIService } from './aiService';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 
-export interface UniversalCorrectionResult {
+
+import { Activity, ActivitySubmission, Rubric } from '../types/activities';
+import { AIService } from './aiService';export interface UniversalCorrectionResult {
   correctionType: string;
   finalSuggestedScore: number;
   confidenceLevel: "baixo" | "médio" | "alto";
@@ -169,9 +169,7 @@ RETORNE UM JSON SEGUINDO ESTE SCHEMA:
 
     try {
       // Se houver uma URL de microserviço configurada, tenta usar ela
-      const envObj = (typeof import.meta !== 'undefined' && (import.meta as any).env) ? (import.meta as any).env : (typeof process !== 'undefined' ? process.env : {});
-      const correctionUrl = envObj.VITE_CORRECTION_ENGINE_URL || (import.meta as any).env?.VITE_CORRECTION_ENGINE_URL;
-      
+      const envObj = (typeof import.meta !== 'undefined' && (import.meta as any).env) ? (import.meta as any).env : (typeof process !== 'undefined' ? process.env : {});      const correctionUrl = envObj.VITE_CORRECTION_ENGINE_URL || (import.meta as any).env?.VITE_CORRECTION_ENGINE_URL;      
       if (correctionUrl) {
         try {
           const response = await fetch(`${correctionUrl}/api/correction/evaluate`, {
@@ -200,9 +198,9 @@ RETORNE UM JSON SEGUINDO ESTE SCHEMA:
       const aiResult = await AIService.generateJSON(prompt, schema) as UniversalCorrectionResult;
 
       if (submission.id) {
-        // Salvar correção no Supabase
-        const { error: updateError } = await supabase
-          .from('activity_submissions')
+        // Salvar correção no Database
+        const { error: updateError } = await api
+          .from('submissoes')
           .update({
             ai_score: aiResult.finalSuggestedScore,
             ai_feedback: aiResult.studentFeedback,
@@ -224,8 +222,8 @@ RETORNE UM JSON SEGUINDO ESTE SCHEMA:
         if (updateError) console.error('Error updating submission:', updateError);
 
         // Gerar log de correção
-        await supabase
-          .from('correction_logs')
+        await api
+          .from('logs_correcao')
           .insert({
             submission_id: submission.id,
             activity_id: activity.id,

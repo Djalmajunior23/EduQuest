@@ -1,27 +1,30 @@
+import { api } from '../lib/api';
+
+
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../lib/AuthContext';
-import { supabase } from '../lib/supabase';
-import { CheckCircle2, ShieldCheck, UserCircle, Rocket } from 'lucide-react';
-
-export function OnboardingWizard() {
+import { CheckCircle2, ShieldCheck, UserCircle, Rocket } from 'lucide-react';export function OnboardingWizard({ onComplete }: { onComplete?: () => void }) {
   const { user, profile } = useAuth();
   const [step, setStep] = useState(1);
   const [telefone, setTelefone] = useState(profile?.telefone || '');
   const [loading, setLoading] = useState(false);
 
   // If already complete or loading, don't show.
-  if (profile?.primeiroAcessoCompleto) return null;
+  if (profile?.primeiroAcessoCompleto) {
+    return null;
+  }
+
 
   const handleAcceptTerms = async () => {
     setLoading(true);
     try {
-      const { error } = await supabase
+      const { error } = await api
         .from('usuarios')
         .update({
           termos_aceitos_em: new Date().toISOString(),
         })
-        .eq('id', user!.id);
+        .eq('uid', user!.id);
       
       if (error) throw error;
       setStep(2);
@@ -34,12 +37,12 @@ export function OnboardingWizard() {
   const handleUpdateProfile = async () => {
     setLoading(true);
     try {
-      const { error } = await supabase
+      const { error } = await api
         .from('usuarios')
         .update({
           telefone,
         })
-        .eq('id', user!.id);
+        .eq('uid', user!.id);
       
       if (error) throw error;
       setStep(3);
@@ -52,15 +55,17 @@ export function OnboardingWizard() {
   const handleFinish = async () => {
     setLoading(true);
     try {
-      const { error } = await supabase
+      const { error } = await api
         .from('usuarios')
         .update({
           primeiro_acesso_completo: true,
         })
-        .eq('id', user!.id);
+        .eq('uid', user!.id);
       
       if (error) throw error;
       // Auth data reloads automatically via subscription in AuthContext
+      // Call onComplete to immediately trigger reload or hide
+      onComplete?.();
     } catch (error) {
       console.error(error);
     }
@@ -148,8 +153,7 @@ export function OnboardingWizard() {
                       placeholder="(11) 99999-9999"
                       className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                     />
-                    <p className="text-xs text-slate-400 mt-2">Para recebermos alertas importantes de turmas e simulados.</p>
-                  </div>
+                    <p className="text-xs text-slate-400 mt-2">Para recebermos alertas importantes de turmas e simulados.</p>                  </div>
                 </div>
                 <button 
                   onClick={handleUpdateProfile} disabled={loading}

@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { supabase } from '../../../lib/supabase';
+import { api } from '../../../lib/api';
 
-interface Simulation {
+
+import React, { useEffect, useState } from 'react';interface Simulation {
   id: string;
   title: string;
   passingScore: number;
@@ -12,7 +12,7 @@ export default function SimulationManager() {
 
   useEffect(() => {
     const fetchSimulations = async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from('simulations')
         .select('*');
       

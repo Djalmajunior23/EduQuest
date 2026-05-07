@@ -1,10 +1,10 @@
+import { api } from '../../lib/api';
+
+
 // src/services/edujarvis/GameIAService.ts
-import { supabase } from '../../lib/supabase';
 import { AIService } from '../aiService';
 import { StudentDigitalTwinService } from './StudentDigitalTwinService';
-import { adaptiveMissionService } from '../adaptiveMissionService';
-
-export class GameIAService {
+import { adaptiveMissionService } from '../adaptiveMissionService';export class GameIAService {
   /**
    * Gera uma missão épica baseada no contexto atual do aluno.
    */
@@ -65,11 +65,11 @@ export class GameIAService {
    */
   public static async syncRewardSystem(userId: string, xpGained: number) {
     // Busca saldo atual
-    const { data: user, error: fetchError } = await supabase
+    const { data: user, error: fetchError } = await api
       .from('usuarios')
       .select('xp, nivel')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
 
     if (fetchError || !user) return;
 
@@ -77,7 +77,7 @@ export class GameIAService {
     const newLevel = Math.floor(newXp / 1000) + 1; // Regra de negócio: cada 1000 XP mata um nível
 
     // Atualiza no banco
-    await supabase
+    await api
       .from('usuarios')
       .update({
         xp: newXp,
@@ -87,7 +87,7 @@ export class GameIAService {
       .eq('id', userId);
 
     // Registra no histórico de gamificação
-    await supabase
+    await api
       .from('gamificacao_historico')
       .insert({
         user_id: userId,

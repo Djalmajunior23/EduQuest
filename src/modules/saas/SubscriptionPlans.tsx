@@ -1,10 +1,12 @@
+import { api } from '../../lib/api';
+
+
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Check, Zap, Shield, Building2, Star, ArrowRight, Lock, Unlock, Clock, Loader2 } from 'lucide-react';
 import { SAAS_PLANS } from '../../constants/saas';
 import { useAuth } from '../../lib/AuthContext';
 import { cn } from '../../lib/utils';
-import { supabase } from '../../lib/supabase';
 // import { doc, getDoc, setDoc, updateDoc, onSnapshot } from 'firebase/firestore'; // Removed Firebase
 
 export default function SubscriptionPlans() {
@@ -15,11 +17,11 @@ export default function SubscriptionPlans() {
 
   useEffect(() => {
     const fetchConfigs = async () => {
-      const { data } = await supabase
+      const { data } = await api
         .from('configuracoes_institucionais')
         .select('*')
         .eq('id', 'saas')
-        .single();
+        .maybeSingle();
       
       if (data) {
         setLiberatedPlans(data.planos_liberados || []);
@@ -36,7 +38,7 @@ export default function SubscriptionPlans() {
       : [...liberatedPlans, planKey];
     
     try {
-      await supabase
+      await api
         .from('configuracoes_institucionais')
         .upsert({
           id: 'saas',
@@ -65,7 +67,7 @@ Deseja confirmar a assinatura?`);
     if(confirm) {
        setIsUpdating(key);
        try {
-         const { error } = await supabase
+         const { error } = await api
            .from('usuarios')
            .update({ 
              plano: key,

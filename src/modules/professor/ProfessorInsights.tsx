@@ -5,8 +5,6 @@ import {
   Target, Users, Zap, Search, Filter, ChevronRight,
   MessageSquare, Lightbulb, Activity, BarChart3
 } from 'lucide-react';
-import { collection, query, where, onSnapshot, getDocs, orderBy, limit } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
 import { useAuth } from '../../lib/AuthContext';
 import { cn } from '../../lib/utils';
 import { 

@@ -85,10 +85,10 @@ export default function StudentActivityView() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1 space-y-4">
-          {activities.length === 0 ? (
+          {(activities || []).length === 0 ? (
             <div className="p-6 bg-slate-50 rounded-xl text-slate-500 text-sm text-center">Nenhuma atividade pendente.</div>
           ) : (
-             activities.map(act => {
+             (activities || []).map(act => {
                 const sub = getSub(act.id!);
                 const isDone = sub && (sub.status === 'corrected' || sub.status === 'reviewed');
                 return (

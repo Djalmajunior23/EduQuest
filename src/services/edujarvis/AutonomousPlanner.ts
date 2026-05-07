@@ -1,5 +1,5 @@
 // src/services/edujarvis/AutonomousPlanner.ts
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI } from "@/services/aiClient";
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 
@@ -11,7 +11,7 @@ export class AutonomousPlanner {
     durationWeeks: number;
     studentNeeds: string[];
   }) {
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+    const ai = new GoogleGenAI({});
     const prompt = `Crie um planejamento pedagógico autônomo sobre ${data.topic} para ${data.durationWeeks} semanas.
     Necessidades da turma: ${data.studentNeeds.join(', ')}.
     Retorne em JSON: { "planTitle": "", "weeklyPlans": [{"week": 1, "topics": [], "activities": [], "interventions": []}] }`;

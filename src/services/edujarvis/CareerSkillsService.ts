@@ -1,7 +1,7 @@
 // src/services/edujarvis/CareerSkillsService.ts
 import { collection, addDoc, serverTimestamp, query, where, getDocs, setDoc, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI } from "@/services/aiClient";
 
 export interface CareerPath {
   alunoId: string;
@@ -16,7 +16,7 @@ export class CareerSkillsService {
   private static COLLECTION = 'career_paths_ai';
 
   public static async generateCareerPath(alunoId: string, tenantId: string, profile: any) {
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+    const ai = new GoogleGenAI({});
     
     // Simular RAG de Industry Skills
     const prompt = `

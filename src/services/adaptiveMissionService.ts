@@ -1,7 +1,7 @@
-import { supabase } from '../lib/supabase';
-import { AIService } from './aiService';
+import { api } from '../lib/api';
 
-export type StudentProfileType = 
+
+import { AIService } from './aiService';export type StudentProfileType = 
   | 'INICIANTE_INSEGURO' 
   | 'EM_EVOLUCAO' 
   | 'CONSISTENTE' 
@@ -31,11 +31,11 @@ export const adaptiveMissionService = {
    * Determina o perfil do aluno com base em métricas reais.
    */
   async determineStudentProfile(userId: string): Promise<StudentProfileType> {
-    const { data: userData } = await supabase
+    const { data: userData } = await api
       .from('usuarios')
       .select('*')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
       
     if (!userData) return 'INICIANTE_INSEGURO';
     
@@ -55,11 +55,11 @@ export const adaptiveMissionService = {
    */
   async generateAdaptiveMissions(userId: string, courseId: string, tenantId: string) {
     const profile = await this.determineStudentProfile(userId);
-    const { data: userData } = await supabase
+    const { data: userData } = await api
       .from('usuarios')
       .select('nome')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
       
     const userName = userData ? userData.nome : 'Aluno';
 
@@ -109,7 +109,7 @@ export const adaptiveMissionService = {
     }
 
     // Limpa missões antigas pendentes/ativas (opcional, mas boa prática para evitar spam)
-    await supabase
+    await api
       .from('gamificacao_missoes_adaptativas')
       .update({ status: 'EXPIRED' })
       .eq('userId', userId)
@@ -127,11 +127,11 @@ export const adaptiveMissionService = {
         status: 'ACTIVE',
       };
       
-      const { data } = await supabase
+      const { data } = await api
         .from('gamificacao_missoes_adaptativas')
         .insert(newMission)
         .select()
-        .single();
+        .maybeSingle();
         
       if (data) {
         finalMissions.push(data as AdaptiveMission);
@@ -145,7 +145,7 @@ export const adaptiveMissionService = {
    * Busca as missões adaptativas ativas do aluno.
    */
   async getActiveAdaptiveMissions(userId: string, tenantId: string) {
-    const { data } = await supabase
+    const { data } = await api
       .from('gamificacao_missoes_adaptativas')
       .select('*')
       .eq('userId', userId)

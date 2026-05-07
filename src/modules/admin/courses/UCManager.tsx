@@ -1,15 +1,14 @@
+import { api } from '../../../lib/api';
+
+
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../lib/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  Building2, Search, Plus, Filter, MoreVertical, 
+import {   Building2, Search, Plus, Filter, MoreVertical, 
   Library, Clock, FileText, CheckCircle2, AlertCircle, Edit3, X, Save, 
   Loader2, Tags
 } from 'lucide-react';
-import { cn } from '../../../lib/utils';
-
-export default function UCManager() {
+import { cn } from '../../../lib/utils';export default function UCManager() {
   const { profile } = useAuth();
   const [ucs, setUcs] = useState<any[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
@@ -34,7 +33,7 @@ export default function UCManager() {
 
     const fetchData = async () => {
       // Fetch UCs
-      const { data: ucData } = await supabase
+      const { data: ucData } = await api
         .from('unidades_curriculares')
         .select('*')
         .eq('tenant_id', profile.tenantId)
@@ -52,7 +51,7 @@ export default function UCManager() {
       }
 
       // Fetch Courses
-      const { data: courseData } = await supabase
+      const { data: courseData } = await api
         .from('cursos')
         .select('*')
         .eq('tenant_id', profile.tenantId)
@@ -66,7 +65,7 @@ export default function UCManager() {
     fetchData();
 
     // Subscribe to UCs
-    const ucChannel = supabase.channel('unidades_curriculares_changes')
+    const ucChannel = api.channel('unidades_curriculares_changes')
       .on('postgres_changes', { 
         event: '*', 
         schema: 'public', 
@@ -78,7 +77,7 @@ export default function UCManager() {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(ucChannel);
+      api.removeChannel(ucChannel);
     };
   }, [profile]);
 
@@ -121,13 +120,13 @@ export default function UCManager() {
       };
 
       if (editingUc) {
-        const { error } = await supabase
+        const { error } = await api
           .from('unidades_curriculares')
           .update(ucData)
           .eq('id', editingUc.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase
+        const { error } = await api
           .from('unidades_curriculares')
           .insert({
             ...ucData,
@@ -229,7 +228,7 @@ export default function UCManager() {
                    </thead>
                    <tbody className="divide-y divide-slate-100">
                       <AnimatePresence>
-                        {filteredUcs.map((uc) => (
+                        {(filteredUcs || []).map((uc) => (
                           <motion.tr 
                             key={uc.id}
                             initial={{ opacity: 0 }}
@@ -285,7 +284,7 @@ export default function UCManager() {
                       </AnimatePresence>
                    </tbody>
                 </table>
-                {filteredUcs.length === 0 && (
+                {(filteredUcs || []).length === 0 && (
                    <div className="py-16 text-center text-slate-400 bg-slate-50/50">
                       <Library className="w-12 h-12 text-slate-200 mx-auto mb-4" />
                       <p className="font-black tracking-widest text-[10px] uppercase">Nenhuma UC encontrada no filtro.</p>

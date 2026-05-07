@@ -52,7 +52,7 @@ export default function LiveMonitoring({ sessionId }: { sessionId: string }) {
           <div className="bg-white px-6 py-3 rounded-2xl border border-slate-100 flex items-center gap-4">
              <div className="text-center">
                 <p className="text-[10px] font-black text-slate-400 uppercase">Presentes</p>
-                <p className="text-xl font-black text-slate-900">{students.length}</p>
+                <p className="text-xl font-black text-slate-900">{(students || []).length}</p>
              </div>
              <div className="w-px h-8 bg-slate-100" />
              <div className="text-center">
@@ -78,7 +78,7 @@ export default function LiveMonitoring({ sessionId }: { sessionId: string }) {
             <div className="flex items-center gap-3 font-bold">
               <Users size={20} /> Todos os Alunos
             </div>
-            <span className="text-lg font-black">{students.length}</span>
+            <span className="text-lg font-black">{(students || []).length}</span>
           </button>
           
           <button 
@@ -105,13 +105,13 @@ export default function LiveMonitoring({ sessionId }: { sessionId: string }) {
         <div className="lg:col-span-3">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <AnimatePresence>
-              {filteredStudents.length === 0 ? (
+              {(filteredStudents || []).length === 0 ? (
                 <div className="col-span-full bg-slate-50 border-2 border-dashed border-slate-200 rounded-[3rem] h-64 flex flex-col items-center justify-center text-slate-400">
                    <Activity size={48} className="mb-4 opacity-20" />
                    <p className="font-bold uppercase tracking-widest text-xs">Nenhuma atividade detectada nesta categoria</p>
                 </div>
               ) : (
-                filteredStudents.map((s, i) => (
+                (filteredStudents || []).map((s, i) => (
                   <motion.div 
                     layout
                     initial={{ opacity: 0, scale: 0.95 }}

@@ -1,5 +1,5 @@
 // src/services/edujarvis/CurriculumAutopilotAdvanced.ts
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI } from "@/services/aiClient";
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 
@@ -14,7 +14,7 @@ export class CurriculumAutopilotAdvanced {
     marketSkills: string[];
     currentCurriculum: string;
   }) {
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+    const ai = new GoogleGenAI({});
 
     const prompt = `
 Você é o Curriculum Autopilot do EduJarvis.

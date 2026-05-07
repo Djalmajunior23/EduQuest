@@ -1,8 +1,9 @@
+import { api } from '../lib/api';
+
+
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../lib/AuthContext';
-import { supabase } from '../lib/supabase';
-import { 
-  Trophy, 
+import {   Trophy, 
   Clock, 
   CheckCircle2, 
   AlertCircle,
@@ -20,9 +21,7 @@ import {
 import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { cn } from '../lib/utils';
-import { AdminDashboardPanel } from '../modules/admin/AdminDashboard';
-
-export default function Dashboard() {
+import { AdminDashboardPanel } from '../modules/admin/AdminDashboard';export default function Dashboard() {
   const { profile } = useAuth();
   const [stats, setStats] = useState({
     totalAttempts: 0,
@@ -54,7 +53,11 @@ export default function Dashboard() {
       }
     }
 
-    if (profile) fetchStats();
+    if (profile) {
+      fetchStats();
+    } else {
+      setLoading(false);
+    }
   }, [profile]);
 
   if (loading) return (
@@ -72,24 +75,24 @@ export default function Dashboard() {
   return (
     <div className="space-y-12">
       {/* Dynamic Header */}
-      <header className="relative bg-slate-900 rounded-[3rem] p-12 text-white overflow-hidden shadow-2xl">
+      <header className="relative bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 rounded-[2.5rem] p-10 md:p-14 text-white overflow-hidden shadow-2xl shadow-indigo-900/20 border border-white/10">
          <div className="relative z-10 space-y-6">
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-               <span className="bg-blue-600 text-[10px] font-black uppercase tracking-[0.3em] px-4 py-2 rounded-full shadow-lg shadow-blue-500/20">
+               <span className="bg-indigo-500/20 text-indigo-300 text-[10px] font-black uppercase tracking-[0.3em] px-4 py-2 rounded-full border border-indigo-500/30">
                   Acesso Autorizado // {profile?.perfil}
                </span>
-               <h1 className="text-5xl md:text-7xl font-black italic uppercase tracking-tighter mt-6 leading-none">
+               <h1 className="text-4xl md:text-6xl font-black italic uppercase tracking-tighter mt-8 leading-tight">
                   Bem-vindo, <span className="text-indigo-400">{profile?.nome}</span>
                </h1>
-               <p className="max-w-xl text-slate-400 font-medium text-lg mt-4 leading-relaxed">
+               <p className="max-w-xl text-slate-300 font-medium text-lg mt-4 leading-relaxed">
                   {profile?.perfil === 'ALUNO' 
                     ? 'Sua jornada épica rumo à maestria tecnológica continua aqui.' 
                     : 'Aumente sua produtividade pedagógica com inteligência artificial de ponta.'}
                </p>
             </motion.div>
          </div>
-         <Sparkles className="absolute -right-16 -top-16 w-64 h-64 text-white/5 rotate-12" />
-         <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/10 to-transparent pointer-events-none" />
+         <Sparkles className="absolute -right-12 -top-12 w-80 h-80 text-indigo-500/10 rotate-12" />
+         <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-transparent pointer-events-none" />
       </header>
 
       {/* Operation Grid */}

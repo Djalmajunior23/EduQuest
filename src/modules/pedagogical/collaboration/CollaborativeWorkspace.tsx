@@ -1,15 +1,14 @@
+import { api } from '../../../lib/api';
+
+
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  Users2, MessageSquare, ListTodo, Award, Star, 
+import {   Users2, MessageSquare, ListTodo, Award, Star, 
   Send, Paperclip, MoreVertical, CheckCircle2,
   Clock, AlertCircle, Sparkles, Brain, Plus, Users, Calendar
 } from 'lucide-react';
-import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../lib/AuthContext';
-import { cn } from '../../../lib/utils';
-
-interface GroupTask {
+import { cn } from '../../../lib/utils';interface GroupTask {
   id: string;
   titulo: string;
   responsavelId: string;
@@ -26,12 +25,12 @@ export default function CollaborativeWorkspace() {
 
   useEffect(() => {
     // Current collaborative workspace is in simulation/MVP mode
-    // Transitioning to SQL-backed Supabase structure
+    // Transitioning to SQL-backed Database structure
     const fetchWorkspaceData = async () => {
       if (!user) return;
       
       // Attempt to find group for user
-      const { data: groupData } = await supabase
+      const { data: groupData } = await api
         .from('grupos_colaborativos')
         .select('*, membros(*)')
         .contains('membros_ids', [user.id])
@@ -42,7 +41,7 @@ export default function CollaborativeWorkspace() {
         setMyGroup(groupData);
         
         // Fetch tasks
-        const { data: taskData } = await supabase
+        const { data: taskData } = await api
           .from('tarefas_grupo')
           .select('*')
           .eq('grupo_id', groupData.id);
@@ -107,7 +106,7 @@ export default function CollaborativeWorkspace() {
           <div className="bg-white border border-slate-200 rounded-3xl p-6">
             <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Membros do Grupo</h3>
             <div className="space-y-4">
-               {myGroup?.membros.map((membro: any) => (
+               {(myGroup?.membros || []).map((membro: any) => (
                  <div key={membro.id} className="flex items-center justify-between group">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full border-2 border-slate-100 overflow-hidden">
@@ -170,7 +169,7 @@ export default function CollaborativeWorkspace() {
                                <h4 className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">{task.titulo}</h4>
                                <div className="flex items-center gap-4 mt-1">
                                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
-                                   <Users className="w-3 h-3" /> {myGroup?.membros.find((m: any) => m.id === task.responsavelId)?.nome}
+                                   <Users className="w-3 h-3" /> {(myGroup?.membros || []).find((m) => m.id === task.responsavelId)?.nome}
                                  </span>
                                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
                                     <Calendar className="w-3 h-3" /> 14 Out

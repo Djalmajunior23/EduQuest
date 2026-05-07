@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../lib/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { GraduationCap, Chrome, Mail, Lock, AlertCircle, User } from 'lucide-react';
+import { GraduationCap, Mail, Lock, AlertCircle, User } from 'lucide-react';
 import { motion } from 'motion/react';
 
 export default function Login() {
-  const { signInWithGoogle, signInWithEmail, signUpWithEmail, user } = useAuth();
+  const { signInWithEmail, signUpWithEmail, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [loading, setLoading] = useState(false);
@@ -41,19 +41,6 @@ export default function Login() {
     }
   };
 
-  const handleGoogleLogin = async () => {
-    try {
-      setLoading(true);
-      setAuthError('');
-      await signInWithGoogle();
-    } catch (error: any) {
-      console.error('Login error:', error);
-      setAuthError('Ocorreu um erro ao conectar com Google. Tente novamente.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateEmail(email)) {
@@ -77,7 +64,7 @@ export default function Login() {
         }
         await signUpWithEmail(email, password, name);
         // Display an alert or handled state below
-        setAuthError('Conta criada! Verifique seu email se o Supabase pedir confirmação (ou faça login).');
+        setAuthError('Conta criada! Verifique seu email para confirmação ou faça login.');
         setIsSignUp(false);
       } else {
         await signInWithEmail(email, password);
@@ -189,31 +176,7 @@ export default function Login() {
            </button>
         </div>
 
-        <div className="relative py-4 mb-4">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-slate-100"></div>
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-white px-2 text-slate-400">Ou continue com</span>
-          </div>
-        </div>
-
         <div className="space-y-4">
-          <button
-            onClick={handleGoogleLogin}
-            disabled={loading}
-            className="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 text-slate-700 font-semibold py-3 px-4 rounded-xl hover:bg-slate-50 transition-all active:scale-[0.98] disabled:opacity-50"
-          >
-            {loading ? (
-              <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-slate-500"></div>
-            ) : (
-              <>
-                <Chrome className="w-5 h-5 text-blue-500" />
-                Google
-              </>
-            )}
-          </button>
-          
           <p className="text-xs text-center text-slate-400 px-4">
             Ao entrar, você concorda com nossos termos de uso e política de privacidade.
           </p>

@@ -106,7 +106,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
         <nav className="flex-1 px-4 py-8 space-y-2 overflow-y-auto custom-scrollbar">
           <p className="px-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Navegação Principal</p>
-          {filteredMenuItems.map((item) => (
+          {(filteredMenuItems || []).map((item) => (
             <Link
               key={item.path}
               to={item.path}
@@ -218,7 +218,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   </button>
                 </div>
                 <nav className="flex-1 px-4 space-y-1">
-                  {filteredMenuItems.map((item) => (
+                  {(filteredMenuItems || []).map((item) => (
                     <Link
                       key={item.path}
                       to={item.path}

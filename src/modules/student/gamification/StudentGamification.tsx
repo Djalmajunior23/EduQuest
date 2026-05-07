@@ -1,8 +1,10 @@
+import { api } from '../../../lib/api';
+
+
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import * as LucideIcons from 'lucide-react';
-import { 
-  Trophy, 
+import {   Trophy, 
   Flame, 
   Zap, 
   Star, 
@@ -29,20 +31,15 @@ import {
 } from 'lucide-react';
 import { ALL_BADGES, GamificationItem } from '../../gamification/libraries';
 import { BOSS_CHALLENGES, BossChallenge } from '../../gamification/bossChallenges';
-import { PRACTICAL_CHALLENGES } from '../../gamification/challengesLibrary';
-
-const DynamicIcon = ({ name, className }: { name: string, className?: string }) => {
+import { PRACTICAL_CHALLENGES } from '../../gamification/challengesLibrary';const DynamicIcon = ({ name, className }: { name: string, className?: string }) => {
   const IconComponent = (LucideIcons as any)[name] || LucideIcons.Award;
   return <IconComponent className={className} />;
 };
 import { useAuth } from '../../../lib/AuthContext';
 import { useTenant } from '../../../lib/TenantContext';
-import { supabase } from '../../../lib/supabase';
 import { missionService } from '../../../services/missionService';
 import { adaptiveMissionService, AdaptiveMission, StudentProfileType } from '../../../services/adaptiveMissionService';
-import { cn } from '../../../lib/utils';
-
-interface MissionWithProgress {
+import { cn } from '../../../lib/utils';interface MissionWithProgress {
   id: string;
   title: string;
   description: string;
@@ -96,8 +93,8 @@ export default function StudentGamification() {
         return;
       }
 
-      if (!supabase) {
-        throw new Error("Cliente Supabase não inicializado.");
+      if (!api) {
+        throw new Error("Cliente Database não inicializado.");
       }
 
       const fetchAll = async () => {
@@ -111,7 +108,7 @@ export default function StudentGamification() {
           return [];
         });
 
-        const { data: rankData, error: rankError } = await supabase
+        const { data: rankData, error: rankError } = await api
           .from('ranking')
           .select('*')
           .eq('tenantId', tenant.id)
@@ -327,7 +324,7 @@ export default function StudentGamification() {
                         </div>
                       );
                     })}
-                    {missions.length === 0 && (
+                    {(missions || []).length === 0 && (
                       <div className="col-span-full py-20 text-center border-2 border-dashed border-white/5 rounded-3xl">
                         <Target className="w-10 h-10 text-slate-800 mx-auto mb-4" />
                         <p className="text-slate-600 font-black uppercase text-[10px] tracking-widest">Nenhuma missão ativa no momento</p>

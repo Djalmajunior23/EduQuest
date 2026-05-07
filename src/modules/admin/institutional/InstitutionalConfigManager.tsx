@@ -1,15 +1,14 @@
+import { api } from '../../../lib/api';
+
+
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { 
-  Settings2, Building2, Shield, Zap, Box, 
+import {   Settings2, Building2, Shield, Zap, Box, 
   Save, Database, History, Bell, Globe,
   CheckCircle2, AlertCircle, Loader2, Bot
 } from 'lucide-react';
-import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../lib/AuthContext';
-import { cn } from '../../../lib/utils';
-
-export default function InstitutionalConfigManager() {
+import { cn } from '../../../lib/utils';export default function InstitutionalConfigManager() {
   const { user } = useAuth();
   const [config, setConfig] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -18,11 +17,11 @@ export default function InstitutionalConfigManager() {
 
   useEffect(() => {
     async function fetchConfig() {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from('configuracoes_institucionais')
         .select('*')
         .eq('id', 'global')
-        .single();
+        .maybeSingle();
 
       if (data) {
         setConfig(data);
@@ -54,7 +53,7 @@ export default function InstitutionalConfigManager() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const { error } = await supabase
+      const { error } = await api
         .from('configuracoes_institucionais')
         .upsert({
           ...config,

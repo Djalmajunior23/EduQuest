@@ -1,5 +1,5 @@
 // src/services/edujarvis/HyperAgentOrchestrator.ts
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI } from "@/services/aiClient";
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { AdvancedSimulationAgent } from './AdvancedSimulationAgent';
@@ -12,7 +12,7 @@ export class HyperAgentOrchestrator {
     input: Record<string, unknown>;
   }) {
     if (data.workflowType === "complete_lesson_pack") {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+      const ai = new GoogleGenAI({});
       
       // Simulate LessonCreatorIA
       const lessonResult = await ai.models.generateContent({

@@ -1,5 +1,5 @@
 // src/services/edujarvis/AppBuilderService.ts
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI } from "@/services/aiClient";
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 
@@ -10,7 +10,7 @@ export class AppBuilderService {
     description: string;
     appType: string;
   }) {
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+    const ai = new GoogleGenAI({});
     const prompt = `Como um Gerador de Mini-Aplicações Educacionais (App Builder), gere uma configuração JSON para um app descito como: ${data.description}.
     Tipo: ${data.appType}.
     Retorne em JSON: {"appName": "", "uiComponents": [], "logicalState": [], "codeSnippet": ""}`;

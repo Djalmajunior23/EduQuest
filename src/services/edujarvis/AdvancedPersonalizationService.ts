@@ -1,7 +1,7 @@
 // src/services/edujarvis/AdvancedPersonalizationService.ts
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI } from "@/services/aiClient";
 
 export interface PersonalizationProfile {
   alunoId: string;
@@ -29,7 +29,7 @@ export class AdvancedPersonalizationService {
    * Gera uma recomendação ultra-personalizada usando IA.
    */
   public static async getPersonalizedRecommendation(profile: PersonalizationProfile, topic: string) {
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+    const ai = new GoogleGenAI({});
 
     const prompt = `
 Aja como o AI Personalization Engine do EduJarvis. 

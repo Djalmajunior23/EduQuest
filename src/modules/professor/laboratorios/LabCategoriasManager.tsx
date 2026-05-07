@@ -1,15 +1,14 @@
+import { api } from '../../../lib/api';
+
+
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../lib/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  Building2, Search, Plus, Filter, Library,
+import {   Building2, Search, Plus, Filter, Library,
   Edit3, X, Save, Loader2, Tags, Trash2, FlaskConical
 } from 'lucide-react';
 import { cn } from '../../../lib/utils';
-import { LaboratorioCategoria, laboratorioService } from '../../../services/laboratorioService';
-
-export default function LabCategoriasManager() {
+import { LaboratorioCategoria, laboratorioService } from '../../../services/laboratorioService';export default function LabCategoriasManager() {
   const { profile } = useAuth();
   const [categorias, setCategorias] = useState<LaboratorioCategoria[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
@@ -33,7 +32,7 @@ export default function LabCategoriasManager() {
 
     const fetchData = async () => {
       // Fetch Categorias
-      const { data: catData } = await supabase
+      const { data: catData } = await api
         .from('laboratorio_categorias')
         .select('*')
         .eq('tenant_id', profile.tenantId)
@@ -50,7 +49,7 @@ export default function LabCategoriasManager() {
       }
 
       // Fetch Courses
-      const { data: courseData } = await supabase
+      const { data: courseData } = await api
         .from('cursos')
         .select('*')
         .eq('tenant_id', profile.tenantId);
@@ -58,7 +57,7 @@ export default function LabCategoriasManager() {
       if (courseData) setCourses(courseData);
 
       // Fetch UCs
-      const { data: ucData } = await supabase
+      const { data: ucData } = await api
         .from('unidades_curriculares')
         .select('*')
         .eq('tenant_id', profile.tenantId);
@@ -73,7 +72,7 @@ export default function LabCategoriasManager() {
     fetchData();
 
     // Subscribe to categories
-    const catChannel = supabase.channel('laboratorio_categorias_changes')
+    const catChannel = api.channel('laboratorio_categorias_changes')
       .on('postgres_changes', { 
         event: '*', 
         schema: 'public', 
@@ -85,7 +84,7 @@ export default function LabCategoriasManager() {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(catChannel);
+      api.removeChannel(catChannel);
     };
   }, [profile]);
 
@@ -184,7 +183,7 @@ export default function LabCategoriasManager() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <AnimatePresence>
-            {filteredCategorias.map((cat) => (
+            {(filteredCategorias || []).map((cat) => (
               <motion.div 
                 key={cat.id}
                 initial={{ opacity: 0, scale: 0.95 }}
@@ -218,7 +217,7 @@ export default function LabCategoriasManager() {
               </motion.div>
             ))}
           </AnimatePresence>
-          {filteredCategorias.length === 0 && (
+          {(filteredCategorias || []).length === 0 && (
             <div className="col-span-full p-10 text-center border-2 border-dashed border-slate-200 rounded-3xl text-slate-500">
                Nenhuma categoria cadastrada.
             </div>

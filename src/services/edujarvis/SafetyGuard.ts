@@ -1,5 +1,5 @@
 // src/services/edujarvis/SafetyGuard.ts
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI } from "@/services/aiClient";
 
 export interface SafetyResult {
   blocked: boolean;
@@ -13,9 +13,8 @@ export class SafetyGuard {
 
   private static getAI() {
     if (!this.ai) {
-      const apiKey = process.env.GEMINI_API_KEY;
-      if (!apiKey) throw new Error("GEMINI_API_KEY_MISSING");
-      this.ai = new GoogleGenAI({ apiKey });
+      
+      this.ai = new GoogleGenAI({});
     }
     return this.ai;
   }

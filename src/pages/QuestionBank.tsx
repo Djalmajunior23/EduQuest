@@ -1,8 +1,9 @@
+import { api } from '../lib/api';
+
+
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/AuthContext';
-import { 
-  Plus, 
+import {   Plus, 
   Search, 
   Trash2, 
   Edit2, 
@@ -20,9 +21,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
-import { generateQuestions, suggestQuestionMetadata } from '../services/aiAssistantService';
-
-export default function QuestionBank() {
+import { generateQuestions, suggestQuestionMetadata } from '../services/aiAssistantService';export default function QuestionBank() {
   const { profile } = useAuth();
   const [questions, setQuestions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,7 +70,7 @@ export default function QuestionBank() {
   useEffect(() => {
     async function fetchQuestions() {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await api
           .from('questions')
           .select('*')
           .eq('teacher_id', profile?.id);
@@ -118,21 +117,21 @@ export default function QuestionBank() {
       };
 
       if (editingId) {
-        const { error } = await supabase
+        const { error } = await api
           .from('questions')
           .update(questionData)
           .eq('id', editingId);
         if (error) throw error;
-        setQuestions(questions.map(q => q.id === editingId ? { ...q, ...questionData } : q));
+        setQuestions((questions || []).map(q => q.id === editingId ? { ...q, ...questionData } : q));
       } else {
-        const { data, error } = await supabase
+        const { data, error } = await api
           .from('questions')
           .insert({
             ...questionData,
             created_at: new Date().toISOString()
           })
           .select()
-          .single();
+          .maybeSingle();
         if (error) throw error;
         setQuestions([data, ...questions]);
       }
@@ -226,7 +225,7 @@ export default function QuestionBank() {
   const handleSaveAIQuestions = async () => {
     setIsGenerating(true);
     try {
-      const newQuestionsData = generatedQuestions.map((q: any) => ({
+      const newQuestionsData = generatedQuestions.map((q) => ({
         ...q,
         correct_option_index: q.correctOptionIndex,
         bloom_taxonomy: q.bloomTaxonomy,
@@ -236,7 +235,7 @@ export default function QuestionBank() {
         competence: aiPrompt
       }));
 
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from('questions')
         .insert(newQuestionsData)
         .select();
@@ -257,7 +256,7 @@ export default function QuestionBank() {
 
   const handleDelete = async (id: string) => {
     if (confirm('Deseja excluir esta questão?')) {
-      const { error } = await supabase.from('questions').delete().eq('id', id);
+      const { error } = await api.from('questions').delete().eq('id', id);
       if (error) {
         console.error('Error deleting question:', error);
         alert('Erro ao excluir questão.');
@@ -269,12 +268,12 @@ export default function QuestionBank() {
 
   const handleUpdateDifficulty = async (id: string, newDifficulty: string) => {
     try {
-      const { error } = await supabase
+      const { error } = await api
         .from('questions')
         .update({ difficulty: newDifficulty })
         .eq('id', id);
       if (error) throw error;
-      setQuestions(questions.map(q => q.id === id ? { ...q, difficulty: newDifficulty } : q));
+      setQuestions((questions || []).map(q => q.id === id ? { ...q, difficulty: newDifficulty } : q));
     } catch (error) {
       console.error('Error updating difficulty:', error);
     }
@@ -284,7 +283,7 @@ export default function QuestionBank() {
     if (!quickExamConfig.title || !quickExamConfig.tag) return;
     setIsGenerating(true);
     try {
-      const { data: taggedQuestions, error } = await supabase
+      const { data: taggedQuestions, error } = await api
         .from('questions')
         .select('id')
         .eq('teacher_id', profile.id)
@@ -310,7 +309,7 @@ export default function QuestionBank() {
         created_at: new Date().toISOString()
       };
       
-      const { error: examError } = await supabase.from('exams').insert(newExam);
+      const { error: examError } = await api.from('exams').insert(newExam);
       if (examError) throw examError;
 
       setIsQuickExamModalOpen(false);
@@ -331,7 +330,7 @@ export default function QuestionBank() {
 
   const handleExportCSV = () => {
     const headers = ['ID', 'Enunciado', 'Opções', 'Resposta Correta', 'Dificuldade', 'Taxonomia de Bloom', 'Tags', 'Explicação'];
-    const rows = questions.map(q => [
+    const rows = (questions || []).map(q => [
       q.id,
       `"${(q.text || '').replace(/"/g, '""')}"`,
       `"${(q.options?.join(' | ') || '').replace(/"/g, '""')}"`,
@@ -445,7 +444,7 @@ export default function QuestionBank() {
       </div>
 
       <div className="grid grid-cols-1 gap-4">
-        {filteredQuestions.map((q) => (
+        {(filteredQuestions || []).map((q) => (
           <div key={q.id} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg hover:border-indigo-300 transition-all duration-300">
             <div className="flex justify-between gap-4 mb-4">
               <div className="flex flex-wrap gap-2">

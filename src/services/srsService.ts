@@ -1,7 +1,7 @@
-import { supabase } from '../lib/supabase';
-import { AIService } from './aiService';
+import { api } from '../lib/api';
 
-export interface SpacedReviewItem {
+
+import { AIService } from './aiService';export interface SpacedReviewItem {
   id: string; // submission_id
   atividade_id: string;
   titulo: string;
@@ -16,7 +16,7 @@ export interface SpacedReviewItem {
 export const SRSService = {
   async getItemsToReview(studentId: string): Promise<SpacedReviewItem[]> {
     // Buscar as submissões recentes do aluno com nota baixa/média
-    const { data: submissions, error } = await supabase
+    const { data: submissions, error } = await api
       .from('submissoes')
       .select(`
         id,
@@ -92,9 +92,9 @@ export const SRSService = {
 
       items.push({
         id: sub.id,
-        atividade_id: sub.atividades.id || sub.atividade_id,
-        titulo: sub.atividades.titulo || 'Atividade',
-        descricao: sub.atividades.descricao || 'Atividade pedagógica',
+        atividade_id: (sub.atividades as any)?.id || sub.atividade_id,
+        titulo: (sub.atividades as any)?.titulo || 'Atividade',
+        descricao: (sub.atividades as any)?.descricao || 'Atividade pedagógica',
         ultimaNota: nota,
         pontosMelhoria: pontos,
         nivelUrgencia: urgencia,

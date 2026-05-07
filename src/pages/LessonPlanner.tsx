@@ -1,6 +1,8 @@
+import { api } from '../lib/api';
+
+
 import React, { useState, useEffect } from 'react';
-import { 
-  Plus, 
+import {   Plus, 
   Sparkles, 
   Calendar, 
   BookOpen, 
@@ -20,10 +22,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
 import { generateLessonPlan } from '../services/aiAssistantService';
-import { supabase } from '../lib/supabase';
-import { useAuth } from '../lib/AuthContext';
-
-export default function LessonPlanner() {
+import { useAuth } from '../lib/AuthContext';export default function LessonPlanner() {
   const { profile } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -48,7 +47,7 @@ export default function LessonPlanner() {
   const fetchPlans = async () => {
     if (!profile) return;
     try {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from('planos_aula')
         .select('*')
         .eq('teacher_id', profile.id)
@@ -93,7 +92,7 @@ export default function LessonPlanner() {
           created_at: new Date().toISOString()
         };
 
-        const { error } = await supabase
+        const { error } = await api
           .from('planos_aula')
           .insert(newPlan);
         

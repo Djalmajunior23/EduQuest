@@ -34,7 +34,7 @@ export default function PedagogicalBI() {
         setAnalysis(result);
       } catch (error) {
         console.error("Erro ao carregar BI:", error);
-        // Fallback mock para demonstração se não houver registros no Supabase
+        // Fallback mock para demonstração se não houver registros no Database
         setAnalysis({
           turmaId: selectedTurma,
           totalAlunos: 32,
@@ -197,7 +197,7 @@ export default function PedagogicalBI() {
             </p>
 
             <div className="space-y-4 mb-8">
-              {analysis?.recomendacoes.map((rec, i) => (
+              {(analysis?.recomendacoes || []).map((rec, i) => (
                 <motion.div 
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -239,7 +239,7 @@ export default function PedagogicalBI() {
         <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm lg:col-span-1">
           <h3 className="text-xl font-bold text-slate-800 mb-6">Conteúdos Críticos</h3>
           <div className="space-y-6">
-            {analysis?.conteudosCriticos.map((content, i) => (
+            {(analysis?.conteudosCriticos || []).map((content, i) => (
               <div key={i} className="group">
                 <div className="flex justify-between text-sm mb-2">
                   <span className="font-bold text-slate-700">{content}</span>
@@ -301,13 +301,13 @@ export default function PedagogicalBI() {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {analysis?.questoesMalCalibradas.length === 0 ? (
+            {(!analysis?.questoesMalCalibradas || analysis.questoesMalCalibradas.length === 0) ? (
               <div className="col-span-4 p-8 text-center bg-emerald-50 text-emerald-700 rounded-2xl border border-emerald-100 flex items-center justify-center gap-2 font-bold">
                 <CheckCircle2 className="w-5 h-5" />
                 Todas as questões da avaliação estão bem calibradas de acordo com a TRI.
               </div>
             ) : (
-              analysis?.questoesMalCalibradas.map((qid, i) => (
+              (analysis?.questoesMalCalibradas || []).map((qid, i) => (
                 <div key={i} className="p-4 bg-rose-50 border border-rose-100 rounded-2xl">
                   <div className="flex justify-between items-start mb-2">
                     <span className="font-black text-rose-600 text-xs">{qid}</span>

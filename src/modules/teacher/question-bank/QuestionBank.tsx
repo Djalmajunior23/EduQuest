@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { supabase } from '../../../lib/supabase';
-import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Sparkles, X, Loader2, Save, Trash2, Edit2, Search, Filter } from 'lucide-react';
+import { api } from '../../../lib/api';
 
-interface Question {
+
+import React, { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Plus, Sparkles, X, Loader2, Save, Trash2, Edit2, Search, Filter } from 'lucide-react';interface Question {
   id?: string;
   text: string;
   options: string[];
@@ -34,7 +34,7 @@ export default function QuestionBank() {
   const fetchQuestions = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from('questions')
         .select('*')
         .order('created_at', { ascending: false });
@@ -63,7 +63,7 @@ export default function QuestionBank() {
         body: JSON.stringify({ prompt: aiPrompt }),
       });
       const data = await response.json();
-      setSuggestedQuestions(data.map((q: any) => ({
+      setSuggestedQuestions(data.map((q) => ({
         ...q,
         ucId: 'UC-Inteligência Educacional Interativa-001'
       })));
@@ -78,7 +78,7 @@ export default function QuestionBank() {
   const handleSaveQuestion = async (index: number) => {
     const q = suggestedQuestions[index];
     try {
-      const { error } = await supabase
+      const { error } = await api
         .from('questions')
         .insert({
           text: q.text,
@@ -343,7 +343,7 @@ export default function QuestionBank() {
       ) : (
         <div className="grid grid-cols-1 gap-4 pb-20">
           <AnimatePresence mode="popLayout">
-            {filteredQuestions.map((q) => (
+            {(filteredQuestions || []).map((q) => (
               <motion.div 
                 layout
                 initial={{ opacity: 0 }}
@@ -380,7 +380,7 @@ export default function QuestionBank() {
             ))}
           </AnimatePresence>
           
-          {filteredQuestions.length === 0 && (
+          {(filteredQuestions || []).length === 0 && (
             <div className="text-center py-24 bg-white rounded-3xl border-2 border-dashed border-gray-100">
                <div className="bg-gray-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
                   <Search className="w-10 h-10 text-gray-300" />

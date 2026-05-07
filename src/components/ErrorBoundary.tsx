@@ -1,5 +1,5 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { AlertCircle, RefreshCw } from 'lucide-react';
 
 interface Props {
   children?: ReactNode;
@@ -7,12 +7,13 @@ interface Props {
 
 interface State {
   hasError: boolean;
-  error?: Error;
+  error: Error | null;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
   public state: State = {
-    hasError: false
+    hasError: false,
+    error: null
   };
 
   public static getDerivedStateFromError(error: Error): State {
@@ -26,32 +27,26 @@ export class ErrorBoundary extends Component<Props, State> {
   public render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-          <div className="max-w-md w-full bg-white rounded-3xl shadow-xl shadow-slate-200/50 p-8 text-center border border-slate-100">
-            <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
-              <AlertTriangle className="w-8 h-8 text-red-500" />
+        <div className="min-h-screen bg-slate-900 flex flex-col justify-center items-center p-4">
+          <div className="bg-slate-800 p-8 rounded-[2rem] border border-rose-500/20 max-w-lg w-full text-center shadow-2xl">
+            <div className="w-20 h-20 bg-rose-500/10 rounded-[1.5rem] flex items-center justify-center mx-auto mb-6 text-rose-500">
+              <AlertCircle className="w-10 h-10" />
             </div>
-            
-            <h1 className="text-2xl font-bold text-slate-800 mb-2">Ops! Algo deu errado.</h1>
-            <p className="text-slate-500 mb-8">
-              A aplicação encontrou um erro inesperado. Tente recarregar a página para continuar.
+            <h1 className="text-2xl font-black text-white mb-2">Ops! Algo deu errado.</h1>
+            <p className="text-slate-400 mb-8 max-w-md mx-auto">
+              Nossa equipe já foi notificada. Você pode tentar recarregar a página para continuar.
             </p>
             
             <button
-              onClick={() => window.location.reload()}
-              className="w-full bg-indigo-600 text-white px-6 py-4 rounded-2xl font-bold hover:bg-indigo-700 transition flex items-center justify-center gap-2 shadow-lg shadow-indigo-200"
+              onClick={() => window.location.href = '/'}
+              className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-8 rounded-2xl w-full transition"
             >
               <RefreshCw className="w-5 h-5" />
-              Recarregar Aplicação
+              Recarregar Sistema
             </button>
-            
-            {import.meta.env.DEV && (
-              <div className="mt-8 p-4 bg-slate-900 rounded-xl text-left overflow-auto max-h-40">
-                <p className="text-xs font-mono text-red-400 leading-relaxed">
-                  {this.state.error?.toString()}
-                </p>
-              </div>
-            )}
+            <div className="mt-8 text-left bg-slate-900 p-4 rounded-xl border border-slate-700 overflow-auto max-h-48 text-xs text-rose-400 font-mono">
+              {this.state.error && this.state.error.toString()}
+            </div>
           </div>
         </div>
       );

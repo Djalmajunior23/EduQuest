@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { supabase } from '../../../lib/supabase';
+import { api } from '../../../lib/api';
 
-export default function SAProducer() {
+
+import React, { useState } from 'react';export default function SAProducer() {
   const [prompt, setPrompt] = useState({ tema: '', conhecimentos: '', capacidades: '', objetivos: '' });
   const [generating, setGenerating] = useState(false);
   const [saContent, setSaContent] = useState('');
@@ -32,7 +32,7 @@ export default function SAProducer() {
 
   const handleSave = async () => {
     try {
-      const { error } = await supabase
+      const { error } = await api
         .from('situacoes_aprendizagem')
         .insert({
           titulo: prompt.tema,

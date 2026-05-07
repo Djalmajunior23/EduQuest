@@ -1,16 +1,15 @@
+import { api } from '../../../lib/api';
+
+
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  Medal, Award, Star, Trophy, ChevronRight, 
+import {   Medal, Award, Star, Trophy, ChevronRight, 
   Download, Share2, ShieldCheck, Zap, Target,
   Sparkles, History, GraduationCap
 } from 'lucide-react';
-import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../lib/AuthContext';
 import { cn } from '../../../lib/utils';
-import confetti from 'canvas-confetti';
-
-interface Badge {
+import confetti from 'canvas-confetti';interface Badge {
   id: string;
   title: string;
   description: string;

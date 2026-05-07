@@ -1,15 +1,14 @@
+import { api } from '../../../lib/api';
+
+
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  Briefcase, Plus, Search, Filter, ChevronRight, 
+import {   Briefcase, Plus, Search, Filter, ChevronRight, 
   Target, Calendar, Users, CheckCircle2, AlertCircle,
   MoreVertical, Edit, Trash2, Brain
 } from 'lucide-react';
-import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../lib/AuthContext';
-import { cn } from '../../../lib/utils';
-
-interface ABPProject {
+import { cn } from '../../../lib/utils';interface ABPProject {
   id: string;
   titulo: string;
   tema: string;
@@ -31,7 +30,7 @@ export default function ABPManager() {
     if (!profile) return;
 
     const fetchProjects = async () => {
-      let query = supabase.from('abp_projetos').select('*');
+      let query = api.from('abp_projetos').select('*');
       
       if (profile.perfil === 'PROFESSOR') {
         query = query.eq('professor_responsavel_id', user?.id);
@@ -57,7 +56,7 @@ export default function ABPManager() {
     fetchProjects();
 
     // Subscribe to changes
-    const channel = supabase
+    const channel = api
       .channel('abp_projetos_changes')
       .on('postgres_changes', { 
         event: '*', 
@@ -69,7 +68,7 @@ export default function ABPManager() {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      api.removeChannel(channel);
     };
   }, [profile]);
 

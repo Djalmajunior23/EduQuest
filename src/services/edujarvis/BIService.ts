@@ -1,8 +1,8 @@
-// src/services/edujarvis/BIService.ts
-import { supabase } from '../../lib/supabase';
-import { TRIService, TRIItem, TRIResponse } from './TRIService';
+import { api } from '../../lib/api';
 
-export interface BIAnalysis {
+
+// src/services/edujarvis/BIService.ts
+import { TRIService, TRIItem, TRIResponse } from './TRIService';export interface BIAnalysis {
   turmaId: string;
   totalAlunos: number;
   mediaProficiencia: number;
@@ -21,7 +21,7 @@ export class BIService {
     console.log(`[BI Intelligent] Analisando turma ${turmaId}...`);
 
     // 1. Buscar dados de provas e simulados
-    const { data: results, error } = await supabase
+    const { data: results, error } = await api
       .from('resultados_exames')
       .select('*, questoes(*), alunos(*)')
       .eq('turma_id', turmaId)
@@ -42,7 +42,7 @@ export class BIService {
         const responses: TRIResponse[] = res.respostas || [];
         
         // Mapear itens se não estiverem no mapa
-        res.questoes?.forEach((q: any) => {
+        res.questoes?.forEach((q) => {
             if (!itemsMap.has(q.id)) {
                 itemsMap.set(q.id, {
                     id: q.id,
@@ -129,7 +129,7 @@ export class BIService {
    * Registra log de análise para auditoria.
    */
   public static async logAnalysis(analysis: BIAnalysis, triggeredBy: string) {
-    await supabase.from('bi_logs').insert({
+    await api.from('bi_logs').insert({
       turma_id: analysis.turmaId,
       result: analysis,
       triggered_by: triggeredBy,

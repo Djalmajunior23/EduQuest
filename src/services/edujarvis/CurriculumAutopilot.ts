@@ -1,13 +1,13 @@
 // src/services/edujarvis/CurriculumAutopilot.ts
 import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI } from "@/services/aiClient";
 
 export class CurriculumAutopilot {
   private static COLLECTION = 'curriculum_autopilot_proposals';
 
   public static async analyzeAndPropose(tenantId: string, performanceData: any) {
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+    const ai = new GoogleGenAI({});
     
     const prompt = `
 Você é o AI Curriculum Autopilot. 

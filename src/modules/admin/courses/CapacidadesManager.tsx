@@ -1,14 +1,13 @@
+import { api } from '../../../lib/api';
+
+
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../lib/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  Building2, Search, Plus, Filter, Library, Target, Key, GitCommit, Trash2, Edit3, X, Save, 
+import {   Building2, Search, Plus, Filter, Library, Target, Key, GitCommit, Trash2, Edit3, X, Save, 
   Loader2, Network
 } from 'lucide-react';
-import { cn } from '../../../lib/utils';
-
-export default function CapacidadesManager() {
+import { cn } from '../../../lib/utils';export default function CapacidadesManager() {
   const { profile } = useAuth();
   const [ucs, setUcs] = useState<any[]>([]);
   const [capacidades, setCapacidades] = useState<any[]>([]);
@@ -33,7 +32,7 @@ export default function CapacidadesManager() {
 
     const fetchData = async () => {
       // Fetch Capacidades
-      const { data: capData } = await supabase
+      const { data: capData } = await api
         .from('capacidades_tecnicas')
         .select('*')
         .eq('tenant_id', profile.tenantId)
@@ -50,7 +49,7 @@ export default function CapacidadesManager() {
       }
 
       // Fetch UCs
-      const { data: ucData } = await supabase
+      const { data: ucData } = await api
         .from('unidades_curriculares')
         .select('*')
         .eq('tenant_id', profile.tenantId)
@@ -64,7 +63,7 @@ export default function CapacidadesManager() {
     fetchData();
 
     // Subscribe to Capacidades
-    const capChannel = supabase.channel('capacidades_tecnicas_changes')
+    const capChannel = api.channel('capacidades_tecnicas_changes')
       .on('postgres_changes', { 
         event: '*', 
         schema: 'public', 
@@ -76,7 +75,7 @@ export default function CapacidadesManager() {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(capChannel);
+      api.removeChannel(capChannel);
     };
   }, [profile]);
 
@@ -105,7 +104,7 @@ export default function CapacidadesManager() {
 
   const handleDelete = async (id: string) => {
      if(window.confirm('Excluir esta Capacidade Técnica? Essa ação pode quebrar trilhas ou dashboards de alunos que já aprenderam isso!')) {
-         const { error } = await supabase
+         const { error } = await api
            .from('capacidades_tecnicas')
            .delete()
            .eq('id', id);
@@ -129,13 +128,13 @@ export default function CapacidadesManager() {
       };
 
       if (editingCapacidade) {
-        const { error } = await supabase
+        const { error } = await api
           .from('capacidades_tecnicas')
           .update(capData)
           .eq('id', editingCapacidade.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase
+        const { error } = await api
           .from('capacidades_tecnicas')
           .insert({
             ...capData,
@@ -224,7 +223,7 @@ export default function CapacidadesManager() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
              <AnimatePresence>
-               {filteredCaps.map(cap => (
+               {(filteredCaps || []).map(cap => (
                  <motion.div 
                    key={cap.id}
                    initial={{ opacity: 0, scale: 0.95 }}
@@ -285,7 +284,7 @@ export default function CapacidadesManager() {
                  </motion.div>
                ))}
              </AnimatePresence>
-             {filteredCaps.length === 0 && (
+             {(filteredCaps || []).length === 0 && (
                 <div className="col-span-full py-16 text-center bg-slate-50 border border-dashed border-slate-200 rounded-[3rem]">
                    <Target className="w-12 h-12 text-slate-300 mx-auto mb-4" />
                    <p className="text-slate-500 font-medium">Nenhum nó de Habilidade Mapeado para o filtro atual.</p>

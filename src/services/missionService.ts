@@ -1,4 +1,6 @@
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
+
+
 
 export interface Mission {
   id: string;
@@ -28,24 +30,24 @@ export const missionService = {
   async checkMissions(userId: string, action: 'COMPLETE_EXAM', metadata: { score?: number, examId?: string }) {
     try {
       // 1. Buscar missões ativas do tipo correspondente
-      const { data: missionsSnap, error: missionsError } = await supabase
+      const { data: missionsSnap, error: missionsError } = await api
         .from('gamificacao_missoes')
         .select('*')
         .eq('type', action);
         
       if (missionsError) throw missionsError;
       
-      const results = [];
+      const results: any[] = [];
       
       for (const missionDoc of missionsSnap || []) {
         const mission = missionDoc as any;
         
-        const { data: progressSnap } = await supabase
+        const { data: progressSnap } = await api
           .from('gamificacao_progresso_missoes')
           .select('*')
           .eq('userId', userId)
           .eq('missionId', mission.id)
-          .single();
+          .maybeSingle();
           
         let progressData: MissionProgress;
         
@@ -84,14 +86,14 @@ export const missionService = {
           
           // Use RPC para incrementar saldo ou buscar usuario primeiro
           // Fallback: update manual
-          const { data: user } = await supabase
+          const { data: user } = await api
             .from('usuarios')
             .select('xp, saldoTokensIA')
             .eq('id', userId)
-            .single();
+            .maybeSingle();
             
           if (user) {
-             await supabase
+             await api
                .from('usuarios')
                .update({
                  xp: (user.xp || 0) + mission.xpReward,
@@ -102,7 +104,7 @@ export const missionService = {
           }
           
           // Registrar conquista
-          await supabase
+          await api
             .from('gamificacao_conquistas_aluno')
             .insert({
               userId,
@@ -114,13 +116,13 @@ export const missionService = {
         }
 
         if (progressSnap) {
-          await supabase
+          await api
             .from('gamificacao_progresso_missoes')
             .update(progressData)
             .eq('userId', userId)
             .eq('missionId', mission.id);
         } else {
-          await supabase
+          await api
             .from('gamificacao_progresso_missoes')
             .insert(progressData);
         }
@@ -138,7 +140,7 @@ export const missionService = {
    */
   async getMissionsWithProgress(userId: string, tenantId: string) {
     try {
-      const { data: missionsSnap, error: mErr } = await supabase
+      const { data: missionsSnap, error: mErr } = await api
         .from('gamificacao_missoes')
         .select('*')
         .eq('tenantId', tenantId);
@@ -146,7 +148,7 @@ export const missionService = {
       if (mErr) throw mErr;
       const missions = missionsSnap || [];
       
-      const { data: progressSnap, error: pErr } = await supabase
+      const { data: progressSnap, error: pErr } = await api
         .from('gamificacao_progresso_missoes')
         .select('*')
         .eq('userId', userId);
@@ -154,7 +156,7 @@ export const missionService = {
       if (pErr) throw pErr;
       const progressMap = new Map((progressSnap || []).map(doc => [doc.missionId, doc]));
       
-      return missions.map(m => ({
+      return (missions || []).map(m => ({
         ...m,
         progress: (progressMap.get(m.id) as MissionProgress)?.progress || 0,
         completed: (progressMap.get(m.id) as MissionProgress)?.completed || false

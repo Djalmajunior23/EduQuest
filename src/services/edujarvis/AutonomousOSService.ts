@@ -1,12 +1,12 @@
 // src/services/edujarvis/AutonomousOSService.ts
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI } from "@/services/aiClient";
 
 export class AutonomousOSService {
   /**
    * Atua como o núcleo do sistema educacional simulando intervenções autônomas.
    */
   public static async orchestrate(tenantId: string, stats: any) {
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+    const ai = new GoogleGenAI({});
 
     const prompt = `
 Atue como o Autonomous Education OS (EduJarvis Nível 12).

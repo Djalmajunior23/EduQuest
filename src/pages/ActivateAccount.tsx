@@ -1,8 +1,9 @@
+import { api } from '../lib/api';
+
+
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
-import { 
-  ShieldCheck, 
+import {   ShieldCheck, 
   Lock, 
   Eye, 
   EyeOff, 
@@ -13,9 +14,7 @@ import {
   Terminal
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { cn } from '../lib/utils';
-
-export default function ActivateAccount() {
+import { cn } from '../lib/utils';export default function ActivateAccount() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const token = searchParams.get('token');
@@ -41,13 +40,13 @@ export default function ActivateAccount() {
       }
 
       try {
-        const { data, error } = await supabase
+        const { data, error } = await api
           .from('convites')
           .select('*')
           .eq('token', token)
           .eq('email', email)
           .eq('status', 'ENVIADO')
-          .single();
+          .maybeSingle();
 
         if (error || !data) {
           setError('Convite inválido, expirado ou já utilizado.');
@@ -87,7 +86,7 @@ export default function ActivateAccount() {
 
     try {
       // 1. Create Auth User
-      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+      const { data: signUpData, error: signUpError } = await api.auth.signUp({
         email: email!,
         password: password,
         options: {
@@ -102,7 +101,7 @@ export default function ActivateAccount() {
       if (!user) throw new Error('Falha ao criar usuário.');
 
       // 2. Create User Profile
-      const { error: profileError } = await supabase.from('usuarios').upsert({
+      const { error: profileError } = await api.from('usuarios').upsert({
         id: user.id,
         nome: invitation.nome,
         email: invitation.email,
@@ -117,7 +116,7 @@ export default function ActivateAccount() {
       if (profileError) throw profileError;
 
       // 3. Update Invitation Status
-      const { error: inviteError } = await supabase
+      const { error: inviteError } = await api
         .from('convites')
         .update({
           status: 'ACEITO',

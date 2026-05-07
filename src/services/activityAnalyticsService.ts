@@ -1,24 +1,24 @@
-import { supabase } from '../lib/supabase';
-import { Activity, ActivitySubmission } from '../types/activities';
+import { api } from '../lib/api';
 
-export const activityAnalyticsService = {
+
+import { Activity, ActivitySubmission } from '../types/activities';export const activityAnalyticsService = {
   async getTeacherDashboardMetrics(teacherId: string) {
     // Buscar atividades
-    const { data: activitiesData, error: activitiesError } = await supabase
-      .from('activities')
+    const { data: activitiesData, error: activitiesError } = await api
+      .from('atividades')
       .select('*')
       .eq('teacher_id', teacherId);
     
     if (activitiesError) throw activitiesError;
     const activities = activitiesData || [];
 
-    if (activities.length === 0) return { totalActivities: 0, pendingSubmissions: 0, averageScore: 0 };
+    if ((activities || []).length === 0) return { totalActivities: 0, pendingSubmissions: 0, averageScore: 0 };
 
-    const activityIds = activities.map(a => a.id);
+    const activityIds = (activities || []).map(a => a.id);
     
     // Fetch all submissions for these activities
-    const { data: submissionsData, error: submissionsError } = await supabase
-      .from('activity_submissions')
+    const { data: submissionsData, error: submissionsError } = await api
+      .from('submissoes')
       .select('*')
       .in('activity_id', activityIds);
     
@@ -36,7 +36,7 @@ export const activityAnalyticsService = {
       : 0;
 
     return {
-      totalActivities: activities.length,
+      totalActivities: (activities || []).length,
       pendingSubmissions: pending,
       averageScore: avgScore,
       totalSubmissions: submissions.length

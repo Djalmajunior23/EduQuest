@@ -1,18 +1,16 @@
+import { api } from '../lib/api';
+
+
 import React, { useEffect, useState } from 'react';
-import { 
-  LineChart, Line, AreaChart, Area, BarChart, Bar, 
+import {   LineChart, Line, AreaChart, Area, BarChart, Bar, 
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie 
 } from 'recharts';
-import { 
-  Trophy, Users, Target, Zap, TrendingUp, AlertTriangle, 
+import {   Trophy, Users, Target, Zap, TrendingUp, AlertTriangle, 
   CheckCircle2, Clock, Brain, LayoutDashboard, FileText
 } from 'lucide-react';
 import { motion } from 'motion/react';
-import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/AuthContext';
-import { cn } from '../lib/utils';
-
-export default function AnalyticsDashboard() {
+import { cn } from '../lib/utils';export default function AnalyticsDashboard() {
   const { profile } = useAuth();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);

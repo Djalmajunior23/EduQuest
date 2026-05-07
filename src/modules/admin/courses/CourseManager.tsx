@@ -1,16 +1,15 @@
+import { api } from '../../../lib/api';
+
+
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../lib/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  BookOpen, Search, Plus, Filter, MoreVertical, 
+import {   BookOpen, Search, Plus, Filter, MoreVertical, 
   Settings2, Activity, Archive, Edit3, X, Save, 
   Loader2, GraduationCap, Clock, Layers
 } from 'lucide-react';
 import { cn } from '../../../lib/utils';
-import { Link } from 'react-router-dom';
-
-export default function CourseManager() {
+import { Link } from 'react-router-dom';export default function CourseManager() {
   const { profile } = useAuth();
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,7 +32,7 @@ export default function CourseManager() {
     if (!profile?.tenantId) return;
 
     const fetchCourses = async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from('cursos')
         .select('*')
         .eq('tenant_id', profile.tenantId)
@@ -56,7 +55,7 @@ export default function CourseManager() {
     fetchCourses();
 
     // Subscribe to courses
-    const channel = supabase.channel('cursos_changes')
+    const channel = api.channel('cursos_changes')
       .on('postgres_changes', { 
         event: '*', 
         schema: 'public', 
@@ -68,7 +67,7 @@ export default function CourseManager() {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      api.removeChannel(channel);
     };
   }, [profile]);
 
@@ -114,13 +113,13 @@ export default function CourseManager() {
       };
 
       if (editingCourse) {
-        const { error } = await supabase
+        const { error } = await api
           .from('cursos')
           .update(courseData)
           .eq('id', editingCourse.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase
+        const { error } = await api
           .from('cursos')
           .insert({
             ...courseData,
@@ -140,7 +139,7 @@ export default function CourseManager() {
   const handleStatusToggle = async (courseId: string, currentStatus: string) => {
     const newStatus = currentStatus === 'ATIVO' ? 'INATIVO' : 'ATIVO';
     try {
-      const { error } = await supabase
+      const { error } = await api
         .from('cursos')
         .update({ status: newStatus, updated_at: new Date().toISOString() })
         .eq('id', courseId);
@@ -200,7 +199,7 @@ export default function CourseManager() {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
              <AnimatePresence>
-               {filteredCourses.map(course => (
+               {(filteredCourses || []).map(course => (
                  <motion.div 
                    key={course.id}
                    initial={{ opacity: 0, scale: 0.95 }}
@@ -258,7 +257,7 @@ export default function CourseManager() {
                  </motion.div>
                ))}
              </AnimatePresence>
-             {filteredCourses.length === 0 && (
+             {(filteredCourses || []).length === 0 && (
                 <div className="col-span-full py-16 text-center border-2 border-dashed border-slate-200 rounded-[3rem]">
                    <GraduationCap className="w-12 h-12 text-slate-300 mx-auto mb-4" />
                    <p className="text-slate-500 font-medium">Nenhuma matriz curricular localizada com os filtros atuais.</p>

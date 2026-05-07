@@ -1,8 +1,8 @@
-// src/services/edujarvis/AdaptiveLearningEngine.ts
-import { supabase } from '../../lib/supabase';
-import { LearningEvent, StudentCognitiveMemory } from './types';
+import { api } from '../../lib/api';
 
-export class AdaptiveLearningEngine {
+
+// src/services/edujarvis/AdaptiveLearningEngine.ts
+import { LearningEvent, StudentCognitiveMemory } from './types';export class AdaptiveLearningEngine {
   private static COLLECTION = 'student_cognitive_memory';
   private static EVENTS_COLLECTION = 'learning_events';
 
@@ -10,11 +10,11 @@ export class AdaptiveLearningEngine {
    * Obtém a memória cognitiva do aluno
    */
   public static async getStudentMemory(alunoId: string): Promise<StudentCognitiveMemory | null> {
-    const { data, error } = await supabase
+    const { data, error } = await api
       .from(this.COLLECTION)
       .select('*')
       .eq('aluno_id', alunoId)
-      .single();
+      .maybeSingle();
     
     if (error) return null;
     return {
@@ -38,7 +38,7 @@ export class AdaptiveLearningEngine {
     const existingMemory = await this.getStudentMemory(event.alunoId);
 
     // Salva o evento no histórico global para BI
-    await supabase.from(this.EVENTS_COLLECTION).insert({
+    await api.from(this.EVENTS_COLLECTION).insert({
       ...event,
       timestamp: new Date().toISOString()
     });
@@ -87,11 +87,11 @@ export class AdaptiveLearningEngine {
       pontos_fortes: newPontosFortes
     };
 
-    const { data: updatedData, error: updateError } = await supabase
+    const { data: updatedData, error: updateError } = await api
       .from(this.COLLECTION)
       .upsert(updates)
       .select()
-      .single();
+      .maybeSingle();
 
     if (updateError) throw updateError;
 

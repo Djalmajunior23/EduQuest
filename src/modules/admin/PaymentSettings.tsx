@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabase';
-import { useAuth } from '../../lib/AuthContext';
+import { api } from '../../lib/api';
 
-export function PaymentSettings() {
+
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../lib/AuthContext';export function PaymentSettings() {
   const { profile } = useAuth();
   const [loading, setLoading] = useState(false);
   const [config, setConfig] = useState({ stripeApiKey: '', mercadoPagoApiKey: '' });
@@ -15,12 +15,12 @@ export function PaymentSettings() {
 
   const loadConfig = async () => {
     if (!profile?.tenantId) return;
-    const { data, error } = await supabase
+    const { data, error } = await api
       .from('tenant_configs')
       .select('*')
       .eq('tenant_id', profile.tenantId)
       .eq('config_key', 'payments')
-      .single();
+      .maybeSingle();
     
     if (data) {
       setConfig(data.config_value);
@@ -31,7 +31,7 @@ export function PaymentSettings() {
     if (!profile?.tenantId) return;
     setLoading(true);
     try {
-      const { error } = await supabase
+      const { error } = await api
         .from('tenant_configs')
         .upsert({
           tenant_id: profile.tenantId,

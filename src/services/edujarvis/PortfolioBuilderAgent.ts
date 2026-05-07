@@ -1,5 +1,5 @@
 // src/services/edujarvis/PortfolioBuilderAgent.ts
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI } from "@/services/aiClient";
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import crypto from 'crypto';
@@ -13,7 +13,7 @@ export class PortfolioBuilderAgent {
     projects: Array<{ title: string; description: string }>;
     credentials: string[];
   }) {
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+    const ai = new GoogleGenAI({});
     const systemPrompt = `
 Você é o Portfolio Builder IA do EduJarvis.
 

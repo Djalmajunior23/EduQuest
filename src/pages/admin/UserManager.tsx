@@ -1,8 +1,9 @@
+import { api } from '../../lib/api';
+
+
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../lib/AuthContext';
-import { 
-  Users, 
+import {   Users, 
   UserPlus, 
   Search, 
   Filter, 
@@ -21,9 +22,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../../lib/utils';
 import { inviteUser } from '../../services/userManagementService';
-import { BulkImportModal } from '../../components/admin/BulkImportModal';
-
-const PermissionModal = ({isOpen, onClose, user, permissions, toggle, onSave}: any) => {
+import { BulkImportModal } from '../../components/admin/BulkImportModal';const PermissionModal = ({isOpen, onClose, user, permissions, toggle, onSave}: any) => {
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm">
@@ -65,7 +64,7 @@ export default function UserManager() {
 
   const fetchUsers = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from('usuarios')
         .select('*')
         .order('created_at', { ascending: false });
@@ -109,7 +108,7 @@ export default function UserManager() {
   const savePermissions = async () => {
     if (!selectedUser) return;
     try {
-      const { error } = await supabase
+      const { error } = await api
         .from('usuarios')
         .update({
           permissoes_granulares: newPermissions
@@ -350,7 +349,7 @@ export default function UserManager() {
                </thead>
                <tbody className="divide-y divide-slate-100">
                   <AnimatePresence>
-                    {filteredUsers.map((user) => (
+                    {(filteredUsers || []).map((user) => (
                       <motion.tr 
                         key={user.id}
                         initial={{ opacity: 0 }}
@@ -401,7 +400,7 @@ export default function UserManager() {
          <div className="industrial-card p-10 bg-slate-900 text-white">
             <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Total Ativos</h3>
             <div className="flex items-baseline gap-4">
-               <span className="text-5xl font-black italic uppercase tracking-tighter text-indigo-400">{users.length}</span>
+               <span className="text-5xl font-black italic uppercase tracking-tighter text-indigo-400">{(users || []).length}</span>
                <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Contas</span>
             </div>
          </div>

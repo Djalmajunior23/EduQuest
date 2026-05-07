@@ -1,8 +1,9 @@
+import { api } from '../lib/api';
+
+
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/AuthContext';
-import { 
-  FileCheck, 
+import {   FileCheck, 
   Plus, 
   Calendar, 
   Target, 
@@ -19,9 +20,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { cn } from '../lib/utils';
-
-export default function Evaluations() {
+import { cn } from '../lib/utils';export default function Evaluations() {
   const { profile } = useAuth();
   const [evaluations, setEvaluations] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -31,7 +30,7 @@ export default function Evaluations() {
   const fetchEvaluations = async () => {
     if (!profile) return;
     try {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from('avaliacoes')
         .select('*')
         .eq('created_by', profile.id)
@@ -50,7 +49,7 @@ export default function Evaluations() {
     if (!profile) return;
     fetchEvaluations();
 
-    const channel = supabase.channel('avaliacoes_changes')
+    const channel = api.channel('avaliacoes_changes')
       .on('postgres_changes', { 
         event: '*', 
         schema: 'public', 
@@ -62,7 +61,7 @@ export default function Evaluations() {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      api.removeChannel(channel);
     };
   }, [profile]);
 
@@ -151,14 +150,14 @@ export default function Evaluations() {
             <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
             <p className="text-slate-400 font-bold">Carregando avaliações...</p>
           </div>
-        ) : evaluations.length === 0 ? (
+        ) : (evaluations || []).length === 0 ? (
           <div className="col-span-full bg-slate-50 border-2 border-dashed border-slate-200 rounded-[3rem] p-20 text-center">
             <FileCheck className="w-16 h-16 text-slate-200 mx-auto mb-6" />
             <h3 className="text-xl font-bold text-slate-900 mb-2">Nenhuma avaliação encontrada</h3>
             <p className="text-slate-500 max-w-sm mx-auto">Comece criando sua primeira avaliação diagnóstica ou formativa.</p>
           </div>
         ) : (
-          evaluations.map(evalItem => (
+          (evaluations || []).map(evalItem => (
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}

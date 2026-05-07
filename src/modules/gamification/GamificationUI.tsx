@@ -96,7 +96,7 @@ export function MissionList({ missions }: { missions: any[] }) {
   return (
     <div className="space-y-4">
       <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-2">Ordens de Serviço Ativas</h3>
-      {missions.map((mission, idx) => (
+      {(missions || []).map((mission, idx) => (
         <motion.div 
           key={mission.id} 
           initial={{ opacity: 0, x: -20 }}

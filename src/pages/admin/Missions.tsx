@@ -1,11 +1,11 @@
+import { api } from '../../lib/api';
+
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../lib/AuthContext';
-import { supabase } from '../../lib/supabase';
 import { PlusCircle, Zap, Rocket, Cpu, Trophy, Trash2, ListTodo, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { cn } from '../../lib/utils';
-
-export default function MissionManager() {
+import { cn } from '../../lib/utils';export default function MissionManager() {
   const { profile } = useAuth();
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
@@ -15,7 +15,7 @@ export default function MissionManager() {
   const fetchMissions = async () => {
     if (!profile?.tenantId) return;
     try {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from('missoes')
         .select('*')
         .eq('tenant_id', profile.tenantId)
@@ -34,7 +34,7 @@ export default function MissionManager() {
     if (!profile?.tenantId) return;
     fetchMissions();
 
-    const channel = supabase
+    const channel = api
       .channel('missions-changes')
       .on(
         'postgres_changes',
@@ -51,7 +51,7 @@ export default function MissionManager() {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      api.removeChannel(channel);
     };
   }, [profile]);
 
@@ -65,7 +65,7 @@ export default function MissionManager() {
       { titulo: 'Mestre da Documentação', type: 'ESPECIAL', xp: 1000, ai_tokens: 50, tenant_id: profile.tenantId },
     ];
     try {
-      const { error } = await supabase.from('missoes').insert(defaultMissions.map(m => ({ ...m, created_at: new Date().toISOString() })));
+      const { error } = await api.from('missoes').insert(defaultMissions.map(m => ({ ...m, created_at: new Date().toISOString() })));
       if (error) throw error;
     } catch (e) {
       console.error(e);
@@ -79,7 +79,7 @@ export default function MissionManager() {
     if (!profile?.tenantId) return;
     setLoading(true);
     try {
-      const { error } = await supabase.from('missoes').insert({
+      const { error } = await api.from('missoes').insert({
         titulo: newMission.titulo,
         type: newMission.type,
         xp: newMission.xp,
@@ -98,7 +98,7 @@ export default function MissionManager() {
 
   const deleteMission = async (id: string) => {
     if (confirm('Deseja excluir esta missão?')) {
-       const { error } = await supabase.from('missoes').delete().eq('id', id);
+       const { error } = await api.from('missoes').delete().eq('id', id);
        if (error) {
          console.error('Error deleting mission:', error);
          alert('Erro ao excluir missão.');
@@ -208,7 +208,7 @@ export default function MissionManager() {
                <div className="py-20 text-center animate-pulse text-slate-400">
                   <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
                </div>
-            ) : missions.length === 0 ? (
+            ) : (missions || []).length === 0 ? (
                <div className="py-16 text-center border-2 border-dashed border-slate-200 rounded-[3rem] bg-slate-50/50">
                   <Trophy className="w-12 h-12 text-slate-300 mx-auto mb-4" />
                   <p className="text-slate-500 font-medium">Nenhuma missão configurada no banco.</p>
@@ -216,7 +216,7 @@ export default function MissionManager() {
             ) : (
                <div className="space-y-4">
                  <AnimatePresence>
-                   {missions.map((mission) => (
+                   {(missions || []).map((mission) => (
                       <motion.div 
                         key={mission.id}
                         initial={{ opacity: 0, y: 10 }}

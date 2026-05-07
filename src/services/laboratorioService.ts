@@ -1,4 +1,6 @@
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
+
+
 
 export interface Laboratorio {
   id?: string;
@@ -27,7 +29,7 @@ const CATEGORIA_COLLECTION = 'laboratorio_categorias';
 
 export const laboratorioService = {
   getLaboratorios: async (tenantId: string) => {
-    const { data, error } = await supabase
+    const { data, error } = await api
       .from(COLLECTION)
       .select('*')
       .eq('tenant_id', tenantId);
@@ -44,7 +46,7 @@ export const laboratorioService = {
   },
   
   createLaboratorio: async (lab: Laboratorio) => {
-    const { data, error } = await supabase
+    const { data, error } = await api
       .from(COLLECTION)
       .insert({
         titulo: lab.titulo,
@@ -56,14 +58,14 @@ export const laboratorioService = {
         updated_at: new Date().toISOString()
       })
       .select()
-      .single();
+      .maybeSingle();
     
     if (error) throw error;
     return data;
   },
 
   updateLaboratorio: async (id: string, lab: Partial<Laboratorio>) => {
-    const { error } = await supabase
+    const { error } = await api
       .from(COLLECTION)
       .update({
         ...lab,
@@ -79,7 +81,7 @@ export const laboratorioService = {
 
   // Categorias
   getCategorias: async (tenantId: string) => {
-    const { data, error } = await supabase
+    const { data, error } = await api
       .from(CATEGORIA_COLLECTION)
       .select('*')
       .eq('tenant_id', tenantId);
@@ -96,7 +98,7 @@ export const laboratorioService = {
   },
 
   createCategoria: async (categoria: LaboratorioCategoria) => {
-    const { data, error } = await supabase
+    const { data, error } = await api
       .from(CATEGORIA_COLLECTION)
       .insert({
         nome: categoria.nome,
@@ -108,14 +110,14 @@ export const laboratorioService = {
         updated_at: new Date().toISOString()
       })
       .select()
-      .single();
+      .maybeSingle();
     
     if (error) throw error;
     return data;
   },
 
   updateCategoria: async (id: string, categoria: Partial<LaboratorioCategoria>) => {
-    const { error } = await supabase
+    const { error } = await api
       .from(CATEGORIA_COLLECTION)
       .update({
         ...categoria,
@@ -130,7 +132,7 @@ export const laboratorioService = {
   },
 
   deleteCategoria: async (id: string) => {
-    const { error } = await supabase
+    const { error } = await api
       .from(CATEGORIA_COLLECTION)
       .delete()
       .eq('id', id);

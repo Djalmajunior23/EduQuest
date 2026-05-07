@@ -147,9 +147,9 @@ export default function SAPanel() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
           {[1, 2, 3].map(i => <div key={i} className="h-64 bg-slate-100 rounded-3xl" />)}
         </div>
-      ) : filteredSAs.length > 0 ? (
+      ) : (filteredSAs || []).length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredSAs.map((sa) => (
+          {(filteredSAs || []).map((sa) => (
             <motion.div 
               key={sa.id}
               initial={{ opacity: 0, y: 20 }}

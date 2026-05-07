@@ -1,10 +1,10 @@
-// src/services/labService.ts
-import { supabase } from '../lib/supabase';
-import { LaboratorioPratico } from '../types/laboratorio';
+import { api } from '../lib/api';
 
-export const labService = {
+
+// src/services/labService.ts
+import { LaboratorioPratico } from '../types/laboratorio';export const labService = {
   async getLaboratoriosByTenant(tenantId: string): Promise<LaboratorioPratico[]> {
-    const { data, error } = await supabase
+    const { data, error } = await api
       .from('laboratorios_praticos')
       .select('*')
       .eq('tenantId', tenantId);
@@ -17,11 +17,11 @@ export const labService = {
   },
   
   async getLaboratorioById(labId: string): Promise<LaboratorioPratico | null> {
-    const { data, error } = await supabase
+    const { data, error } = await api
       .from('laboratorios_praticos')
       .select('*')
       .eq('id', labId)
-      .single();
+      .maybeSingle();
     
     if (error) {
       console.error(error);

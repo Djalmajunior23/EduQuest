@@ -1,5 +1,5 @@
 // src/services/edujarvis/ClassroomCompanion.ts
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI } from "@/services/aiClient";
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 
@@ -10,7 +10,7 @@ export class ClassroomCompanion {
     topic: string;
     type: "quiz" | "example" | "challenge";
   }) {
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+    const ai = new GoogleGenAI({});
     const prompt = `Como companheiro de sala de aula, gere rapidamente: ${data.type} sobre o tópico ${data.topic}.
     Retorne o tempo estimado (ex: 5 min) e a atividade em formato JSON: {"activity": "", "estimatedTimeMin": 0}`;
 

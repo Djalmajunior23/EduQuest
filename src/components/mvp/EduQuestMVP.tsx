@@ -65,7 +65,7 @@ const ProfessorView: React.FC<{ onExit: () => void }> = ({ onExit }) => {
     setLoading(false);
   };
 
-  const selectTurma = async (t: any) => {
+  const selectTurma = async (t) => {
     setSelectedTurma(t);
     const [resAlunos, resSimulados] = await Promise.all([
       MVPService.listarAlunos(t.id),
@@ -142,12 +142,12 @@ const ProfessorView: React.FC<{ onExit: () => void }> = ({ onExit }) => {
             <Button disabled={loading} onClick={criarTurma} className="bg-emerald-600 hover:bg-emerald-500">Nova Turma</Button>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {turmas.map(t => (
+            {(turmas || []).map(t => (
               <div key={t.id} onClick={() => selectTurma(t)} className="bg-slate-800 p-6 rounded-2xl border border-slate-700 cursor-pointer hover:border-emerald-500 hover:bg-slate-800/80 transition-colors">
                 <h4 className="font-bold text-lg">{t.nome}</h4>
               </div>
             ))}
-            {turmas.length === 0 && <p className="text-slate-500">Nenhuma turma cadastrada. Crie uma acima.</p>}
+            {(turmas || []).length === 0 && <p className="text-slate-500">Nenhuma turma cadastrada. Crie uma acima.</p>}
           </div>
         </div>
       ) : (
@@ -168,12 +168,12 @@ const ProfessorView: React.FC<{ onExit: () => void }> = ({ onExit }) => {
                     <Button disabled={loading} onClick={criarSimulado} className="bg-indigo-600 hover:bg-indigo-500 text-sm">Criar</Button>
                  </div>
                  <ul className="space-y-3">
-                   {simulados.map(s => (
+                   {(simulados || []).map(s => (
                      <li key={s.id} className="bg-slate-950 p-4 rounded-xl border border-slate-800 text-sm flex justify-between items-center">
                        {s.titulo}
                      </li>
                    ))}
-                   {simulados.length === 0 && <p className="text-sm text-slate-500">Nenhum simulado. Crie um para começar.</p>}
+                   {(simulados || []).length === 0 && <p className="text-sm text-slate-500">Nenhum simulado. Crie um para começar.</p>}
                  </ul>
               </div>
 
@@ -184,7 +184,7 @@ const ProfessorView: React.FC<{ onExit: () => void }> = ({ onExit }) => {
                    <Button onClick={analisarTurma} disabled={loading} size="sm" className="bg-blue-600 hover:bg-blue-500 text-xs">Analisar Turma</Button>
                  </div>
                  <ul className="space-y-3">
-                   {alunos.map(a => (
+                   {(alunos || []).map(a => (
                      <li key={a.id} className="bg-slate-950 p-4 rounded-xl border border-slate-800 flex justify-between items-center">
                        <span className="font-medium text-sm">{a.nome}</span>
                        <Button onClick={() => analisarAlunoIA(a)} size="sm" variant="outline" className="text-xs border-indigo-700 text-indigo-300 hover:bg-indigo-900/50">
@@ -192,7 +192,7 @@ const ProfessorView: React.FC<{ onExit: () => void }> = ({ onExit }) => {
                        </Button>
                      </li>
                    ))}
-                   {alunos.length === 0 && <p className="text-sm text-slate-500">Nenhum aluno. Os alunos devem entrar nesta turma para aparecerem aqui.</p>}
+                   {(alunos || []).length === 0 && <p className="text-sm text-slate-500">Nenhum aluno. Os alunos devem entrar nesta turma para aparecerem aqui.</p>}
                  </ul>
               </div>
            </div>
@@ -271,7 +271,7 @@ const AlunoView: React.FC<{ onExit: () => void }> = ({ onExit }) => {
                       className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-300"
                     >
                       <option value="">Selecione a turma...</option>
-                      {turmas.map(t => <option key={t.id} value={t.id}>{t.nome}</option>)}
+                      {(turmas || []).map(t => <option key={t.id} value={t.id}>{t.nome}</option>)}
                     </select>
                     <Button disabled={loading || !nomeAluno || !selectedTurma} onClick={entrarNaTurma} className="w-full bg-indigo-600 hover:bg-indigo-500 py-6 rounded-xl font-bold">
                        Acessar Ambiente
@@ -284,13 +284,13 @@ const AlunoView: React.FC<{ onExit: () => void }> = ({ onExit }) => {
                     <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl">
                        <h3 className="text-xl font-bold mb-4">Simulados Disponíveis</h3>
                        <div className="space-y-3">
-                         {simulados.map(s => (
+                         {(simulados || []).map(s => (
                             <div key={s.id} className="bg-slate-950 p-6 rounded-xl border border-slate-800 flex justify-between items-center">
                               <span className="font-medium">{s.titulo}</span>
                               <Button onClick={() => setSimuladoAtivo(s)} className="bg-emerald-600 hover:bg-emerald-500">Realizar Simulado</Button>
                             </div>
                          ))}
-                         {simulados.length === 0 && <p className="text-slate-500">Nenhum simulado disponível nesta turma.</p>}
+                         {(simulados || []).length === 0 && <p className="text-slate-500">Nenhum simulado disponível nesta turma.</p>}
                        </div>
                     </div>
                  )}

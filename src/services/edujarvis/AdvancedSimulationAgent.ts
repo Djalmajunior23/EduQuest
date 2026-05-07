@@ -1,5 +1,5 @@
 // src/services/edujarvis/AdvancedSimulationAgent.ts
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI } from "@/services/aiClient";
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 
@@ -11,7 +11,7 @@ export class AdvancedSimulationAgent {
     difficulty: "iniciante" | "intermediario" | "avancado";
     theme: string;
   }) {
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+    const ai = new GoogleGenAI({});
     const systemPrompt = `
 Você é o Advanced Simulation Lab do EduJarvis.
 

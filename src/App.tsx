@@ -4,6 +4,7 @@ import { AuthProvider } from './lib/AuthContext';
 import { TenantProvider } from './lib/TenantContext';
 import { AuthGuard } from './components/AuthGuard';
 import { Layout } from './components/Layout';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import ExamList from './pages/ExamList';
@@ -84,12 +85,13 @@ function TenantSpecificHyperOS() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <TenantProvider>
-        <NotificationProvider>
-          <Router>
-            <EduJarvisChat />
-            <Routes>
+    <ErrorBoundary>
+      <AuthProvider>
+        <TenantProvider>
+          <NotificationProvider>
+            <Router>
+              <EduJarvisChat />
+              <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/auth/callback" element={<OAuthCallback />} />
             <Route path="/activate" element={<ActivateAccount />} />
@@ -533,5 +535,6 @@ export default function App() {
       </NotificationProvider>
       </TenantProvider>
     </AuthProvider>
+    </ErrorBoundary>
   );
 }

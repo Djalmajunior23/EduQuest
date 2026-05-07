@@ -1,15 +1,14 @@
+import { api } from '../../../lib/api';
+
+
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../lib/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  BrainCircuit, Compass, Target, Trophy, Flame, Loader2, ArrowRight, Zap, Target as TargetIcon,
+import {   BrainCircuit, Compass, Target, Trophy, Flame, Loader2, ArrowRight, Zap, Target as TargetIcon,
   Cpu, Network, Database, LayoutGrid, Code2
 } from 'lucide-react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from 'recharts';
-import { cn } from '../../../lib/utils';
-
-export default function StudentAdaptiveJourney() {
+import { cn } from '../../../lib/utils';export default function StudentAdaptiveJourney() {
   const { user, profile } = useAuth();
   const [perfil, setPerfil] = useState<any>(null);
   const [plano, setPlano] = useState<any>(null);
@@ -37,11 +36,11 @@ export default function StudentAdaptiveJourney() {
 
     // Conecta no Motor Inteligente para pegar Perfil Atual
     const subscribeProfile = async () => {
-        const { data: docData } = await supabase
+        const { data: docData } = await api
             .from('perfis_aluno')
             .select('*')
             .eq('uid', user.id)
-            .single();
+            .maybeSingle();
 
         if (docData) {
             setPerfil({
@@ -63,12 +62,12 @@ export default function StudentAdaptiveJourney() {
     };
 
     const fetchPlan = async () => {
-        const { data: planData } = await supabase
+        const { data: planData } = await api
             .from('planos_estudo')
             .select('*')
             .eq('student_id', user.id)
             .eq('status', 'ATIVO')
-            .single();
+            .maybeSingle();
 
         if (planData) {
             setPlano({
@@ -87,7 +86,7 @@ export default function StudentAdaptiveJourney() {
 
     const fetchMissions = async () => {
         if (profile?.tenant_id) {
-            const { data: missionsData } = await supabase
+            const { data: missionsData } = await api
                 .from('missoes')
                 .select('*')
                 .eq('tenant_id', profile.tenant_id)

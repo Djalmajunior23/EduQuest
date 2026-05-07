@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
-import { useAuth } from '../lib/AuthContext';
+import { api } from '../lib/api';
 
-export function useCursos() {
+
+import { useEffect, useState } from 'react';
+import { useAuth } from '../lib/AuthContext';export function useCursos() {
   const { profile } = useAuth();
   const tenantId = profile?.tenantId;
   const [cursos, setCursos] = useState<any[]>([]);
@@ -12,7 +12,7 @@ export function useCursos() {
     if (!tenantId) return;
 
     const fetchCursos = async () => {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from('cursos')
         .select('*')
         .eq('tenant_id', tenantId);
@@ -25,7 +25,7 @@ export function useCursos() {
 
     fetchCursos();
 
-    const channel = supabase
+    const channel = api
       .channel('cursos-changes')
       .on(
         'postgres_changes',
@@ -42,7 +42,7 @@ export function useCursos() {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      api.removeChannel(channel);
     };
   }, [tenantId]);
 

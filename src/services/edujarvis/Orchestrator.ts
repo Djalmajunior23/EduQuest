@@ -1,5 +1,5 @@
 // src/services/edujarvis/Orchestrator.ts
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI } from "@/services/aiClient";
 import { EduJarvisIntent, EduJarvisAgentType } from "./types";
 import { EduJarvisAgentConfig } from "./AgentConfiguration";
 
@@ -17,9 +17,8 @@ export class EduJarvisOrchestrator {
 
   private static getAI() {
     if (!this.ai) {
-      const apiKey = process.env.GEMINI_API_KEY;
-      if (!apiKey) throw new Error("GEMINI_API_KEY_MISSING");
-      this.ai = new GoogleGenAI({ apiKey });
+      
+      this.ai = new GoogleGenAI({});
     }
     return this.ai;
   }

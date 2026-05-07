@@ -1,5 +1,5 @@
 // src/services/edujarvis/IntelligentContentFactory.ts
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI } from "@/services/aiClient";
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 
@@ -10,7 +10,7 @@ export class IntelligentContentFactory {
     theme: string;
     level: string;
   }) {
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+    const ai = new GoogleGenAI({});
     
     const prompt = `Gere um pacote completo de conteúdo sobre: ${data.theme}. Nível: ${data.level}.
     O pacote deve conter: Aula, Exercícios, Projeto, Rubrica.

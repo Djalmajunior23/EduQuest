@@ -1,22 +1,24 @@
+import { api } from '../../lib/api';
+
+
 // src/services/mvp/MVPService.ts
-import { supabase } from '../../lib/supabase';
 
 export class MVPService {
   public static async criarTurma(nome: string) {
-    const { data: user } = await supabase.auth.getUser();
+    const { data: user } = { data: { user: { id: '' } } };
     
-    const { data, error } = await supabase
+    const { data, error } = await api
       .from('turmas')
       .insert({ nome, professor_id: user.user?.id || null })
       .select()
-      .single();
+      .maybeSingle();
       
     if (error) console.error(error);
     return data;
   }
 
   public static async listarTurmas() {
-    const { data, error } = await supabase
+    const { data, error } = await api
       .from('turmas')
       .select('*')
       .order('created_at', { ascending: false });
@@ -26,20 +28,20 @@ export class MVPService {
   }
 
   public static async criarAluno(nome: string, turmaId: string) {
-    const { data: user } = await supabase.auth.getUser();
+    const { data: user } = { data: { user: { id: '' } } };
     
-    const { data, error } = await supabase
+    const { data, error } = await api
       .from('alunos')
       .insert({ nome, turma_id: turmaId, user_id: user.user?.id || null })
       .select()
-      .single();
+      .maybeSingle();
       
     if (error) console.error(error);
     return data;
   }
 
   public static async listarAlunos(turmaId: string) {
-    const { data, error } = await supabase
+    const { data, error } = await api
       .from('alunos')
       .select('*')
       .eq('turma_id', turmaId);
@@ -49,18 +51,18 @@ export class MVPService {
   }
 
   public static async criarSimulado(titulo: string, turmaId: string) {
-    const { data, error } = await supabase
+    const { data, error } = await api
       .from('simulados')
       .insert({ titulo, turma_id: turmaId })
       .select()
-      .single();
+      .maybeSingle();
       
     if (error) console.error(error);
     return data;
   }
   
   public static async listarSimulados(turmaId: string) {
-    const { data, error } = await supabase
+    const { data, error } = await api
       .from('simulados')
       .select('*')
       .eq('turma_id', turmaId);
@@ -86,7 +88,7 @@ export class MVPService {
 
   public static async enviarResposta(alunoId: string, simuladoId: string, respostas: any[]) {
     // Attempting to use Edge Function
-    const { data, error } = await supabase.functions.invoke('responder-simulado', {
+    const { data, error } = await api.functions.invoke('responder-simulado', {
       body: { alunoId, simuladoId, respostas, tenantId: null }
     });
     
@@ -95,7 +97,7 @@ export class MVPService {
        console.warn("Edge function responder-simulado falhou, usando fallback direto", error);
        const score = this.calcularScore(respostas) || Math.floor(Math.random() * 100); 
        
-       const { data: dbData } = await supabase
+       const { data: dbData } = await api
          .from('respostas_simulado')
          .insert({
            aluno_id: alunoId,
@@ -104,7 +106,7 @@ export class MVPService {
            score
          })
          .select()
-         .single();
+         .maybeSingle();
          
        return { id: dbData?.id, score };
     }
@@ -118,21 +120,21 @@ export class MVPService {
        basicPlan: planoBasico
     };
     
-    const { data, error } = await supabase
+    const { data, error } = await api
       .from('planos_estudo')
       .insert({
         aluno_id: alunoId,
         plano
       })
       .select()
-      .single();
+      .maybeSingle();
       
     if (error) console.error(error);
     return { id: data?.id, analise, planoBasico };
   }
   
   public static async analisarTurma(turmaId: string) {
-     const { data, error } = await supabase.rpc('analisar_turma', {
+     const { data, error } = await api.rpc('analisar_turma', {
        p_turma_id: turmaId
      });
      if(error) console.error(error);

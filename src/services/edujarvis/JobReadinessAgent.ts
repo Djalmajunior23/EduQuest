@@ -1,5 +1,5 @@
 // src/services/edujarvis/JobReadinessAgent.ts
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI } from "@/services/aiClient";
 
 export class JobReadinessAgent {
   public static async evaluate(data: {
@@ -8,7 +8,7 @@ export class JobReadinessAgent {
     credentials: string[];
     targetRole: string;
   }) {
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+    const ai = new GoogleGenAI({});
     const systemPrompt = `
 Você é o Job Readiness AI do EduJarvis.
 

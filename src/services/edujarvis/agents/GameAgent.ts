@@ -1,6 +1,6 @@
 // src/services/edujarvis/agents/GameAgent.ts
 import { AIService } from "../../aiService";
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI } from "@/services/aiClient";
 
 export class GameAgent {
   public static async execute(message: string, context: any) {

@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User } from '@supabase/supabase-js';
-import { supabase } from './supabase';
 import { SAAS_PLANS } from '../constants/saas';
+import { api } from './api';
 
 const DEFAULT_PERMISSIONS: Record<string, string[]> = {
   ADMIN: [
@@ -26,16 +25,24 @@ const DEFAULT_PERMISSIONS: Record<string, string[]> = {
   ]
 };
 
+// Define local User interface instead of using Database's
+export interface User {
+  id: string;
+  email: string;
+  [key: string]: any;
+}
+
 interface AuthContextType {
   user: User | null;
   profile: any | null;
+  profileError: string | null;
   loading: boolean;
-  signInWithGoogle: () => Promise<void>;
-  signInWithEmail: (email: string, password: string) => Promise<void>;
-  signUpWithEmail: (email: string, password: string, name: string) => Promise<void>;
+  signInWithEmail: (email: string, senha: string) => Promise<void>;
+  signUpWithEmail: (email: string, senha: string, nome: string) => Promise<void>;
   logout: () => Promise<void>;
   hasPermission: (permissionName: string) => boolean;
   hasPlanFeature: (featureName: string) => boolean;
+  setBackendToken: (token: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -44,6 +51,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const [profileError, setProfileError] = useState<string | null>(null);
 
   const hasPermission = (permissionName: string): boolean => {
     if (!profile) return false;
@@ -64,162 +73,96 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    const fetchProfile = async (userId: string) => {
-      const { data, error } = await supabase
-        .from('usuarios')
-        .select('*')
-        .eq('uid', userId)
-        .single();
+    let mounted = true;
 
-      if (data) {
-        setProfile(data);
-      } else if (!error || error.code === 'PGRST116') {
-        // Profile doesn't exist, create it
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const adminEmails = [
-            'djalmabatistajunior@gmail.com', 
-            'djalmabatistabarbosajunior@gmail.com'
-          ];
-          const isAdmin = user.email && adminEmails.includes(user.email);
-          
-          const newProfile = {
-            uid: user.id,
-            email: user.email,
-            nome: user.user_metadata?.full_name || 'Usuário',
-            perfil: isAdmin ? 'ADMIN' : 'ALUNO',
-            plano: 'FREE',
-            tenantId: isAdmin ? 'nexus_master' : 'nexus_default',
-            status: 'ATIVO',
-            saldoTokensIA: 50,
-            xp: 0,
-            updatedAt: new Date().toISOString()
-          };
-
-          const { data: createdProfile, error: createError } = await supabase
-            .from('usuarios')
-            .upsert(newProfile)
-            .select()
-            .single();
-
-          if (createError) {
-            console.error("Error creating user profile:", createError);
-          } else {
-            setProfile(createdProfile);
-          }
-        }
+    const initializeAuth = async () => {
+      const token = localStorage.getItem('eduquest_token');
+      if (!token) {
+        if (mounted) setLoading(false);
+        return;
       }
-      setLoading(false);
-    };
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
       
-      if (currentUser) {
-        fetchProfile(currentUser.id);
-        
-        // Subscribe to profile changes
-        const channel = supabase
-          .channel(`profile-${currentUser.id}`)
-          .on(
-            'postgres_changes',
-            {
-              event: 'UPDATE',
-              schema: 'public',
-              table: 'usuarios',
-              filter: `uid=eq.${currentUser.id}`,
-            },
-            (payload) => {
-              setProfile(payload.new);
-            }
-          )
-          .subscribe();
-
-        return () => {
-          supabase.removeChannel(channel);
-        };
-      } else {
-        setProfile(null);
-        setLoading(false);
-      }
-    });
-
-    const handleMessage = (event: MessageEvent) => {
-      if (event.data?.type === 'OAUTH_AUTH_SUCCESS') {
-        // Trigger generic getSession to ensure state is updated
-        supabase.auth.getSession();
+      try {
+        const { data } = await api.get('/api/auth/me');
+        if (data && data.user && mounted) {
+           setUser({ id: data.user.id, email: data.user.email });
+           setProfile({
+             ...data.user,
+             id: data.user.id,
+             role: data.user.perfil,
+             tenantId: data.user.tenantId,
+             saldoTokensIA: data.user.aiTokens
+           });
+        }
+      } catch (err) {
+        console.error("Failed to restore session from backend:", err);
+      } finally {
+        if (mounted) setLoading(false);
       }
     };
-    window.addEventListener('message', handleMessage);
+
+    initializeAuth();
 
     return () => {
-      window.removeEventListener('message', handleMessage);
-      subscription.unsubscribe();
+      mounted = false;
     };
   }, []);
 
-  const signInWithGoogle = async () => {
+  const setBackendToken = async (token: string) => {
+    localStorage.setItem('eduquest_token', token);
+// Another block inside setBackendToken
     try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          skipBrowserRedirect: true,
-          redirectTo: `${window.location.origin}/auth/callback`
-        }
-      });
-      if (error) throw error;
-      
-      if (data?.url) {
-        window.open(data.url, 'oauth_popup', 'width=600,height=700');
+      const { data } = await api.get('/api/auth/me');
+      if (data && data.user) {
+        setUser({ id: data.user.id, email: data.user.email });
+        setProfile({
+          ...data.user,
+          id: data.user.id,
+          role: data.user.perfil,
+          tenantId: data.user.tenantId,
+          saldoTokensIA: data.user.aiTokens
+        });
       }
-    } catch (error: any) {
-      console.error("Login Error:", error);
-      throw error;
+    } catch (e) {
+      console.error("Failed to fetch backend session:", e);
     }
   };
 
-  const signInWithEmail = async (email: string, password: string) => {
+  const signInWithEmail = async (email: string, senha: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) throw error;
-    } catch (error: any) {
-      console.error("Email Login Error:", error);
-      throw error;
+      const { data } = await api.post('/api/auth/login', { email, senha });
+      await setBackendToken(data.accessToken);
+    } catch(err) {
+      throw err;
     }
   };
 
-  const signUpWithEmail = async (email: string, password: string, name: string) => {
+  const signUpWithEmail = async (email: string, senha: string, nome: string) => {
     try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: name,
-          }
-        }
-      });
-      if (error) throw error;
-      
-      // Optionally alert the user if email confirmation is required by Supabase settings:
-      // alert("Verifique seu e-mail para confirmar a conta.");
-    } catch (error: any) {
-      console.error("Email Sign Up Error:", error);
-      throw error;
+      const { data } = await api.post('/api/auth/register', { email, senha, nome });
+      if (data && data.user) {
+         await signInWithEmail(email, senha);
+      }
+    } catch(err) {
+      throw err;
     }
   };
 
   const logout = async () => {
-    await supabase.auth.signOut();
+    try {
+      await api.post('/api/auth/logout');
+    } catch (err) {
+      console.error(err);
+    } finally {
+      localStorage.removeItem('eduquest_token');
+      setUser(null);
+      setProfile(null);
+      window.location.href = '/login';
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signInWithGoogle, signInWithEmail, signUpWithEmail, logout, hasPermission, hasPlanFeature }}>
+    <AuthContext.Provider value={{ user, profile, profileError, loading, signInWithEmail, signUpWithEmail, logout, hasPermission, hasPlanFeature, setBackendToken }}>
       {children}
     </AuthContext.Provider>
   );

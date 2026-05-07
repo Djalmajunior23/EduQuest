@@ -1,8 +1,9 @@
+import { api } from '../lib/api';
+
+
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/AuthContext';
-import { 
-  BookOpen, 
+import {   BookOpen, 
   Clock, 
   Plus, 
   Play, 
@@ -13,9 +14,7 @@ import {
   FileText
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Link, useNavigate } from 'react-router-dom';
-
-export default function ExamList() {
+import { Link, useNavigate } from 'react-router-dom';export default function ExamList() {
   const { profile } = useAuth();
   const [exams, setExams] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,24 +30,15 @@ export default function ExamList() {
       (filterActive === 'all' || (filterActive === 'active' ? exam.active : !exam.active))
     )
     .sort((a, b) => {
-      if (sortBy === 'newest') return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
-      if (sortBy === 'questions') return (b.question_ids?.length || 0) - (a.question_ids?.length || 0);
+      if (sortBy === 'newest') return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+      if (sortBy === 'questions') return (b._count?.questoes || 0) - (a._count?.questoes || 0);
       return 0;
     });
 
   useEffect(() => {
     async function fetchExams() {
       try {
-        let query = supabase.from('exams').select('*');
-        
-        if (profile?.role === 'student') {
-          query = query.eq('active', true);
-        } else {
-          query = query.eq('teacher_id', profile?.id);
-        }
-        
-        const { data, error } = await query;
-        if (error) throw error;
+        const { data } = await api.get('/api/simulados');
         setExams(data || []);
       } catch (error) {
         console.error('Error fetching exams:', error);
@@ -120,7 +110,7 @@ export default function ExamList() {
 
       {/* Exam Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredExams.map((exam) => (
+        {(filteredExams || []).map((exam) => (
           <motion.div
             key={exam.id}
             initial={{ opacity: 0, scale: 0.95 }}
@@ -150,7 +140,7 @@ export default function ExamList() {
                 </div>
                 <div className="flex items-center gap-1">
                   <FileText className="w-4 h-4" />
-                  {exam.question_ids?.length || 0} questões
+                  {exam._count?.questoes || 0} questões
                 </div>
               </div>
 
@@ -201,8 +191,11 @@ export default function ExamList() {
 
                 try {
                   setLoading(true);
-                  const { data, error } = await supabase.from('exams').insert(newExam).select().single();
-                  if (error) throw error;
+                  const { data } = await api.post('/api/simulados', {
+                    titulo: newExam.title,
+                    descricao: newExam.description,
+                    // In a real expanded scenario we would pass more data
+                  });
                   setExams(prev => [data, ...prev]);
                   setIsCreateModalOpen(false);
                 } catch (err) {

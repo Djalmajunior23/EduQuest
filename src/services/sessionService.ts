@@ -1,5 +1,7 @@
+import { api } from '../lib/api';
+
+
 // src/services/sessionService.ts
-import { supabase } from '../lib/supabase';
 
 export interface ClassSession {
   id?: string;
@@ -23,7 +25,7 @@ export interface ClassSession {
 
 export const sessionService = {
   async startSession(session: Omit<ClassSession, 'id' | 'startedAt' | 'studentsProgress'>) {
-    const { data, error } = await supabase
+    const { data, error } = await api
       .from('sessoes_ativas')
       .insert({
         ...session,
@@ -31,14 +33,14 @@ export const sessionService = {
         students_progress: {}
       })
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     return data.id;
   },
 
   async finishSession(sessionId: string) {
-    const { error } = await supabase
+    const { error } = await api
       .from('sessoes_ativas')
       .update({ 
         status: 'FINISHED', 
@@ -51,17 +53,17 @@ export const sessionService = {
 
   subscribeToSession(sessionId: string, callback: (session: ClassSession) => void) {
     const fetchSession = async () => {
-      const { data } = await supabase
+      const { data } = await api
         .from('sessoes_ativas')
         .select('*')
         .eq('id', sessionId)
-        .single();
+        .maybeSingle();
       if (data) callback(data as ClassSession);
     };
 
     fetchSession();
 
-    const channel = supabase
+    const channel = api
       .channel(`session-${sessionId}`)
       .on(
         'postgres_changes',
@@ -78,18 +80,18 @@ export const sessionService = {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      api.removeChannel(channel);
     };
   },
 
   async updateStudentProgress(sessionId: string, studentId: string, progress: any) {
-    // Para atualizar JSONB parcial em Supabase sem RPC complexo, 
+    // Para atualizar JSONB parcial em Database sem RPC complexo, 
     // o ideal é buscar e atualizar ou usar a lógica de merge no cliente
-    const { data: session } = await supabase
+    const { data: session } = await api
       .from('sessoes_ativas')
       .select('students_progress')
       .eq('id', sessionId)
-      .single();
+      .maybeSingle();
 
     const currentProgress = session?.students_progress || {};
     currentProgress[studentId] = {
@@ -97,7 +99,7 @@ export const sessionService = {
       lastUpdate: new Date().toISOString()
     };
 
-    const { error } = await supabase
+    const { error } = await api
       .from('sessoes_ativas')
       .update({
         students_progress: currentProgress

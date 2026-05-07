@@ -1,8 +1,8 @@
-// src/services/simulationService.ts
-import { supabase } from '../lib/supabase';
-import { AIService } from './aiService';
+import { api } from '../lib/api';
 
-export interface Simulation {
+
+// src/services/simulationService.ts
+import { AIService } from './aiService';export interface Simulation {
   id?: string;
   tenantId: string;
   titulo: string;
@@ -28,7 +28,7 @@ export interface SimulationStep {
 
 export const simulationService = {
   async createSimulation(sim: Omit<Simulation, 'id' | 'createdAt'>) {
-    const { data, error } = await supabase
+    const { data, error } = await api
       .from('simuladores')
       .insert({
         tenant_id: sim.tenantId,
@@ -40,14 +40,14 @@ export const simulationService = {
         created_at: new Date().toISOString()
       })
       .select()
-      .single();
+      .maybeSingle();
     
     if (error) throw error;
     return data.id;
   },
 
   async listSimulations(tenantId: string): Promise<Simulation[]> {
-    const { data, error } = await supabase
+    const { data, error } = await api
       .from('simuladores')
       .select('*')
       .eq('tenant_id', tenantId);

@@ -1,10 +1,10 @@
+import { api } from '../lib/api';
+
+
 import { AIService } from './aiService';
 import { Activity, ActivitySubmission, Rubric } from '../types/activities';
-import { supabase } from '../lib/supabase';
 import { UniversalActivityCorrectionEngine } from './UniversalActivityCorrectionEngine';
-import { CorrectionRequest } from '../types/correction';
-
-export const activityCorrectionService = {
+import { CorrectionRequest } from '../types/correction';export const activityCorrectionService = {
   async correctSubmissionWithAI(
     activity: Activity,
     submission: ActivitySubmission,
@@ -36,10 +36,10 @@ export const activityCorrectionService = {
 
     const aiResult = await UniversalActivityCorrectionEngine.correct(activity, submission, rubric);
     
-    // Save to Supabase
+    // Save to Database
     if (submission.id) {
-      const { error: updateError } = await supabase
-        .from('activity_submissions')
+      const { error: updateError } = await api
+        .from('submissoes')
         .update({
           ai_score: aiResult.finalSuggestedScore,
           ai_feedback: aiResult.studentFeedback,
@@ -58,8 +58,8 @@ export const activityCorrectionService = {
       if (updateError) console.error('Error updating submission:', updateError);
 
       // Log action
-      const { error: logError } = await supabase
-        .from('correction_logs')
+      const { error: logError } = await api
+        .from('logs_correcao')
         .insert({
           submission_id: submission.id,
           activity_id: activity.id,
@@ -86,8 +86,8 @@ export const activityCorrectionService = {
     feedback: string,
     oldScore?: number
   ) {
-    const { error: updateError } = await supabase
-      .from('activity_submissions')
+    const { error: updateError } = await api
+      .from('submissoes')
       .update({
         teacher_score: finalScore,
         final_score: finalScore,
@@ -99,8 +99,8 @@ export const activityCorrectionService = {
 
     if (updateError) throw updateError;
 
-    const { error: logError } = await supabase
-      .from('correction_logs')
+    const { error: logError } = await api
+      .from('logs_correcao')
       .insert({
         submission_id: submissionId,
         activity_id: activityId,

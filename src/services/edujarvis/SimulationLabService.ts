@@ -1,5 +1,5 @@
 // src/services/edujarvis/SimulationLabService.ts
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI } from "@/services/aiClient";
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 
@@ -7,7 +7,7 @@ export class SimulationLabService {
   private static COLLECTION = 'ai_simulation_labs';
 
   public static async startLabSession(tenantId: string, alunoId: string, scenario: string) {
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+    const ai = new GoogleGenAI({});
     
     const prompt = `
 Inicie uma sessão de laboratório simulado sobre: ${scenario}.

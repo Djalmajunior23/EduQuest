@@ -1,13 +1,13 @@
-import { supabase } from '../lib/supabase';
-import { Activity, ActivitySubmission } from '../types/activities';
+import { api } from '../lib/api';
 
-const ACTIVITIES_TABLE = 'activities';
+
+import { Activity, ActivitySubmission } from '../types/activities';const ACTIVITIES_TABLE = 'activities';
 const SUBMISSIONS_TABLE = 'activity_submissions';
 
 export const activityService = {
   async createActivity(activity: Omit<Activity, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
     const now = new Date().toISOString();
-    const { data, error } = await supabase
+    const { data, error } = await api
       .from(ACTIVITIES_TABLE)
       .insert({
         title: activity.title,
@@ -32,7 +32,7 @@ export const activityService = {
         updated_at: now
       })
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     return data.id;
@@ -56,7 +56,7 @@ export const activityService = {
     if (updates.correctionMode !== undefined) mappedUpdates.correction_mode = updates.correctionMode;
     if (updates.testCases !== undefined) mappedUpdates.test_cases = updates.testCases;
 
-    const { error } = await supabase
+    const { error } = await api
       .from(ACTIVITIES_TABLE)
       .update(mappedUpdates)
       .eq('id', id);
@@ -65,7 +65,7 @@ export const activityService = {
   },
 
   async getActivitiesByTeacher(teacherId: string): Promise<Activity[]> {
-    const { data, error } = await supabase
+    const { data, error } = await api
       .from(ACTIVITIES_TABLE)
       .select('*')
       .eq('teacher_id', teacherId);
@@ -89,7 +89,7 @@ export const activityService = {
   },
 
   async getActivitiesByClass(classId: string): Promise<Activity[]> {
-    const { data, error } = await supabase
+    const { data, error } = await api
       .from(ACTIVITIES_TABLE)
       .select('*')
       .eq('class_id', classId)
@@ -115,7 +115,7 @@ export const activityService = {
 
   async submitActivity(submission: Omit<ActivitySubmission, 'id' | 'createdAt'>): Promise<string> {
     const now = new Date().toISOString();
-    const { data, error } = await supabase
+    const { data, error } = await api
       .from(SUBMISSIONS_TABLE)
       .insert({
         activity_id: submission.activityId,
@@ -132,14 +132,14 @@ export const activityService = {
         created_at: now
       })
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     return data.id;
   },
 
   async getSubmissionsByActivity(activityId: string): Promise<ActivitySubmission[]> {
-    const { data, error } = await supabase
+    const { data, error } = await api
       .from(SUBMISSIONS_TABLE)
       .select('*')
       .eq('activity_id', activityId);
@@ -175,7 +175,7 @@ export const activityService = {
   },
 
   async getStudentSubmissions(studentId: string): Promise<ActivitySubmission[]> {
-    const { data, error } = await supabase
+    const { data, error } = await api
       .from(SUBMISSIONS_TABLE)
       .select('*')
       .eq('student_id', studentId);

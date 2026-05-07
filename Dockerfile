@@ -1,29 +1,31 @@
-# Stage 1: Build
-FROM node:20-alpine AS build
+# Use Node 20 as base image
+FROM node:20-alpine AS builder
 
 WORKDIR /app
-
-# Install dependencies first (better caching)
 COPY package*.json ./
 RUN npm install
 
-# Copy source and build
+# Copy source
 COPY . .
 
-# Build args can be passed here if needed for VITE_ variables
-# RUN npm run build
+# Build the frontend and backend (Vite)
 RUN npm run build
 
-# Stage 2: Production
-FROM nginx:alpine
+# Production image
+FROM node:20-alpine AS runner
+WORKDIR /app
 
-# Copy custom nginx config
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Only copy required files to run server.ts with Node
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./
+# Actually server.ts requires compilation if it uses TypeScript, but we can run it with tsx or compile it.
+# Assuming package.json runs it via `tsx server.ts` or we compile it during build.
+COPY --from=builder /app/server.ts ./
+COPY --from=builder /app/src/server ./src/server
 
-# Copy build artifacts to nginx public folder
-COPY --from=build /app/dist /usr/share/nginx/html
+# Expose port (Internal port the backend runs on)
+EXPOSE 3000
 
-# Expose port (internal)
-EXPOSE 80
-
-CMD ["nginx", "-g", "daemon off;"]
+# Start command
+CMD ["npm", "start"]

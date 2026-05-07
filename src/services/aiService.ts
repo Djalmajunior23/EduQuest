@@ -1,5 +1,5 @@
 // src/services/aiService.ts
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI } from "@/services/aiClient";
 
 // Abstração para suporte a fallback e governança (Seção 4.4, 13)
 export class AIService {
@@ -12,7 +12,7 @@ export class AIService {
         console.warn("GEMINI_API_KEY não configurada. IA indisponível.");
         return null;
       }
-      this.instance = new GoogleGenAI({ apiKey });
+      this.instance = new GoogleGenAI({});
     }
     return this.instance;
   }

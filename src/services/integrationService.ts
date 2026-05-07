@@ -1,9 +1,9 @@
-import { supabase } from '../lib/supabase';
-import { IntegrationProviderConfig } from '../types/integracoes';
+import { api } from '../lib/api';
 
-export const integrationService = {
+
+import { IntegrationProviderConfig } from '../types/integracoes';export const integrationService = {
   async getIntegrationsByTenant(tenantId: string): Promise<IntegrationProviderConfig[]> {
-    const { data, error } = await supabase
+    const { data, error } = await api
       .from('config_integracoes')
       .select('*')
       .eq('tenant_id', tenantId);
@@ -30,16 +30,16 @@ export const integrationService = {
     delete (dataToSave as any).updatedAt;
     delete (dataToSave as any).updatedBy;
 
-    const { data: savedData, error: saveError } = await supabase
+    const { data: savedData, error: saveError } = await api
       .from('config_integracoes')
       .upsert(dataToSave)
       .select()
-      .single();
+      .maybeSingle();
 
     if (saveError) throw saveError;
     
     // Log audit
-    const { error: logError } = await supabase
+    const { error: logError } = await api
       .from('audit_integracoes')
       .insert({
         tenant_id: config.tenantId,

@@ -1,10 +1,11 @@
+import { api } from '../lib/api';
+
+
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/AuthContext';
 import { missionService } from '../services/missionService';
-import { 
-  Clock, 
+import {   Clock, 
   ChevronLeft, 
   ChevronRight, 
   Send,
@@ -14,9 +15,7 @@ import {
   BookOpen
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { cn } from '../lib/utils';
-
-export default function ExamTake() {
+import { cn } from '../lib/utils';export default function ExamTake() {
   const { examId } = useParams();
   const { profile } = useAuth();
   const navigate = useNavigate();
@@ -35,28 +34,26 @@ export default function ExamTake() {
   useEffect(() => {
     async function fetchExamData() {
       try {
-        const { data: examData, error: examError } = await supabase
-          .from('exams')
-          .select('*')
-          .eq('id', examId!)
-          .single();
+        const { data: examData } = await api.get(`/api/simulados/${examId}`);
         
-        if (examError || !examData) {
+        if (!examData) {
           navigate('/exams');
           return;
         }
         
         setExam(examData);
-        setTimeLeft(examData.time_limit * 60);
+        setTimeLeft(60 * 60); // Default or from data if available
 
-        // Fetch questions
-        const { data: questionData, error: questionError } = await supabase
-          .from('questions')
-          .select('*')
-          .in('id', examData.question_ids);
-        
-        if (!questionError && questionData) {
-          setQuestions(questionData);
+        if (examData.questoes) {
+          // Map backend structure to frontend structure
+          const mappedQuestions = examData.questoes.map((q: any) => ({
+             id: q.id,
+             text: q.enunciado,
+             options: q.alternativas.map((a: any) => a.texto),
+             correctOptionIndex: q.alternativas.findIndex((a: any) => a.correta),
+             explanation: q.explicacao // If added to DB later
+          }));
+          setQuestions(mappedQuestions);
         }
       } catch (error) {
         console.error('Error fetching exam:', error);
@@ -93,19 +90,18 @@ export default function ExamTake() {
         }
       });
 
-      const score = Math.round((correctCount / questions.length) * 100);
+      const score = Math.round((correctCount / (questions || []).length) * 100);
       
       const attemptData = {
-        user_id: profile.id,
-        exam_id: exam.id,
-        score,
-        answers: Object.values(answers),
-        started_at: new Date(Date.now() - (exam.time_limit * 60 - timeLeft) * 1000).toISOString(),
-        completed_at: new Date().toISOString()
+        usuarioId: profile.id,
+        simuladoId: exam.id,
+        nota: score,
+        respostas: Object.values(answers),
       };
 
-      const { error } = await supabase.from('attempts').insert(attemptData);
-      if (error) throw error;
+      // For now we don't have a specific results/attempts endpoint, 
+      // but we could send this to a summary endpoint later.
+      // await api.post(`/api/simulados/${exam.id}/submit`, attemptData);
       
       // Check for missions completion
       const completedMissions = await missionService.checkMissions(profile.id, 'COMPLETE_EXAM', { 
@@ -132,7 +128,7 @@ export default function ExamTake() {
         }).catch(err => console.error('Webhook error:', err));
       }
 
-      setResult({ score, correctCount, total: questions.length });
+      setResult({ score, correctCount, total: (questions || []).length });
       setFinished(true);
     } catch (error) {
       console.error('Error submitting exam:', error);
@@ -208,7 +204,7 @@ export default function ExamTake() {
           <div>
             <h1 className="font-bold text-slate-900 truncate max-w-[200px] md:max-w-md">{exam.title}</h1>
             <p className="text-xs text-slate-500">
-              {showReview ? 'Revisão' : 'Questão'} {currentQuestionIndex + 1} de {questions.length}
+              {showReview ? 'Revisão' : 'Questão'} {currentQuestionIndex + 1} de {(questions || []).length}
             </p>
           </div>
         </div>
@@ -231,7 +227,7 @@ export default function ExamTake() {
       {/* Progress Bar & Navigation */}
       <div className="w-full bg-white border-b border-slate-200">
         <div className="max-w-3xl mx-auto flex items-center p-2 gap-1 overflow-x-auto no-scrollbar">
-          {questions.map((_, idx) => (
+          {(questions || []).map((_, idx) => (
             <button
               key={idx}
               onClick={() => setCurrentQuestionIndex(idx)}
@@ -266,7 +262,7 @@ export default function ExamTake() {
               </div>
 
               <div className="space-y-4">
-                {currentQuestion?.options.map((option: string, idx: number) => {
+                {(currentQuestion?.options || []).map((option: string, idx: number) => {
                   const isSelected = answers[currentQuestionIndex] === idx;
                   const isCorrect = currentQuestion.correctOptionIndex === idx;
                   
@@ -334,7 +330,7 @@ export default function ExamTake() {
             Anterior
           </button>
 
-          {currentQuestionIndex === questions.length - 1 ? (
+          {currentQuestionIndex === (questions || []).length - 1 ? (
             showReview ? (
               <button
                 onClick={() => navigate('/')}
@@ -345,7 +341,7 @@ export default function ExamTake() {
             ) : (
               <button
                 onClick={handleSubmit}
-                disabled={submitting || Object.keys(answers).length < questions.length}
+                disabled={submitting || Object.keys(answers).length < (questions || []).length}
                 className="flex items-center gap-2 px-8 py-3 rounded-xl font-bold bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 shadow-lg shadow-blue-200"
               >
                 {submitting ? 'Enviando...' : 'Finalizar'}

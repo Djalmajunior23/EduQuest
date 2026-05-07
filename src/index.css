@@ -14,9 +14,9 @@
 }
 
 @layer components {
-  /* Industrial Card Pattern */
+  /* Modern Card Pattern */
   .industrial-card {
-    @apply bg-white border border-slate-200 rounded-[2rem] shadow-sm hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300;
+    @apply bg-gradient-to-br from-white to-slate-50 border border-slate-100 rounded-[2.5rem] shadow-xl shadow-slate-200/40 hover:shadow-2xl hover:shadow-slate-200/60 transition-all duration-300;
   }
 
   /* Cyber Heading */

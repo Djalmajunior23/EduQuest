@@ -1,8 +1,8 @@
-import { supabase } from '../lib/supabase';
-import { AIService } from './aiService';
-import { Type } from '@google/genai';
+import { api } from '../lib/api';
 
-export interface LearningSituation {
+
+import { AIService } from './aiService';
+import { Type } from '@google/genai';export interface LearningSituation {
   id?: string;
   titulo: string;
   contexto: string;
@@ -29,7 +29,7 @@ export interface LearningSituation {
 
 export const saService = {
   async createSA(sa: Omit<LearningSituation, 'id' | 'createdAt' | 'updatedAt'>) {
-    const { data, error } = await supabase
+    const { data, error } = await api
       .from('situacoes_aprendizagem')
       .insert({
         ...sa,
@@ -37,14 +37,14 @@ export const saService = {
         updated_at: new Date().toISOString()
       })
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     return data.id;
   },
 
   async updateSA(id: string, sa: Partial<LearningSituation>) {
-    const { error } = await supabase
+    const { error } = await api
       .from('situacoes_aprendizagem')
       .update({
         ...sa,
@@ -56,18 +56,18 @@ export const saService = {
   },
 
   async getSA(id: string): Promise<LearningSituation | null> {
-    const { data, error } = await supabase
+    const { data, error } = await api
       .from('situacoes_aprendizagem')
       .select('*')
       .eq('id', id)
-      .single();
+      .maybeSingle();
 
     if (error) return null;
     return data as LearningSituation;
   },
 
   async listSAs(professorId?: string): Promise<LearningSituation[]> {
-    let query = supabase.from('situacoes_aprendizagem').select('*');
+    let query = api.from('situacoes_aprendizagem').select('*');
     if (professorId) {
       query = query.eq('created_by', professorId);
     }

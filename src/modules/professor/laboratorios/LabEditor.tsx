@@ -222,7 +222,7 @@ export default function LabEditor() {
                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">Título do Laboratório</label>
                 <input 
                    value={lab.titulo}
-                   onChange={e => setLab((p: any) => ({ ...p, titulo: e.target.value }))}
+                   onChange={e => setLab((p) => ({ ...p, titulo: e.target.value }))}
                    placeholder="Ex: Deploy de Kubernetes em Bare-Metal"
                    className="w-full bg-slate-50 px-6 py-4 rounded-2xl font-black text-xl text-slate-900 border-none focus:ring-4 focus:ring-slate-100 transition-all outline-none"
                 />
@@ -237,7 +237,7 @@ export default function LabEditor() {
                     <div className="grid grid-cols-2 gap-4">
                        <textarea 
                           value={lab.versaoAluno}
-                          onChange={e => setLab((p: any) => ({ ...p, versaoAluno: e.target.value }))}
+                          onChange={e => setLab((p) => ({ ...p, versaoAluno: e.target.value }))}
                           placeholder="MarkDown das instruções para o aluno..."
                           className="w-full h-[500px] bg-slate-50 p-6 rounded-[2rem] resize-none font-medium text-slate-700 outline-none focus:ring-4 focus:ring-slate-100 disabled:opacity-50"
                        />
@@ -254,7 +254,7 @@ export default function LabEditor() {
                     <div className="grid grid-cols-2 gap-4">
                        <textarea 
                           value={lab.versaoProfessor}
-                          onChange={e => setLab((p: any) => ({ ...p, versaoProfessor: e.target.value }))}
+                          onChange={e => setLab((p) => ({ ...p, versaoProfessor: e.target.value }))}
                           placeholder="Notas e gabarito exclusivo do docente..."
                           className="w-full h-[500px] bg-indigo-50/50 p-6 rounded-[2rem] resize-none font-medium text-indigo-900 outline-none focus:ring-4 focus:ring-indigo-50 disabled:opacity-50"
                        />

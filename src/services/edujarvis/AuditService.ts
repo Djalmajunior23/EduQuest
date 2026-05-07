@@ -1,5 +1,7 @@
+import { api } from '../../lib/api';
+
+
 // src/services/edujarvis/AuditService.ts
-import { supabase } from '../../lib/supabase';
 
 export interface AuditLog {
   tenantId: string | null;
@@ -41,7 +43,7 @@ export class AuditService {
       const promptHash = await this.hashPrompt(data.prompt);
       const { prompt, ...rest } = data;
       
-      const { error } = await supabase.from(this.TABLE).insert({
+      const { error } = await api.from(this.TABLE).insert({
         ...rest,
         tenant_id: rest.tenantId,
         user_id: rest.userId,
@@ -61,7 +63,7 @@ export class AuditService {
   }
 
   public static async getTenantAuditSummary(tenantId: string) {
-    const { data: logs, error } = await supabase
+    const { data: logs, error } = await api
       .from(this.TABLE)
       .select('*')
       .eq('tenant_id', tenantId)

@@ -1,12 +1,12 @@
-import { supabase } from '../lib/supabase';
-import { Rubric } from '../types/activities';
+import { api } from '../lib/api';
 
-const RUBRICS_COLLECTION = 'rubrics';
+
+import { Rubric } from '../types/activities';const RUBRICS_COLLECTION = 'rubrics';
 
 export const rubricService = {
   async createRubric(rubric: Omit<Rubric, 'id' | 'createdAt'>): Promise<string> {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from(RUBRICS_COLLECTION)
         .insert({
           ...rubric,
@@ -14,19 +14,19 @@ export const rubricService = {
           created_at: new Date().toISOString()
         })
         .select()
-        .single();
+        .maybeSingle();
       
       if (error) throw error;
       return data.id;
     } catch (e) {
-      console.error('Supabase Error (rubric create):', e);
+      console.error('Database Error (rubric create):', e);
       throw e;
     }
   },
 
   async getTeacherRubrics(teacherId: string): Promise<Rubric[]> {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from(RUBRICS_COLLECTION)
         .select('*')
         .eq('teacher_id', teacherId);
@@ -38,18 +38,18 @@ export const rubricService = {
         createdAt: r.created_at
       } as Rubric));
     } catch (e) {
-      console.error('Supabase Error (rubric list):', e);
+      console.error('Database Error (rubric list):', e);
       return [];
     }
   },
 
   async getRubric(id: string): Promise<Rubric | null> {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from(RUBRICS_COLLECTION)
         .select('*')
         .eq('id', id)
-        .single();
+        .maybeSingle();
       
       if (error) throw error;
       if (!data) return null;
@@ -60,14 +60,14 @@ export const rubricService = {
         createdAt: data.created_at
       } as Rubric;
     } catch (e) {
-      console.error('Supabase Error (rubric get):', e);
+      console.error('Database Error (rubric get):', e);
       return null;
     }
   },
 
   async updateRubric(id: string, updates: Partial<Rubric>): Promise<void> {
      try {
-       const { error } = await supabase
+       const { error } = await api
          .from(RUBRICS_COLLECTION)
          .update({
            ...updates,
@@ -77,21 +77,21 @@ export const rubricService = {
        
        if (error) throw error;
      } catch (e) {
-       console.error('Supabase Error (rubric update):', e);
+       console.error('Database Error (rubric update):', e);
        throw e;
      }
   },
 
   async deleteRubric(id: string): Promise<void> {
     try {
-      const { error } = await supabase
+      const { error } = await api
         .from(RUBRICS_COLLECTION)
         .delete()
         .eq('id', id);
       
       if (error) throw error;
     } catch (e) {
-      console.error('Supabase Error (rubric delete):', e);
+      console.error('Database Error (rubric delete):', e);
       throw e;
     }
   }

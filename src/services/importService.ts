@@ -1,4 +1,6 @@
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
+
+
 
 export interface ImportResult {
   total: number;
@@ -8,14 +10,11 @@ export interface ImportResult {
 }
 
 /**
- * Serviço para processar importação de dados em lote.
- */
-export const importService = {
-  /**
+ * Serviço para processar importação de dados em lote. */
+export const importService = {  /**
    * Processa um arquivo CSV de alunos.
    */
-  async importStudents(csvContent: string): Promise<ImportResult> {
-    const lines = csvContent.split('\n');
+  async importStudents(csvContent: string): Promise<ImportResult> {    const lines = csvContent.split('\n');
     const headers = lines[0].split(',');
     
     let success = 0;
@@ -38,8 +37,8 @@ export const importService = {
           throw new Error('Nome e Email são obrigatórios');
         }
 
-        // Adicionar ao Supabase
-        const { error } = await supabase.from('usuarios').insert({
+        // Adicionar ao Database
+        const { error } = await api.from('usuarios').insert({
           ...student,
           perfil: student.perfil || 'ALUNO',
           status: student.status || 'PENDENTE',

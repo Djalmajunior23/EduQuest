@@ -20,7 +20,7 @@ export class PredictiveAgent {
 `;
   }
 
-  private static getInsight(p: any) {
+  private static getInsight(p) {
     if (p.classificacao === 'crítico') return "Ação imediata recomendada. Alto risco detectado.";
     if (p.classificacao === 'excelente') return "Aluno em alta performance. Sugerir desafios extras.";
     return "Desempenho estável dentro da curva esperada.";

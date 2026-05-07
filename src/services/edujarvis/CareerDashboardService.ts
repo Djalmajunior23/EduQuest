@@ -34,8 +34,8 @@ export class CareerDashboardService {
 
     const dashboard = {
       readinessScore: readiness,
-      credentialsCount: data.credentials.length,
-      projectsCount: data.projects.length,
+      credentialsCount: (data.credentials || []).length,
+      projectsCount: (data.projects || []).length,
       strongSkills,
       gaps,
       recommendedNextAction
@@ -48,7 +48,7 @@ export class CareerDashboardService {
       readinessScore: readiness,
       skillsSummary: JSON.stringify(data.skills),
       gaps,
-      nextProjects: data.projects.length > 0 ? [data.projects[0]] : [],
+      nextProjects: (data.projects || []).length > 0 ? [data.projects[0]] : [],
       createdAt: serverTimestamp()
     });
 

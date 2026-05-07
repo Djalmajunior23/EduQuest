@@ -1,7 +1,7 @@
-import { supabase } from '../lib/supabase';
-import { AIService } from './aiService';
+import { api } from '../lib/api';
 
-export const studentAiService = {
+
+import { AIService } from './aiService';export const studentAiService = {
   /**
    * Generates a pedagogical response for the student, enforcing constraints
    * and deducting tokens.
@@ -15,8 +15,8 @@ export const studentAiService = {
       // Call architectural Socratic layer from central AIService
       const tutorResponse = await AIService.generate(prompt, subjectContext);
 
-      // Record usage and deduct tokens in Supabase
-      const { error: usageError } = await supabase
+      // Record usage and deduct tokens in Database
+      const { error: usageError } = await api
         .from('uso_ia')
         .insert({
           user_id: userId,
@@ -29,7 +29,7 @@ export const studentAiService = {
       
       if (usageError) console.error("Error logging AI usage:", usageError);
 
-      const { error: userError } = await supabase
+      const { error: userError } = await api
         .from('usuarios')
         .update({
           saldo_tokens_ia: currentTokens - 5,

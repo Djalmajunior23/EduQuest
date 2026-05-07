@@ -1,5 +1,5 @@
 // src/services/edujarvis/ImmersiveSimulationEngine.ts
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI } from "@/services/aiClient";
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 
@@ -10,7 +10,7 @@ export class ImmersiveSimulationEngine {
     difficulty: string;
     competencies: string[];
   }) {
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+    const ai = new GoogleGenAI({});
     const prompt = `Crie uma simulação imersiva estilo laboratório virtual. 
     Tipo: ${data.type}. Dificuldade: ${data.difficulty}.
     Competências a avaliar: ${data.competencies.join(', ')}.

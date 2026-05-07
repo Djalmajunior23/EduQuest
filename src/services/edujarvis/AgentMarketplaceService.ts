@@ -1,5 +1,5 @@
 // src/services/edujarvis/AgentMarketplaceService.ts
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI } from "@/services/aiClient";
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 
@@ -23,7 +23,7 @@ export class AgentMarketplaceService {
     // Simplification for prototype: If no record found but we want to allow testing, we proceed.
     // In production, we'd throw if snap.empty.
 
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+    const ai = new GoogleGenAI({});
     
     // We would fetch the agent config here. For now, hardcode behavior based on slug.
     const systemPrompt = `

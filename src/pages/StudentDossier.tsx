@@ -1,8 +1,9 @@
+import { api } from '../lib/api';
+
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
-import { 
-  User, 
+import {   User, 
   TrendingUp, 
   AlertCircle, 
   Target, 
@@ -19,9 +20,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '../lib/utils';
-import { predictStudentRisk } from '../services/aiAssistantService';
-
-export default function StudentDossier() {
+import { predictStudentRisk } from '../services/aiAssistantService';export default function StudentDossier() {
   const { studentId } = useParams();
   const navigate = useNavigate();
   const [student, setStudent] = useState<any>(null);
@@ -36,11 +35,11 @@ export default function StudentDossier() {
 
   const fetchStudentData = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from('usuarios')
         .select('*')
         .eq('id', studentId!)
-        .single();
+        .maybeSingle();
       
       if (error) throw error;
       setStudent(data);
@@ -56,7 +55,7 @@ export default function StudentDossier() {
     setAnalyzing(true);
     try {
       // Fetch performance data for AI
-      const { data: history, error } = await supabase
+      const { data: history, error } = await api
         .from('resultados')
         .select('*')
         .eq('student_id', student.id)

@@ -1,8 +1,8 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from './supabase';
-import { useAuth } from './AuthContext';
+import { api } from '../lib/api';
 
-export interface TenantConfig {
+
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useAuth } from './AuthContext';export interface TenantConfig {
   id: string;
   name: string;
   statusAssinatura: 'ATIVA' | 'INADIMPLENTE' | 'CANCELADA';
@@ -30,18 +30,15 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
   const fetchTenant = async () => {
     if (!profile?.tenantId) return;
 
-    const { data, error } = await supabase
-      .from('tenants')
-      .select('*')
-      .eq('id', profile.tenantId)
-      .single();
-
-    if (data) {
+    try {
+      const { data } = await api.get(`/api/tenants/${profile.tenantId}`);
       setTenant(data as TenantConfig);
-    } else {
+    } catch (err) {
+      console.error("Failed to fetch tenant:", err);
       setTenant(null);
+    } finally {
+      setLoadingTenant(false);
     }
-    setLoadingTenant(false);
   };
 
   useEffect(() => {
@@ -54,25 +51,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
     setLoadingTenant(true);
     fetchTenant();
     
-    const channel = supabase
-      .channel(`tenant-${profile.tenantId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'tenants',
-          filter: `id=eq.${profile.tenantId}`,
-        },
-        (payload) => {
-          setTenant(payload.new as TenantConfig);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    // Real-time updates removed for now, or could be replaced by polling/websockets later
   }, [profile?.tenantId]);
 
   const isBlockedByBilling = tenant?.statusAssinatura === 'INADIMPLENTE';

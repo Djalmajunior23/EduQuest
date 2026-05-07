@@ -1,12 +1,12 @@
+import { api } from '../../lib/api';
+
+
 import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { Users, BookOpen, Brain, ShieldAlert, Target, Loader2, Info } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { supabase } from '../../lib/supabase';
 import { cn } from '../../lib/utils';
-import { Link } from 'react-router-dom';
-
-const COLORS = ['#4f46e5', '#3b82f6', '#f59e0b', '#ef4444'];
+import { Link } from 'react-router-dom';const COLORS = ['#4f46e5', '#3b82f6', '#f59e0b', '#ef4444'];
 
 export function AdminDashboardPanel() {
   const [data, setData] = useState<any>(null);
@@ -14,11 +14,11 @@ export function AdminDashboardPanel() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data: biData, error } = await supabase
+      const { data: biData, error } = await api
         .from('indicadores_bi')
         .select('*')
         .eq('id', 'instituicao_atual')
-        .single();
+        .maybeSingle();
       
       if (error) {
         console.error('Error fetching BI data:', error);
@@ -42,7 +42,7 @@ export function AdminDashboardPanel() {
 
     fetchData();
 
-    const channel = supabase.channel('indicadores_bi_changes')
+    const channel = api.channel('indicadores_bi_changes')
       .on('postgres_changes', { 
         event: '*', 
         schema: 'public', 
@@ -54,7 +54,7 @@ export function AdminDashboardPanel() {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      api.removeChannel(channel);
     };
   }, []);
 
