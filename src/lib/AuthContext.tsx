@@ -83,7 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       
       try {
-        const { data } = await api.get('/api/auth/me');
+        const { data, error } = await api.get<{ user: any }>('/api/auth/me');
         if (data && data.user && mounted) {
            setUser({ id: data.user.id, email: data.user.email });
            setProfile({
@@ -93,6 +93,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
              tenantId: data.user.tenantId,
              saldoTokensIA: data.user.aiTokens
            });
+        } else if (error) {
+           console.warn("Session validation failed:", error);
+           localStorage.removeItem('eduquest_token');
         }
       } catch (err) {
         console.error("Failed to restore session from backend:", err);
@@ -110,9 +113,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const setBackendToken = async (token: string) => {
     localStorage.setItem('eduquest_token', token);
-// Another block inside setBackendToken
     try {
-      const { data } = await api.get('/api/auth/me');
+      const { data, error } = await api.get<{ user: any }>('/api/auth/me');
       if (data && data.user) {
         setUser({ id: data.user.id, email: data.user.email });
         setProfile({
@@ -122,29 +124,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           tenantId: data.user.tenantId,
           saldoTokensIA: data.user.aiTokens
         });
+      } else if (error) {
+         throw new Error(error);
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error("Failed to fetch backend session:", e);
+      throw e;
     }
   };
 
   const signInWithEmail = async (email: string, senha: string) => {
-    try {
-      const { data } = await api.post('/api/auth/login', { email, senha });
-      await setBackendToken(data.accessToken);
-    } catch(err) {
-      throw err;
+    const { data, error } = await api.post<{ accessToken: string }>('/api/auth/login', { email, senha });
+    if (error) throw new Error(error);
+    if (data?.accessToken) {
+       await setBackendToken(data.accessToken);
     }
   };
 
   const signUpWithEmail = async (email: string, senha: string, nome: string) => {
-    try {
-      const { data } = await api.post('/api/auth/register', { email, senha, nome });
-      if (data && data.user) {
-         await signInWithEmail(email, senha);
-      }
-    } catch(err) {
-      throw err;
+    const { data, error } = await api.post<{ user: any }>('/api/auth/register', { email, senha, nome });
+    if (error) throw new Error(error);
+    if (data) {
+       await signInWithEmail(email, senha);
     }
   };
 

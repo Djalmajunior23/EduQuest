@@ -1,4 +1,5 @@
 import { api } from '../lib/api';
+import { normalizeArray } from '../utils/normalizeArray';
 
 
 
@@ -154,9 +155,9 @@ export const missionService = {
         .eq('userId', userId);
         
       if (pErr) throw pErr;
-      const progressMap = new Map((progressSnap || []).map(doc => [doc.missionId, doc]));
+      const progressMap = new Map(normalizeArray(progressSnap).map(doc => [doc.missionId, doc]));
       
-      return (missions || []).map(m => ({
+      return normalizeArray(missions).map(m => ({
         ...m,
         progress: (progressMap.get(m.id) as MissionProgress)?.progress || 0,
         completed: (progressMap.get(m.id) as MissionProgress)?.completed || false

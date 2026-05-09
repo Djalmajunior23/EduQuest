@@ -1,4 +1,5 @@
 import { api } from '../lib/api';
+import { normalizeArray } from '../utils/normalizeArray';
 
 
 import { AIService } from './aiService';
@@ -26,7 +27,7 @@ import { CorrectionRequest } from '../types/correction';export const activityCor
       competencies: activity.competencies,
       skills: activity.skills,
       rubric: rubric ? {
-          criteria: (rubric.criteria || []).map((c: any) => ({
+          criteria: normalizeArray(rubric.criteria).map((c: any) => ({
           name: c.name || c.nome || c.criterion || 'Critério',
           description: c.description || c.descricao || '',
           maxPoints: c.maxPoints || c.pontos || c.maxScore || 0

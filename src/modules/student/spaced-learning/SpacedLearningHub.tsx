@@ -124,11 +124,11 @@ export default function SpacedLearningHub() {
                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                            Pergunta {currentQuestionIdx + 1} de {quizData.perguntas.length}
                        </span>
-                       <div className="flex gap-1 border border-slate-200 p-1 rounded-full">
-                           {quizData.perguntas.map((_: any, i: number) => (
-                               <div key={i} className={cn("w-2 h-2 rounded-full", i === currentQuestionIdx ? "bg-amber-500" : i < currentQuestionIdx ? "bg-emerald-500" : "bg-slate-200")} />
-                           ))}
-                       </div>
+                        <div className="flex gap-1 border border-slate-200 p-1 rounded-full">
+                            {(Array.isArray(quizData.perguntas) ? quizData.perguntas : []).map((_: any, i: number) => (
+                                <div key={i} className={cn("w-2 h-2 rounded-full", i === currentQuestionIdx ? "bg-amber-500" : i < currentQuestionIdx ? "bg-emerald-500" : "bg-slate-200")} />
+                            ))}
+                        </div>
                    </div>
                    
                    <p className="text-xl font-medium text-slate-800 leading-relaxed mb-8">
@@ -136,7 +136,7 @@ export default function SpacedLearningHub() {
                    </p>
 
                    <div className="space-y-3">
-                       {quizData.perguntas[currentQuestionIdx].opcoes.map((opt: string, idx: number) => {
+                       {(Array.isArray(quizData.perguntas[currentQuestionIdx]?.opcoes) ? quizData.perguntas[currentQuestionIdx].opcoes : []).map((opt: string, idx: number) => {
                            const isSelected = selectedAnswer === idx;
                            const isCorrect = idx === quizData.perguntas[currentQuestionIdx].respostaCorretaIndex;
                            

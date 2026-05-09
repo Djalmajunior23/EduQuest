@@ -55,8 +55,7 @@ import { cn } from '../lib/utils';export default function AnalyticsDashboard() {
                <Target className="w-6 h-6" />
             </div>
             <div>
-               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Média Geral</p>
-               <h3 className="text-2xl font-black italic uppercase tracking-tighter text-slate-900">{data.stats.avgGrade}</h3>
+               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Média Geral</p>                <h3 className="text-2xl font-black italic uppercase tracking-tighter text-slate-900">{data?.stats?.avgGrade || 0}</h3>
             </div>
          </div>
          <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm flex items-center gap-4">
@@ -65,7 +64,7 @@ import { cn } from '../lib/utils';export default function AnalyticsDashboard() {
             </div>
             <div>
                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Conclusão</p>
-               <h3 className="text-2xl font-black italic uppercase tracking-tighter text-slate-900">{data.stats.completion}%</h3>
+               <h3 className="text-2xl font-black italic uppercase tracking-tighter text-slate-900">{data?.stats?.completion || 0}%</h3>
             </div>
          </div>
          <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm flex items-center gap-4">
@@ -74,7 +73,7 @@ import { cn } from '../lib/utils';export default function AnalyticsDashboard() {
             </div>
             <div>
                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Uso de IA</p>
-               <h3 className="text-2xl font-black italic uppercase tracking-tighter text-slate-900">{data.stats.tokens} <span className="text-xs font-medium lowercase">tkns</span></h3>
+               <h3 className="text-2xl font-black italic uppercase tracking-tighter text-slate-900">{data?.stats?.tokens || 0} <span className="text-xs font-medium lowercase">tkns</span></h3>
             </div>
          </div>
          <div className="bg-slate-900 p-6 rounded-[2.5rem] shadow-xl shadow-slate-200 flex items-center gap-4 text-white">
@@ -83,7 +82,7 @@ import { cn } from '../lib/utils';export default function AnalyticsDashboard() {
             </div>
             <div>
                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Posição Ranking</p>
-               <h3 className="text-2xl font-black italic uppercase tracking-tighter">{data.stats.rank}º</h3>
+               <h3 className="text-2xl font-black italic uppercase tracking-tighter">{data?.stats?.rank || 0}º</h3>
             </div>
          </div>
       </section>
@@ -112,7 +111,7 @@ import { cn } from '../lib/utils';export default function AnalyticsDashboard() {
             </div>
             <div className="h-[300px]">
                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={data.performance}>
+                  <AreaChart data={data?.performance || []}>
                      <defs>
                         <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
                            <stop offset="5%" stopColor="#2563eb" stopOpacity={0.1}/>
@@ -144,7 +143,7 @@ import { cn } from '../lib/utils';export default function AnalyticsDashboard() {
                <Brain className="w-5 h-5 text-indigo-600" /> Domínio Técnico
             </h3>
             <div className="space-y-6">
-               {data.mastery.map((item: any) => (
+               {(data?.mastery || []).map((item: any) => (
                   <div key={item.subject}>
                      <div className="flex justify-between items-center mb-2">
                         <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider">{item.subject}</span>
@@ -155,8 +154,8 @@ import { cn } from '../lib/utils';export default function AnalyticsDashboard() {
                            initial={{ width: 0 }}
                            animate={{ width: `${item.value}%` }}
                            className={cn(
-                              "h-full rounded-full transition-all duration-1000",
-                              item.value > 80 ? "bg-emerald-500" : item.value > 50 ? "bg-blue-600" : "bg-amber-500"
+                               "h-full rounded-full transition-all duration-1000",
+                               item.value > 80 ? "bg-emerald-500" : item.value > 50 ? "bg-blue-600" : "bg-amber-500"
                            )}
                         />
                      </div>
@@ -174,7 +173,7 @@ import { cn } from '../lib/utils';export default function AnalyticsDashboard() {
             </h3>
             <div className="h-[200px]">
                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={data.engagement}>
+                  <BarChart data={data?.engagement || []}>
                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                      <XAxis 
                         dataKey="name" 

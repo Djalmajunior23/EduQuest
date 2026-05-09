@@ -1,4 +1,5 @@
 import { api } from '../../../lib/api';
+import { normalizeArray } from '../../../utils/normalizeArray';
 
 
 import React, { useState, useEffect } from 'react';
@@ -43,7 +44,7 @@ export default function ABPManager() {
       if (error) {
         console.error('Error fetching ABP projects:', error);
       } else {
-        setProjects((data || []).map(p => ({
+        setProjects(normalizeArray(data).map(p => ({
           ...p,
           turmaId: p.turma_id,
           professorResponsavelId: p.professor_responsavel_id,

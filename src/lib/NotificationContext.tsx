@@ -1,3 +1,4 @@
+import { normalizeArray } from '../utils/normalizeArray';
 import { api } from '../lib/api';
 
 
@@ -39,7 +40,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       .order('created_at', { ascending: false });
 
     if (data) {
-      setNotifications(data.map(d => ({
+      setNotifications(normalizeArray(data).map(d => ({
         id: d.id,
         userId: d.user_id,
         title: d.title,

@@ -1,4 +1,5 @@
 import { api } from '../../../lib/api';
+import { normalizeArray } from '../../../utils/normalizeArray';
 
 
 import React, { useState, useEffect } from 'react';
@@ -223,7 +224,7 @@ import { cn } from '../../../lib/utils';export default function CapacidadesManag
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
              <AnimatePresence>
-               {(filteredCaps || []).map(cap => (
+               {normalizeArray(filteredCaps).map(cap => (
                  <motion.div 
                    key={cap.id}
                    initial={{ opacity: 0, scale: 0.95 }}
@@ -284,7 +285,7 @@ import { cn } from '../../../lib/utils';export default function CapacidadesManag
                  </motion.div>
                ))}
              </AnimatePresence>
-             {(filteredCaps || []).length === 0 && (
+             {normalizeArray(filteredCaps).length === 0 && (
                 <div className="col-span-full py-16 text-center bg-slate-50 border border-dashed border-slate-200 rounded-[3rem]">
                    <Target className="w-12 h-12 text-slate-300 mx-auto mb-4" />
                    <p className="text-slate-500 font-medium">Nenhum nó de Habilidade Mapeado para o filtro atual.</p>

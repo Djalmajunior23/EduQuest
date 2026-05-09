@@ -1,6 +1,5 @@
 import { api } from '../../../lib/api';
-
-
+import { normalizeArray } from '../../../utils/normalizeArray';
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import * as LucideIcons from 'lucide-react';
@@ -84,12 +83,16 @@ export default function StudentGamification() {
     setError(null);
 
     const timeout = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error("Tempo limite ao carregar protocolo de gamificação. Verifique sua conexão.")), 10000)
+      setTimeout(() => reject(new Error("Tempo limite ao carregar protocolo de gamificação. Verifique sua conexão.")), 30000)
     );
 
     try {
       if (!user || !tenant) {
         console.warn("[Gamificação] User ou Tenant ausentes.");
+        setMissions([]);
+        setAdaptiveMissions([]);
+        setRanking([]);
+        setLoading(false);
         return;
       }
 
@@ -98,41 +101,41 @@ export default function StudentGamification() {
       }
 
       const fetchAll = async () => {
-        const missionsData = await missionService.getMissionsWithProgress(user.id, tenant.id).catch((e: any) => {
-          console.error("Erro missões:", e);
-          return [];
-        });
+        try {
+          const [missionsData, adaptiveData, rankResult] = await Promise.all([
+            missionService.getMissionsWithProgress(user.id, tenant.id).catch(e => {
+               console.error("Erro missões:", e);
+               return [];
+            }),
+            adaptiveMissionService.getActiveAdaptiveMissions(user.id, tenant.id).catch(e => {
+               console.error("Erro missões adaptativas:", e);
+               return [];
+            }),
+            api.from('ranking')
+              .select('*')
+              .eq('tenantId', tenant.id)
+              .order('xp', { ascending: false })
+              .limit(10)
+          ]);
 
-        const adaptiveData = await adaptiveMissionService.getActiveAdaptiveMissions(user.id, tenant.id).catch((e: any) => {
-          console.error("Erro missões adaptativas:", e);
-          return [];
-        });
-
-        const { data: rankData, error: rankError } = await api
-          .from('ranking')
-          .select('*')
-          .eq('tenantId', tenant.id)
-          .order('xp', { ascending: false })
-          .limit(10);
-
-        if (rankError) {
-          console.error("Erro ranking:", rankError);
+          return { 
+            missionsData: Array.isArray(missionsData) ? missionsData : [], 
+            adaptiveData: Array.isArray(adaptiveData) ? adaptiveData : [], 
+            rankData: Array.isArray(rankResult?.data) ? rankResult.data : [] 
+          };
+        } catch (e) {
+          console.error("Erro ao buscar dados paralelos:", e);
+          return { missionsData: [], adaptiveData: [], rankData: [] };
         }
-
-        return { 
-          missionsData, 
-          adaptiveData, 
-          rankData: rankData || [] 
-        };
       };
 
       const result = await Promise.race([fetchAll(), timeout]);
 
       console.log("[Gamificação] Resultado carregado com sucesso:", result);
 
-      setMissions(Array.isArray(result.missionsData) ? result.missionsData : []);
-      setAdaptiveMissions(Array.isArray(result.adaptiveData) ? result.adaptiveData : []);
-      setRanking(Array.isArray(result.rankData) ? result.rankData : []);
+      setMissions(result.missionsData);
+      setAdaptiveMissions(result.adaptiveData);
+      setRanking(result.rankData);
 
     } catch (err: any) {
       console.error("[Gamificação] Erro:", err);
@@ -309,7 +312,7 @@ export default function StudentGamification() {
                     <button onClick={() => setActiveTab('missoes')} className="text-indigo-400 text-xs font-bold hover:underline">Ver todas</button>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {(missions || []).slice(0, 4).map((mission) => {
+                    {normalizeArray(missions).slice(0, 4).map((mission) => {
                       const percentage = Math.min(((mission?.progress || 0) / (mission?.threshold || 1)) * 100, 100);
                       return (
                         <div key={mission.id} className="bg-slate-900 border border-slate-800 p-8 rounded-3xl hover:border-indigo-500/30 transition-all">
@@ -324,7 +327,7 @@ export default function StudentGamification() {
                         </div>
                       );
                     })}
-                    {(missions || []).length === 0 && (
+                    {normalizeArray(missions).length === 0 && (
                       <div className="col-span-full py-20 text-center border-2 border-dashed border-white/5 rounded-3xl">
                         <Target className="w-10 h-10 text-slate-800 mx-auto mb-4" />
                         <p className="text-slate-600 font-black uppercase text-[10px] tracking-widest">Nenhuma missão ativa no momento</p>
@@ -340,7 +343,7 @@ export default function StudentGamification() {
                     Top Operadores
                   </h2>
                   <div className="bg-slate-900 border border-slate-800 rounded-[2rem] p-6 space-y-4">
-                    {(ranking || []).slice(0, 5).map((player, idx) => (
+                    {normalizeArray(ranking).slice(0, 5).map((player, idx) => (
                       <div key={player?.id || idx} className="flex items-center gap-4 p-3 rounded-2xl hover:bg-white/5 transition-all">
                         <span className="text-slate-500 font-black text-xs w-4">{idx + 1}</span>
                         <div className="w-10 h-10 rounded-full bg-slate-800 overflow-hidden border border-slate-700">
@@ -484,7 +487,7 @@ export default function StudentGamification() {
                     Missões Sugeridas pela IA (Adaptativas)
                   </h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {adaptiveMissions.map(am => (
+                    {normalizeArray(adaptiveMissions).map(am => (
                       <div key={am.id} className="bg-indigo-950/20 border border-indigo-500/30 p-8 rounded-[2.5rem] flex flex-col group relative overflow-hidden backdrop-blur-sm">
                         <div className="absolute top-0 right-0 p-4 opacity-10">
                           <Sparkles className="w-20 h-20 text-indigo-500" />
@@ -519,7 +522,7 @@ export default function StudentGamification() {
                   Objetivos Gerais da Trilha
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {(missions || []).map(mission => (
+                  {normalizeArray(missions).map(mission => (
                     <div key={mission?.id || Math.random()} className="bg-slate-900 border border-slate-800 p-8 rounded-[2.5rem] flex flex-col group hover:border-indigo-500/20 transition-all">
                       <div className="flex justify-between items-start mb-6">
                         <div className="p-4 bg-slate-800 rounded-2xl text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-all">
@@ -552,7 +555,7 @@ export default function StudentGamification() {
                       </div>
                     </div>
                   ))}
-                  {(missions || []).length === 0 && (
+                  {normalizeArray(missions).length === 0 && (
                     <div className="col-span-full py-20 text-center border-2 border-dashed border-white/5 rounded-3xl">
                       <ListTodo className="w-10 h-10 text-slate-800 mx-auto mb-4" />
                       <p className="text-slate-600 font-black uppercase text-[10px] tracking-widest">Nenhuma missão listada no banco de dados</p>
@@ -774,7 +777,7 @@ export default function StudentGamification() {
                </div>
 
                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  {(goals || []).map(goal => (
+                  {normalizeArray(goals).map(goal => (
                     <div key={goal.id} className="bg-slate-900 border border-slate-800 p-10 rounded-[3rem] space-y-6">
                        <div className="flex justify-between items-start">
                           <h3 className="text-2xl font-black italic tracking-tight">{goal.title}</h3>
@@ -828,7 +831,7 @@ export default function StudentGamification() {
                         </tr>
                      </thead>
                      <tbody className="divide-y divide-white/5">
-                        {(history || []).map(item => (
+                        {normalizeArray(history).map(item => (
                           <tr key={item.id} className="hover:bg-white/5 transition-all group">
                              <td className="p-6">
                                 <p className="font-black italic uppercase tracking-tight text-white group-hover:text-indigo-400 transition-colors">{item?.desc || 'Atividade Operacional'}</p>
@@ -871,7 +874,7 @@ export default function StudentGamification() {
                </div>
 
                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                  {(ALL_BADGES || []).map((badge) => {
+                  {normalizeArray(ALL_BADGES).map((badge) => {
                     const isUnlocked = profile?.badgesIds?.includes(badge?.id);
                     return (
                       <div key={badge.id} className={cn(
@@ -938,7 +941,7 @@ export default function StudentGamification() {
                   </header>
 
                   <div className="space-y-4">
-                     {(ranking || []).map((user_rank, idx) => (
+                     {normalizeArray(ranking).map((user_rank, idx) => (
                        <div key={user_rank?.id || idx} className={cn(
                          "flex items-center gap-6 p-6 rounded-[2rem] border transition-all",
                          user_rank?.id === user?.id ? "bg-indigo-600 border-white/20 shadow-2xl" : "bg-slate-900 border-white/5 hover:bg-slate-800"

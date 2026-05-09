@@ -35,8 +35,6 @@ import CapacidadesManager from './modules/admin/courses/CapacidadesManager';
 import ProfessorInsights from './modules/professor/insights/ProfessorInsights';
 import StudentAdaptiveJourney from './modules/student/adaptive/StudentAdaptiveJourney';
 import Profile from './pages/Profile';
-import ActivateAccount from './pages/ActivateAccount';
-import OAuthCallback from './pages/OAuthCallback';
 
 // New Advanced Modules
 import ABPManager from './modules/pedagogical/abp/ABPManager';
@@ -45,7 +43,7 @@ import SpacedLearningHub from './modules/student/spaced-learning/SpacedLearningH
 import CertificationCenter from './modules/student/certification/CertificationCenter';
 import InstitutionalConfigManager from './modules/admin/institutional/InstitutionalConfigManager';
 import { PaymentConfigManager } from './modules/admin/payments/PaymentConfigManager';
-import { EduJarvisChat } from './components/EduJarvis/Chat';
+import { EduJarvisChat } from './components/edujarvis/Chat';
 import { EnterpriseCommandCenter } from './components/edujarvis/EnterpriseCommandCenter';
 import { EduJarvisIntelligencePlatform } from './components/edujarvis/EduJarvisIntelligencePlatform';
 import { EducationOSDashboard } from './components/edujarvis/EducationOSDashboard';
@@ -83,18 +81,19 @@ function TenantSpecificHyperOS() {
   return <HyperIntelligenceDashboard tenantId={tenant?.id || 'public'} />;
 }
 
+import { ErrorProvider } from './lib/ErrorContext';
+
 export default function App() {
   return (
     <ErrorBoundary>
-      <AuthProvider>
-        <TenantProvider>
-          <NotificationProvider>
+      <ErrorProvider>
+        <AuthProvider>
+          <TenantProvider>
+            <NotificationProvider>
             <Router>
               <EduJarvisChat />
               <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/auth/callback" element={<OAuthCallback />} />
-            <Route path="/activate" element={<ActivateAccount />} />
+                <Route path="/login" element={<Login />} />
             
             <Route path="/" element={
               <AuthGuard>
@@ -535,6 +534,7 @@ export default function App() {
       </NotificationProvider>
       </TenantProvider>
     </AuthProvider>
+    </ErrorProvider>
     </ErrorBoundary>
   );
 }

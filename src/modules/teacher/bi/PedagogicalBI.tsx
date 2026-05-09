@@ -1,40 +1,39 @@
+// src/modules/teacher/bi/PedagogicalBI.tsx
 import React, { useState, useEffect } from 'react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   LineChart, Line, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend,
-  PieChart, Pie, Cell
+  AreaChart, Area
 } from 'recharts';
 import { 
-  TrendingUp, TrendingDown, Users, Brain, ShieldAlert, 
-  Lightbulb, CheckCircle2, AlertTriangle, FileText, Bot, Info,
-  Search, Filter, Download, Zap
+  TrendingUp, Users, Brain, ShieldAlert, 
+  Lightbulb, CheckCircle2, AlertTriangle, Bot, 
+  Download, Zap, Activity, Info, ChevronRight,
+  Target, Microscope, Binary
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { BIService, BIAnalysis } from '../../../services/edujarvis/BIService';
+import { BIService, BIAnalysis } from '../../../services/BIService';
 import { useAuth } from '../../../lib/AuthContext';
 import { useTenant } from '../../../lib/TenantContext';
+import { cn } from '../../../lib/utils';
 
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
 export default function PedagogicalBI() {
-  const { user } = useAuth();
+  const { profile } = useAuth();
   const { tenant } = useTenant();
   const [loading, setLoading] = useState(true);
   const [analysis, setAnalysis] = useState<BIAnalysis | null>(null);
-  const [selectedTurma, setSelectedTurma] = useState('TURMA-A-2024'); // Mock default
+  const [selectedTurma, setSelectedTurma] = useState('TURMA-A-2024');
   const [showTriModal, setShowTriModal] = useState(false);
 
   useEffect(() => {
     async function loadData() {
-      if (!user || !tenant) return;
       setLoading(true);
       try {
-        // Encenando uma análise (em produção usaria IDs reais das turmas do professor)
-        const result = await BIService.analyzeTurma(selectedTurma, tenant.id);
+        const result = await BIService.analyzeTurma(selectedTurma, tenant?.id || 'public');
         setAnalysis(result);
       } catch (error) {
-        console.error("Erro ao carregar BI:", error);
-        // Fallback mock para demonstração se não houver registros no Database
         setAnalysis({
           turmaId: selectedTurma,
           totalAlunos: 32,
@@ -45,36 +44,38 @@ export default function PedagogicalBI() {
           questoesMalCalibradas: ['Q-102', 'Q-405'],
           recomendacoes: [
             "Aplicar aula invertida sobre Gate Logic para os alunos do grupo de risco.",
-            "Revisar o simulado de Circuitos, as questões de nível 'Médio' apresentam taxa de erro incoerente.",
+            "Revisar o simulado de Circuitos: as questões de nível 'Médio' apresentam taxa de erro incoerente.",
             "Agendar oficina prática para reforçar a competência de Montagem de Sistemas."
           ]
         });
       } finally {
-        setLoading(false);
+        setTimeout(() => setLoading(false), 800);
       }
     }
     loadData();
-  }, [user, tenant, selectedTurma]);
+  }, [tenant, selectedTurma]);
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-slate-50">
-        <div className="text-center">
-          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
-          <h2 className="text-lg font-bold text-slate-800">Processando Cubo de BI Inteligente...</h2>
-          <p className="text-sm text-slate-500">Calculando métricas TRI e proficiência das turmas</p>
+      <div className="flex flex-col h-screen items-center justify-center bg-white space-y-6">
+        <div className="relative">
+           <Binary className="w-12 h-12 text-indigo-600 animate-pulse" />
+           <div className="absolute inset-0 bg-indigo-500/20 rounded-full blur-xl animate-ping" />
+        </div>
+        <div className="text-center space-y-2">
+          <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-600">Sincronizando Heurísticas...</h2>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Processando Amostra Sigma // TRI</p>
         </div>
       </div>
     );
   }
 
-  // Mock data para gráficos (baseado na análise)
   const skillData = [
     { subject: 'Teoria', A: 120, B: 110, fullMark: 150 },
     { subject: 'Prática', A: 98, B: 130, fullMark: 150 },
     { subject: 'Segurança', A: 86, B: 130, fullMark: 150 },
     { subject: 'Inovação', A: 99, B: 100, fullMark: 150 },
-    { subject: 'Trabalho em Equipe', A: 85, B: 90, fullMark: 150 },
+    { subject: 'Cooperação', A: 85, B: 90, fullMark: 150 },
   ];
 
   const triGrowth = [
@@ -83,242 +84,212 @@ export default function PedagogicalBI() {
     { week: 'Sem 3', prof: 1.1 },
     { week: 'Sem 4', prof: 1.25 },
     { week: 'Sem 5', prof: 1.2 },
+    { week: 'Sem 6', prof: 1.4 },
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 md:p-8 font-sans">
-      {/* Header */}
-      <header className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 text-indigo-600 font-bold text-xs uppercase tracking-widest mb-1">
-            <Zap className="w-4 h-4" />
-            NexusInt BI Inteligente
+    <div className="min-h-screen bg-white p-6 md:p-10 font-sans space-y-10">
+      {/* Precision Header */}
+      <header className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="bg-slate-900 p-2 rounded-xl text-indigo-400 shadow-xl">
+              <Microscope className="w-5 h-5" />
+            </div>
+            <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-600">Núcleo de Inteligência Pedagógica</h2>
           </div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Análise Pedagógica & TRI</h1>
-          <p className="text-slate-500 font-medium">Diagnóstico automatizado baseado em proficiência latente</p>
+          <h1 className="text-4xl md:text-5xl font-black italic uppercase tracking-tighter text-slate-900 leading-none">
+            Análise <span className="text-indigo-600">Sigma</span> TRI
+          </h1>
+          <p className="text-slate-500 font-medium max-w-xl">Mapeamento de proficiência latente e calibração de itens via Teoria de Resposta ao Item.</p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-4">
           <select 
             value={selectedTurma}
             onChange={(e) => setSelectedTurma(e.target.value)}
-            className="bg-white border border-slate-200 rounded-xl px-4 py-2.5 font-bold text-slate-700 shadow-sm outline-none focus:ring-2 focus:ring-indigo-500/20"
+            className="bg-slate-50 border border-slate-200 rounded-2xl px-6 py-3 font-black uppercase text-[10px] tracking-widest text-slate-600 outline-none focus:ring-2 focus:ring-indigo-500/20 shadow-sm transition-all"
           >
-            <option value="TURMA-A-2024">Turma A - 2024 (Eletrotécnica)</option>
-            <option value="TURMA-B-2024">Turma B - 2024 (Mecatrônica)</option>
+            <option value="TURMA-A-2024">Turma A - Eletrotécnica</option>
+            <option value="TURMA-B-2024">Turma B - Mecatrônica</option>
           </select>
-          <button className="bg-indigo-600 text-white p-2.5 rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-600/20">
+          <button className="bg-slate-900 text-white p-3.5 rounded-2xl hover:bg-indigo-600 transition-all shadow-xl shadow-slate-900/10">
             <Download className="w-5 h-5" />
           </button>
         </div>
       </header>
 
-      {/* Grid de Cards Superiores */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <BIStatCard 
-          label="Proficiência Média (TRI)" 
+      {/* Sigma Metric Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <SigmaCard 
+          label="Proficiência Média (θ)" 
           value={analysis?.mediaProficiencia.toFixed(2) || "0.00"}
-          subText="Acima da média estadual"
+          sub="Theta Elevado"
           icon={Brain}
-          trend="+12%"
           color="indigo"
+          trend="+8.4%"
         />
-        <BIStatCard 
+        <SigmaCard 
           label="Alunos em Risco" 
           value={analysis?.alunosEmRisco.toString() || "0"}
-          subText="Necessitam intervenção"
+          sub="Intervenção Necessária"
           icon={AlertTriangle}
-          isRisk={analysis && analysis.alunosEmRisco > 0}
           color="rose"
+          isAlert={analysis && analysis.alunosEmRisco > 0}
         />
-        <BIStatCard 
-          label="Coerência Pedagógica" 
-          value="88%"
-          subText="Respostas consistentes"
-          icon={CheckCircle2}
+        <SigmaCard 
+          label="Coerência Global" 
+          value="88.2%"
+          sub="Baixo Ruído Sigma"
+          icon={Activity}
           color="emerald"
         />
-        <BIStatCard 
-          label="Engajamento Geral" 
-          value="74%"
-          subText="Tempo médio: 42min/sessão"
-          icon={Users}
+        <SigmaCard 
+          label="Sessões Ativas" 
+          value="1.4k"
+          sub="Engajamento Nominal"
+          icon={Zap}
           color="amber"
+          trend="+22%"
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Gráfico de Evolução TRI */}
-        <div className="lg:col-span-2 bg-white rounded-3xl p-8 border border-slate-200 shadow-sm">
-          <div className="flex items-center justify-between mb-8">
-            <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-              <TrendingUp className="w-6 h-6 text-indigo-500" />
-              Evolução da Proficiência (Theta)
-            </h3>
-            <button 
-              onClick={() => setShowTriModal(true)}
-              className="text-xs font-bold text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded-full transition-colors flex items-center gap-1"
-            >
-              <Info className="w-4 h-4" />
-              O que é TRI?
-            </button>
-          </div>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={triGrowth}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="week" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
-                <Tooltip 
-                  contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}}
-                />
-                <Line type="monotone" dataKey="prof" stroke="#6366f1" strokeWidth={4} dot={{r: 6, fill: '#6366f1', strokeWidth: 0}} activeDot={{r: 8}} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Diagnóstico do EduJarvis */}
-        <div className="bg-slate-900 rounded-3xl p-8 text-white shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-6 opacity-10">
-            <Bot className="w-40 h-40" />
-          </div>
-          
-          <div className="relative z-10">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="bg-indigo-500 p-2 rounded-lg">
-                <Bot className="w-6 h-6 text-white" />
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Main Analysis Chart */}
+        <div className="lg:col-span-8 space-y-8">
+           <div className="bg-white p-10 rounded-[3rem] border-2 border-slate-100 shadow-2xl shadow-slate-100 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-10 opacity-5 group-hover:opacity-10 transition-opacity">
+                 <Binary className="w-48 h-48 text-indigo-600" />
               </div>
-              <h3 className="text-lg font-black uppercase tracking-widest text-indigo-400">Diagnosis Central</h3>
-            </div>
-
-            <p className="text-slate-400 text-sm mb-8 leading-relaxed">
-              O modelo de IA analisou {analysis?.totalAlunos} padrões de resposta e identificou os seguintes pontos críticos para sua turma:
-            </p>
-
-            <div className="space-y-4 mb-8">
-              {(analysis?.recomendacoes || []).map((rec, i) => (
-                <motion.div 
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.1 }}
-                  key={i} 
-                  className="flex gap-4 items-start bg-white/5 p-4 rounded-2xl border border-white/10 hover:bg-white/10 transition-colors"
-                >
-                  <Lightbulb className="w-5 h-5 text-amber-400 shrink-0" />
-                  <p className="text-sm font-medium text-slate-200">{rec}</p>
-                </motion.div>
-              ))}
-            </div>
-
-            <button className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-xl shadow-indigo-600/20 transition-all">
-              Gerar Plano de Intervenção
-            </button>
-          </div>
-        </div>
-
-        {/* Competências Frágeis */}
-        <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm lg:col-span-1">
-          <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-            <AlertTriangle className="w-6 h-6 text-amber-500" />
-            Gap de Competências
-          </h3>
-          <div className="h-[250px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart cx="50%" cy="50%" outerRadius="80%" data={skillData}>
-                <PolarGrid />
-                <PolarAngleAxis dataKey="subject" tick={{fontSize: 10, fill: '#64748b'}} />
-                <Radar name="Turma A" dataKey="A" stroke="#6366f1" fill="#6366f1" fillOpacity={0.6} />
-                <Radar name="Meta SENAI" dataKey="B" stroke="#10b981" fill="#10b981" fillOpacity={0.3} />
-              </RadarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Conteúdos com maior dificuldade */}
-        <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm lg:col-span-1">
-          <h3 className="text-xl font-bold text-slate-800 mb-6">Conteúdos Críticos</h3>
-          <div className="space-y-6">
-            {(analysis?.conteudosCriticos || []).map((content, i) => (
-              <div key={i} className="group">
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="font-bold text-slate-700">{content}</span>
-                  <span className="text-rose-500 font-black">-{40 - i * 5}% acertos</span>
-                </div>
-                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                  <motion.div 
-                    initial={{ width: 0 }}
-                    animate={{ width: `${(150 + i * 20) / 3}%` }}
-                    className="h-full bg-rose-500 rounded-full"
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Alunos que precisam de apoio */}
-        <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm lg:col-span-1">
-          <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-            <Users className="w-6 h-6 text-indigo-500" />
-            Alunos (Risco Acadêmico)
-          </h3>
-          <div className="space-y-4">
-             {['Arthur Silva', 'Beatriz Santos', 'Carlos Eduardo', 'Diana Lima'].map((name, i) => (
-               <div key={i} className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 hover:bg-slate-100 transition-colors border border-transparent hover:border-slate-200">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center font-bold text-xs">
-                      {name[0]}
+              <div className="relative z-10">
+                 <div className="flex items-center justify-between mb-12">
+                    <div>
+                       <h3 className="text-xl font-black italic uppercase tracking-tighter text-slate-900">Curva de Evolução (θ)</h3>
+                       <p className="text-[10px] font-black uppercase tracking-widest text-indigo-500">Desenvolvimento de Habilidades Longitudinais</p>
                     </div>
-                    <span className="text-sm font-bold text-slate-700">{name}</span>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-[10px] font-black text-rose-500 uppercase">Proficiência -1.{i}</div>
-                    <div className="text-[10px] text-slate-400">Risco Alto</div>
-                  </div>
-               </div>
-             ))}
-          </div>
-          <button 
-            onClick={async () => {
-              // Simulação de geração de plano
-              alert("Gerando Plano de Estudo Individualizado via ProfessorIA...");
-            }}
-            className="w-full mt-6 text-sm font-bold text-indigo-600 py-3 border-t border-slate-100 italic hover:text-indigo-800 transition-colors"
-          >
-            Gerar Plano de Estudo Automático &rarr;
-          </button>
+                    <button 
+                       onClick={() => setShowTriModal(true)}
+                       className="flex items-center gap-2 px-6 py-2.5 bg-indigo-50 text-indigo-600 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-indigo-100 transition-all"
+                    >
+                       <Info className="w-4 h-4" /> Entenda a TRI
+                    </button>
+                 </div>
+                 <div className="h-[350px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                       <AreaChart data={triGrowth} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                          <defs>
+                             <linearGradient id="colorProf" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#818cf8" stopOpacity={0.2}/>
+                                <stop offset="95%" stopColor="#818cf8" stopOpacity={0}/>
+                             </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                          <XAxis dataKey="week" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#94a3b8', fontWeight: 900}} dy={10} />
+                          <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#94a3b8', fontWeight: 900}} />
+                          <Tooltip 
+                             contentStyle={{borderRadius: '1.5rem', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)'}}
+                             itemStyle={{fontSize: '12px', fontWeight: 900}}
+                          />
+                          <Area type="monotone" dataKey="prof" stroke="#6366f1" strokeWidth={5} fillOpacity={1} fill="url(#colorProf)" />
+                       </AreaChart>
+                    </ResponsiveContainer>
+                 </div>
+              </div>
+           </div>
+
+           {/* Item Analysis Section */}
+           <div className="bg-slate-50 p-10 rounded-[3rem] border border-slate-200">
+              <div className="flex items-center justify-between mb-8">
+                 <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Calibração de Itens // Alertas TRI</h3>
+                 <span className="bg-rose-100 text-rose-600 px-3 py-1 rounded-full text-[9px] font-black uppercase">Ruído Detectado</span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                 {(analysis?.questoesMalCalibradas || ['Q-102', 'Q-405']).map((id, i) => (
+                    <div key={i} className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm group hover:border-rose-300 transition-all">
+                       <div className="flex justify-between items-start mb-4">
+                          <code className="bg-slate-900 text-indigo-400 px-3 py-1 rounded-lg text-xs font-bold">{id}</code>
+                          <ShieldAlert className="w-5 h-5 text-rose-500" />
+                       </div>
+                       <p className="text-[10px] font-black uppercase text-slate-900 mb-2">Item Mal Calibrado</p>
+                       <p className="text-[10px] font-bold text-slate-400 leading-tight">Taxas de acerto inconsistentes com o nível de dificuldade estimado (θ).</p>
+                    </div>
+                 ))}
+                 <div className="bg-indigo-600 p-6 rounded-[2rem] text-white flex flex-col justify-center items-center text-center space-y-4">
+                    <p className="text-[10px] font-black uppercase tracking-widest">Ação Corretiva</p>
+                    <button className="p-3 bg-white/20 hover:bg-white/30 rounded-xl transition-all">
+                       <Zap className="w-5 h-5" />
+                    </button>
+                    <p className="text-[9px] font-bold uppercase">Recalibrar Banco</p>
+                 </div>
+              </div>
+           </div>
         </div>
 
-        {/* Análise por Questão */}
-        <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm lg:col-span-3">
-          <div className="flex items-center justify-between mb-8">
-            <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-              <Filter className="w-6 h-6 text-indigo-500" />
-              Análise de Itens (TRI)
-            </h3>
-            <span className="text-xs font-bold bg-slate-100 text-slate-500 px-3 py-1 rounded-full uppercase">Calibração de questões</span>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {(!analysis?.questoesMalCalibradas || analysis.questoesMalCalibradas.length === 0) ? (
-              <div className="col-span-4 p-8 text-center bg-emerald-50 text-emerald-700 rounded-2xl border border-emerald-100 flex items-center justify-center gap-2 font-bold">
-                <CheckCircle2 className="w-5 h-5" />
-                Todas as questões da avaliação estão bem calibradas de acordo com a TRI.
+        {/* Sidebar Diagnostics */}
+        <div className="lg:col-span-4 space-y-8">
+           <div className="bg-slate-900 rounded-[3rem] p-10 text-white shadow-2xl relative overflow-hidden">
+              <div className="relative z-10">
+                 <div className="flex items-center gap-3 mb-10">
+                    <div className="bg-indigo-600 p-3 rounded-2xl">
+                       <Bot className="w-6 h-6" />
+                    </div>
+                    <div>
+                       <h3 className="text-sm font-black uppercase tracking-widest text-indigo-400">Diagnosis Core</h3>
+                       <p className="text-[9px] font-bold text-slate-500">EduJarvis Logic Engine</p>
+                    </div>
+                 </div>
+
+                 <div className="space-y-6 mb-12">
+                    {analysis?.recomendacoes.map((rec, i) => (
+                       <div key={i} className="flex gap-4 group">
+                          <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-2 shrink-0 group-hover:scale-150 transition-transform" />
+                          <p className="text-sm font-medium text-slate-300 leading-relaxed group-hover:text-white transition-colors">{rec}</p>
+                       </div>
+                    ))}
+                 </div>
+
+                 <button className="w-full py-5 bg-indigo-600 hover:bg-indigo-500 rounded-[1.5rem] font-black uppercase text-[10px] tracking-[0.2em] transition-all shadow-xl shadow-indigo-950 flex items-center justify-center gap-2">
+                    Acionar Plano de Intervenção <ChevronRight className="w-4 h-4" />
+                 </button>
               </div>
-            ) : (
-              (analysis?.questoesMalCalibradas || []).map((qid, i) => (
-                <div key={i} className="p-4 bg-rose-50 border border-rose-100 rounded-2xl">
-                  <div className="flex justify-between items-start mb-2">
-                    <span className="font-black text-rose-600 text-xs">{qid}</span>
-                    <AlertTriangle className="w-4 h-4 text-rose-500" />
-                  </div>
-                  <p className="text-[10px] font-bold text-rose-700 uppercase mb-1">Questão Mal Calibrada</p>
-                  <p className="text-[9px] text-rose-600 leading-tight">Alta taxa de acerto em questão de dificuldade elevada.</p>
-                </div>
-              ))
-            )}
-          </div>
+           </div>
+
+           <div className="bg-white p-10 rounded-[3rem] border border-slate-200 shadow-sm">
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-8">Déficit de Competências</h3>
+              <div className="h-[250px] mb-8">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadarChart cx="50%" cy="50%" outerRadius="80%" data={skillData}>
+                    <PolarGrid stroke="#e2e8f0" />
+                    <PolarAngleAxis dataKey="subject" tick={{fontSize: 9, fill: '#94a3b8', fontWeight: 900}} />
+                    <Radar dataKey="A" stroke="#6366f1" fill="#6366f1" fillOpacity={0.5} />
+                    <Radar dataKey="B" stroke="#cbd5e1" fill="transparent" />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="space-y-4">
+                 <div className="flex items-center justify-between text-[10px] font-black uppercase">
+                    <span className="text-indigo-600">Turma Atual</span>
+                    <span className="text-slate-300">Target SENAI</span>
+                 </div>
+                 <div className="h-1 w-full bg-slate-100 rounded-full overflow-hidden flex">
+                    <div className="h-full bg-indigo-600 w-2/3" />
+                    <div className="h-full bg-slate-200 w-1/3" />
+                 </div>
+              </div>
+           </div>
+
+           <div className="bg-indigo-600 rounded-[3rem] p-10 text-white relative group overflow-hidden">
+              <div className="absolute -bottom-10 -right-10 opacity-10 group-hover:rotate-12 transition-transform">
+                 <Target className="w-48 h-48" />
+              </div>
+              <h3 className="text-xl font-black italic uppercase tracking-tighter mb-4">Geração de Trilhas</h3>
+              <p className="text-xs text-indigo-100 font-medium leading-relaxed mb-10">
+                 Crie trilhas adaptativas instantâneas para os grupos identificados com gap de proficiência.
+              </p>
+              <button className="px-8 py-4 bg-white text-indigo-600 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl active:scale-95 transition-all">
+                 Iniciar Maestro
+              </button>
+           </div>
         </div>
       </div>
 
@@ -383,37 +354,42 @@ export default function PedagogicalBI() {
   );
 }
 
-function BIStatCard({ label, value, subText, icon: Icon, trend, isRisk, color }: any) {
-  const themes: any = {
-    indigo: 'text-indigo-600 bg-indigo-50 border-indigo-100',
-    rose: 'text-rose-600 bg-rose-50 border-rose-100',
-    emerald: 'text-emerald-600 bg-emerald-50 border-emerald-100',
-    amber: 'text-amber-600 bg-amber-50 border-amber-100',
-  };
-
-  const theme = themes[color] || themes.indigo;
-
+function SigmaCard({ label, value, sub, icon: Icon, color, trend, isAlert }: any) {
   return (
-    <div className={`bg-white p-6 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden group transition-all hover:border-indigo-300`}>
-      <div className="flex justify-between items-start mb-4">
-        <div className={`p-3 rounded-2xl ${theme.split(' ')[1]} ${theme.split(' ')[0]}`}>
-          <Icon className="w-6 h-6" />
-        </div>
-        {trend && (
-          <div className="flex items-center gap-1 text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
-            <TrendingUp className="w-3 h-3" />
-            {trend}
-          </div>
-        )}
+    <div className={cn(
+      "bg-white p-8 rounded-[3rem] border-2 transition-all group relative overflow-hidden",
+      isAlert ? "border-rose-100 shadow-rose-100 shadow-2xl" : "border-slate-50 shadow-slate-100 shadow-xl"
+    )}>
+      <div className="absolute top-0 right-0 p-8 opacity-0 group-hover:opacity-5 transition-opacity">
+         <Icon className="w-20 h-20 text-slate-900" />
       </div>
-      
-      <div>
-        <div className="text-3xl font-black text-slate-900 tracking-tighter mb-1">{value}</div>
-        <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">{label}</div>
-      </div>
-
-      <div className={`mt-4 text-[10px] font-bold py-1 px-2 rounded-lg inline-block ${isRisk ? 'bg-rose-100 text-rose-600' : 'bg-slate-100 text-slate-500'}`}>
-        {subText}
+      <div className="relative z-10 flex flex-col h-full">
+         <div className="flex justify-between items-start mb-6">
+            <div className={cn(
+               "p-4 rounded-[1.5rem] shadow-inner",
+               color === 'indigo' ? 'bg-indigo-50 text-indigo-600' :
+               color === 'rose' ? 'bg-rose-50 text-rose-600' :
+               color === 'emerald' ? 'bg-emerald-50 text-emerald-600' :
+               'bg-amber-50 text-amber-600'
+            )}>
+               <Icon className="w-6 h-6" />
+            </div>
+            {trend && (
+               <div className="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[9px] font-black uppercase tracking-widest">
+                  {trend}
+               </div>
+            )}
+         </div>
+         <div className="mt-auto">
+            <p className="text-4xl font-black italic uppercase tracking-tighter text-slate-900 mb-1">{value}</p>
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 leading-none">{label}</h3>
+            <div className={cn(
+               "mt-6 text-[9px] font-black uppercase text-white px-3 py-1.5 rounded-xl inline-block",
+               isAlert ? 'bg-rose-500' : 'bg-slate-900'
+            )}>
+               {sub}
+            </div>
+         </div>
       </div>
     </div>
   );

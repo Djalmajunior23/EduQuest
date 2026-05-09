@@ -1,3 +1,4 @@
+import { normalizeArray } from '../../utils/normalizeArray';
 import { api } from '../../lib/api';
 
 
@@ -208,15 +209,15 @@ import { cn } from '../../lib/utils';export default function MissionManager() {
                <div className="py-20 text-center animate-pulse text-slate-400">
                   <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
                </div>
-            ) : (missions || []).length === 0 ? (
+            ) : normalizeArray(missions).length === 0 ? (
                <div className="py-16 text-center border-2 border-dashed border-slate-200 rounded-[3rem] bg-slate-50/50">
                   <Trophy className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                  <p className="text-slate-500 font-medium">Nenhuma missão configurada no banco.</p>
+                  <p className="text-slate-500 font-medium">Nenhum registro anterior encontrado.</p>
                </div>
             ) : (
                <div className="space-y-4">
                  <AnimatePresence>
-                   {(missions || []).map((mission) => (
+                   {normalizeArray(missions).map((mission) => (
                       <motion.div 
                         key={mission.id}
                         initial={{ opacity: 0, y: 10 }}

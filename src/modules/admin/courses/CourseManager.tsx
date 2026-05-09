@@ -1,3 +1,4 @@
+import { normalizeArray } from '../../../utils/normalizeArray';
 import { api } from '../../../lib/api';
 
 
@@ -41,7 +42,7 @@ import { Link } from 'react-router-dom';export default function CourseManager() 
       if (error) {
         console.error('Error fetching courses:', error);
       } else {
-        setCourses((data || []).map(d => ({
+        setCourses(normalizeArray(data).map(d => ({
           ...d,
           cargaHoraria: d.carga_horaria,
           createdAt: d.created_at,
@@ -199,7 +200,7 @@ import { Link } from 'react-router-dom';export default function CourseManager() 
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
              <AnimatePresence>
-               {(filteredCourses || []).map(course => (
+               {normalizeArray(filteredCourses).map(course => (
                  <motion.div 
                    key={course.id}
                    initial={{ opacity: 0, scale: 0.95 }}
@@ -257,7 +258,7 @@ import { Link } from 'react-router-dom';export default function CourseManager() 
                  </motion.div>
                ))}
              </AnimatePresence>
-             {(filteredCourses || []).length === 0 && (
+             {normalizeArray(filteredCourses).length === 0 && (
                 <div className="col-span-full py-16 text-center border-2 border-dashed border-slate-200 rounded-[3rem]">
                    <GraduationCap className="w-12 h-12 text-slate-300 mx-auto mb-4" />
                    <p className="text-slate-500 font-medium">Nenhuma matriz curricular localizada com os filtros atuais.</p>

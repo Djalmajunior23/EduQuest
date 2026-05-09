@@ -1,6 +1,7 @@
 import { api } from '../../../lib/api';
 
 
+import { normalizeArray } from '../../../utils/normalizeArray';
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../../lib/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
@@ -154,11 +155,11 @@ import { cn } from '../../../lib/utils';export default function StudentAdaptiveJ
                         "{parseClassification(perfil?.classificacaoAtual || '')}"
                     </p>
 
-                    <div className="space-y-4">
+                     <div className="space-y-4">
                         <div>
                            <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">Seus Pontos Fortes</p>
                            <div className="flex flex-wrap gap-2">
-                              {(perfil?.pontosFortes || []).map((f: string, i: number) => (
+                              {normalizeArray(perfil?.pontosFortes).map((f: string, i: number) => (
                                  <span key={i} className="px-3 py-1 bg-white/10 rounded-lg text-xs font-bold">{f}</span>
                               ))}
                            </div>
@@ -166,7 +167,7 @@ import { cn } from '../../../lib/utils';export default function StudentAdaptiveJ
                         <div>
                            <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">Focos de Melhoria</p>
                            <div className="flex flex-wrap gap-2">
-                              {(perfil?.pontosFracos || []).map((f: string, i: number) => (
+                              {normalizeArray(perfil?.pontosFracos).map((f: string, i: number) => (
                                  <span key={i} className="px-3 py-1 bg-red-500/20 text-red-300 rounded-lg text-xs font-bold">{f}</span>
                               ))}
                            </div>
@@ -197,7 +198,7 @@ import { cn } from '../../../lib/utils';export default function StudentAdaptiveJ
                   </div>
 
                   <div className="space-y-3 flex-1 flex flex-col justify-center">
-                      {(plano?.tarefasRecomendadas || []).map((t: any, i: number) => (
+                      {normalizeArray(plano?.tarefasRecomendadas).map((t: any, i: number) => (
                           <div key={i} className="p-4 border border-slate-100 rounded-2xl flex items-center justify-between hover:border-indigo-200 hover:bg-indigo-50/50 transition-colors cursor-pointer group">
                              <div className="flex items-center gap-4">
                                  <div className={cn(

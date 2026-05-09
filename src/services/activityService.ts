@@ -1,8 +1,9 @@
+import { normalizeArray } from '../utils/normalizeArray';
 import { api } from '../lib/api';
 
 
-import { Activity, ActivitySubmission } from '../types/activities';const ACTIVITIES_TABLE = 'activities';
-const SUBMISSIONS_TABLE = 'activity_submissions';
+import { Activity, ActivitySubmission } from '../types/activities';const ACTIVITIES_TABLE = 'atividades';
+const SUBMISSIONS_TABLE = 'atividades/submissoes';
 
 export const activityService = {
   async createActivity(activity: Omit<Activity, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
@@ -71,7 +72,7 @@ export const activityService = {
       .eq('teacher_id', teacherId);
 
     if (error) throw error;
-    return (data || []).map(d => ({
+    return normalizeArray(data).map(d => ({
       ...d,
       courseId: d.course_id,
       classId: d.class_id,
@@ -96,7 +97,7 @@ export const activityService = {
       .eq('status', 'published');
 
     if (error) throw error;
-    return (data || []).map(d => ({
+    return normalizeArray(data).map(d => ({
       ...d,
       courseId: d.course_id,
       classId: d.class_id,
@@ -145,7 +146,7 @@ export const activityService = {
       .eq('activity_id', activityId);
 
     if (error) throw error;
-    return (data || []).map(d => ({
+    return normalizeArray(data).map(d => ({
       ...d,
       activityId: d.activity_id,
       studentId: d.student_id,
@@ -181,7 +182,7 @@ export const activityService = {
       .eq('student_id', studentId);
 
     if (error) throw error;
-    return (data || []).map(d => ({
+    return normalizeArray(data).map(d => ({
       ...d,
       activityId: d.activity_id,
       studentId: d.student_id,

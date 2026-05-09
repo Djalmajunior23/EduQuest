@@ -6,12 +6,12 @@
  */
 export class ProxiedGoogleGenAI {
   public models = {
-    generateContent: async ({ model, contents, systemInstruction }: any) => {
+    generateContent: async ({ model, contents, systemInstruction, config }: any) => {
       try {
         const res = await fetch('/api/ai/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ model, contents, systemInstruction })
+          body: JSON.stringify({ model, contents, systemInstruction, config })
         });
         
         if (!res.ok) {

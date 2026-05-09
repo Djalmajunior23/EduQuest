@@ -1,4 +1,5 @@
 import { api } from '../lib/api';
+import { normalizeArray } from '../utils/normalizeArray';
 
 
 import { Rubric } from '../types/activities';const RUBRICS_COLLECTION = 'rubrics';
@@ -32,7 +33,7 @@ export const rubricService = {
         .eq('teacher_id', teacherId);
       
       if (error) throw error;
-      return (data || []).map(r => ({
+      return normalizeArray(data).map(r => ({
         ...r,
         teacherId: r.teacher_id,
         createdAt: r.created_at

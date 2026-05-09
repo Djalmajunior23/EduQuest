@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { normalizeArray } from '../../../utils/normalizeArray';
 import { 
   Users, 
   Activity, 
@@ -105,13 +106,13 @@ export default function LiveMonitoring({ sessionId }: { sessionId: string }) {
         <div className="lg:col-span-3">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <AnimatePresence>
-              {(filteredStudents || []).length === 0 ? (
+              {normalizeArray(filteredStudents).length === 0 ? (
                 <div className="col-span-full bg-slate-50 border-2 border-dashed border-slate-200 rounded-[3rem] h-64 flex flex-col items-center justify-center text-slate-400">
                    <Activity size={48} className="mb-4 opacity-20" />
                    <p className="font-bold uppercase tracking-widest text-xs">Nenhuma atividade detectada nesta categoria</p>
                 </div>
               ) : (
-                (filteredStudents || []).map((s, i) => (
+                normalizeArray(filteredStudents).map((s, i) => (
                   <motion.div 
                     layout
                     initial={{ opacity: 0, scale: 0.95 }}

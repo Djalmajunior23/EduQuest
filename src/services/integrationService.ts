@@ -1,4 +1,5 @@
 import { api } from '../lib/api';
+import { normalizeArray } from '../utils/normalizeArray';
 
 
 import { IntegrationProviderConfig } from '../types/integracoes';export const integrationService = {
@@ -9,7 +10,7 @@ import { IntegrationProviderConfig } from '../types/integracoes';export const in
       .eq('tenant_id', tenantId);
     
     if (error) throw error;
-    return (data || []).map(d => ({
+    return normalizeArray(data).map(d => ({
       ...d,
       tenantId: d.tenant_id,
       updatedAt: d.updated_at,

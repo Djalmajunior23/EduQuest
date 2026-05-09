@@ -1,3 +1,4 @@
+import { normalizeArray } from '../../utils/normalizeArray';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../lib/AuthContext';
@@ -7,6 +8,7 @@ import { activityCorrectionService } from '../../services/activityCorrectionServ
 import { Activity, ActivitySubmission } from '../../types/activities';
 import { ArrowLeft, BrainCircuit, CheckCircle2, MessageSquare, Target, Code, AlertTriangle, Lightbulb, Terminal, ChevronDown, ChevronRight, Star } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { AICalculatedGrade } from '../pedagogical/AICalculatedGrade';
 
 export default function ActivityCorrectionView() {
   const { id, submissionId } = useParams();
@@ -133,11 +135,11 @@ export default function ActivityCorrectionView() {
               {sub.answerText || sub.codeAnswer || (!sub.studentCode && <span className="text-slate-400 italic">Nenhum texto enviado. Analise os anexos se houver.</span>)}
             </div>
             
-            {sub.fileUrls && sub.fileUrls.length > 0 && (
+            {normalizeArray(sub.fileUrls).length > 0 && (
               <div className="mt-4">
                 <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Anexos</h4>
                 <div className="flex gap-2">
-                  {sub.fileUrls.map((url, i) => (
+                  {normalizeArray(sub.fileUrls).map((url, i) => (
                     <a key={i} href={url} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline text-sm font-bold">Anexo {i + 1}</a>
                   ))}
                 </div>
@@ -148,6 +150,28 @@ export default function ActivityCorrectionView() {
 
         {/* Right Col: Correction & Feedback */}
         <div className="space-y-6">
+          <AICalculatedGrade 
+            submissionId={submissionId!} 
+            studentId={sub.studentId}
+            submissionContent={{
+              answerText: sub.answerText,
+              studentCode: sub.studentCode,
+              codeAnswer: sub.codeAnswer,
+              programmingLanguage: sub.programmingLanguage,
+              fileUrls: sub.fileUrls
+            }}
+            criteria={[
+              { id: 1, criterion: "Correção lógica", description: "O código atende aos requisitos funcionais" },
+              { id: 2, criterion: "Boas práticas", description: "Legibilidade e organização" },
+              { id: 3, criterion: "Eficiência", description: "Uso adequado de recursos" }
+            ]}
+            onGradeConfirmed={(grade, feedback) => {
+              setTeacherScore(grade);
+              setTeacherFeedback(feedback);
+              handleSaveReview();
+            }}
+          />
+
           {sub.status !== 'submitted' && (
             <div className="bg-slate-50 rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
               <button 
@@ -239,7 +263,7 @@ export default function ActivityCorrectionView() {
                               <span className="text-[10px] text-slate-500 font-mono italic">{sub.programmingLanguage || 'detectada'}</span>
                             </div>
                             <div className="p-0 font-mono text-xs">
-                              {sub.codeAnalysis.lineByLine.map((line: any, idx: number) => (
+                              {normalizeArray(sub.codeAnalysis.lineByLine).map((line: any, idx: number) => (
                                 <div key={idx} className={`group border-b border-slate-800/50 last:border-0`}>
                                   <div className="flex bg-slate-900/50 px-4 py-2 hover:bg-slate-800/80 transition">
                                     <span className="w-8 text-slate-600 select-none border-r border-slate-800 mr-4">{line.line || line.linha}</span>
@@ -275,7 +299,7 @@ export default function ActivityCorrectionView() {
                         </div>
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {sub.rubricResults?.map((r: any, idx: number) => (
+                          {normalizeArray(sub.rubricResults).map((r: any, idx: number) => (
                             <div key={idx} className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition">
                               <div className="flex justify-between items-start mb-2">
                                 <span className="text-xs font-bold text-slate-700">{r.criterion}</span>
@@ -285,7 +309,7 @@ export default function ActivityCorrectionView() {
                             </div>
                           ))}
                           
-                          {sub.competencyResults?.map((c: any, idx: number) => (
+                          {normalizeArray(sub.competencyResults).map((c: any, idx: number) => (
                             <div key={idx} className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm relative overflow-hidden group">
                               <div className={`absolute top-0 left-0 w-1 h-full ${
                                 c.performance === 'alto' ? 'bg-emerald-400' : c.performance === 'médio' ? 'bg-amber-400' : 'bg-red-400'
@@ -312,7 +336,7 @@ export default function ActivityCorrectionView() {
                            <Star className="w-3 h-3" /> Pontos Fortes
                          </h5>
                          <div className="space-y-2">
-                           {sub.strengths?.map((s: string, idx: number) => (
+                           {normalizeArray(sub.strengths).map((s: string, idx: number) => (
                              <div key={idx} className="flex gap-2 text-[11px] text-slate-600 bg-emerald-50/50 p-2 rounded-lg border border-emerald-100/50">
                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1 flex-shrink-0"></div>
                                {s}
@@ -325,7 +349,7 @@ export default function ActivityCorrectionView() {
                            <AlertTriangle className="w-3 h-3" /> Gaps Técnicos
                          </h5>
                          <div className="space-y-2">
-                           {sub.weaknesses?.map((w: string, idx: number) => (
+                           {normalizeArray(sub.weaknesses).map((w: string, idx: number) => (
                              <div key={idx} className="flex gap-2 text-[11px] text-slate-600 bg-amber-50/50 p-2 rounded-lg border border-amber-100/50">
                                <div className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1 flex-shrink-0"></div>
                                {w}
@@ -336,11 +360,11 @@ export default function ActivityCorrectionView() {
                     </div>
 
                     {/* Next Steps */}
-                    {sub.nextSteps && sub.nextSteps.length > 0 && (
+                    {normalizeArray(sub.nextSteps).length > 0 && (
                       <div className="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100/50">
                         <h5 className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-3">Roteiro de Evolução</h5>
                         <div className="flex flex-wrap gap-2">
-                          {sub.nextSteps.map((step: string, idx: number) => (
+                          {normalizeArray(sub.nextSteps).map((step: string, idx: number) => (
                             <span key={idx} className="bg-white px-3 py-1.5 rounded-lg border border-indigo-100 text-[10px] font-medium text-indigo-700 shadow-sm flex items-center gap-2">
                               <Target className="w-3 h-3 text-indigo-300" /> {step}
                             </span>

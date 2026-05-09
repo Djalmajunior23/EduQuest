@@ -1,4 +1,5 @@
 import { api } from '../lib/api';
+import { normalizeArray } from '../utils/normalizeArray';
 
 
 
@@ -131,7 +132,7 @@ export async function setBlockAccount(userId: string, isBlocked: boolean, respon
 
 /**
  * Batch import users from CSV/JSON */
-export async function importUsersBatch(users: any[], responsibleId: string) {  const preparedUsers = (users || []).map(user => ({
+export async function importUsersBatch(users: any[], responsibleId: string) {  const preparedUsers = normalizeArray(users).map(user => ({
     ...user,
     status: 'PENDENTE',
     created_at: new Date().toISOString(),
@@ -154,4 +155,32 @@ export async function importUsersBatch(users: any[], responsibleId: string) {  c
     detalhes: { importedCount: successCount }  });
 
   return { success: successCount, failed: 0 };
+}
+
+/**
+ * Creates a user directly in the system.
+ */
+export async function createUser(data: { nome: string; email: string; perfil: string; turmaId?: string }, responsibleId: string) {
+  const { data: user, error } = await api
+    .from('usuarios')
+    .insert({
+      ...data,
+      status: 'ATIVO',
+      created_at: new Date().toISOString(),
+      created_by: responsibleId
+    })
+    .select()
+    .maybeSingle();
+
+  if (error) throw error;
+
+  await logAction({
+    acao: 'USER_CREATED',
+    usuarioAfetadoId: user.id,
+    usuarioResponsavelId: responsibleId,
+    descricao: `Usuário criado manualmente: ${data.email} (${data.perfil})`,
+    detalhes: data
+  });
+
+  return user;
 }

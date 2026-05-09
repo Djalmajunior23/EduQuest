@@ -1,4 +1,5 @@
 import { api } from '../../../lib/api';
+import { normalizeArray } from '../../../utils/normalizeArray';
 
 
 import React, { useEffect, useState } from 'react';
@@ -40,7 +41,7 @@ export default function QuestionBank() {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      setQuestions((data || []).map(doc => ({
+      setQuestions(normalizeArray(data).map(doc => ({
         ...doc,
         ucId: doc.uc_id,
         bloomTaxonomy: doc.bloom_taxonomy,
@@ -63,7 +64,8 @@ export default function QuestionBank() {
         body: JSON.stringify({ prompt: aiPrompt }),
       });
       const data = await response.json();
-      setSuggestedQuestions(data.map((q) => ({
+      const safeData = normalizeArray(data);
+      setSuggestedQuestions(safeData.map((q) => ({
         ...q,
         ucId: 'UC-Inteligência Educacional Interativa-001'
       })));
@@ -170,7 +172,7 @@ export default function QuestionBank() {
             </div>
 
             <div className="grid grid-cols-1 gap-6">
-              {suggestedQuestions.map((q, idx) => (
+              {normalizeArray(suggestedQuestions).map((q, idx) => (
                 <motion.div 
                   layout
                   initial={{ opacity: 0, x: -20 }}
@@ -193,7 +195,7 @@ export default function QuestionBank() {
                     <textarea 
                       value={q.text} 
                       onChange={(e) => {
-                        const updated = [...suggestedQuestions];
+                        const updated = [...(Array.isArray(suggestedQuestions) ? suggestedQuestions : [])];
                         updated[idx].text = e.target.value;
                         setSuggestedQuestions(updated);
                       }}
@@ -201,7 +203,7 @@ export default function QuestionBank() {
                       rows={2}
                     />
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {q.options?.map((opt, optIdx) => (
+                      {normalizeArray(q.options).map((opt, optIdx) => (
                         <div key={optIdx} className={`group relative flex items-center p-3 rounded-xl border-2 transition-all ${
                           optIdx === q.correctOptionIndex 
                           ? 'border-indigo-600 bg-indigo-50 text-indigo-900 shadow-sm' 
@@ -343,7 +345,7 @@ export default function QuestionBank() {
       ) : (
         <div className="grid grid-cols-1 gap-4 pb-20">
           <AnimatePresence mode="popLayout">
-            {(filteredQuestions || []).map((q) => (
+            {normalizeArray(filteredQuestions).map((q) => (
               <motion.div 
                 layout
                 initial={{ opacity: 0 }}
@@ -380,7 +382,7 @@ export default function QuestionBank() {
             ))}
           </AnimatePresence>
           
-          {(filteredQuestions || []).length === 0 && (
+          {normalizeArray(filteredQuestions).length === 0 && (
             <div className="text-center py-24 bg-white rounded-3xl border-2 border-dashed border-gray-100">
                <div className="bg-gray-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
                   <Search className="w-10 h-10 text-gray-300" />

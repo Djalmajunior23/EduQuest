@@ -1,3 +1,4 @@
+import { normalizeArray } from '../utils/normalizeArray';
 import { api } from '../lib/api';
 
 
@@ -37,7 +38,7 @@ import { cn } from '../lib/utils';export default function Evaluations() {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      setEvaluations(data || []);
+      setEvaluations(normalizeArray(data));
     } catch (error) {
       console.error('Error fetching evaluations:', error);
     } finally {
@@ -150,14 +151,14 @@ import { cn } from '../lib/utils';export default function Evaluations() {
             <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
             <p className="text-slate-400 font-bold">Carregando avaliações...</p>
           </div>
-        ) : (evaluations || []).length === 0 ? (
+        ) : normalizeArray(evaluations).length === 0 ? (
           <div className="col-span-full bg-slate-50 border-2 border-dashed border-slate-200 rounded-[3rem] p-20 text-center">
             <FileCheck className="w-16 h-16 text-slate-200 mx-auto mb-6" />
             <h3 className="text-xl font-bold text-slate-900 mb-2">Nenhuma avaliação encontrada</h3>
             <p className="text-slate-500 max-w-sm mx-auto">Comece criando sua primeira avaliação diagnóstica ou formativa.</p>
           </div>
         ) : (
-          (evaluations || []).map(evalItem => (
+          normalizeArray(evaluations).map(evalItem => (
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}

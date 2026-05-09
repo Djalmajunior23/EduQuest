@@ -2,7 +2,7 @@ import { api } from '../../../lib/api';
 
 
 import React, { useState, useEffect } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import {   Settings2, Building2, Shield, Zap, Box, 
   Save, Database, History, Bell, Globe,
   CheckCircle2, AlertCircle, Loader2, Bot
@@ -95,7 +95,7 @@ import { cn } from '../../../lib/utils';export default function InstitutionalCon
        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           <aside className="lg:col-span-1 space-y-2 bg-white border border-slate-200 p-4 rounded-3xl h-fit shadow-sm">
              {[
-               { id: 'GENERAL', label: 'Geral e Identidade', icon: Building2 },
+               { id: 'GENERAL', label: 'Identidade e Geral', icon: Building2 },
                { id: 'IA', label: 'Inteligência Artificial', icon: Bot },
                { id: 'MODULES', label: 'Módulos Ativos', icon: Box },
                { id: 'BACKUP', label: 'Política de Dados', icon: Database },
@@ -104,13 +104,13 @@ import { cn } from '../../../lib/utils';export default function InstitutionalCon
                  key={tab.id}
                  onClick={() => setActiveTab(tab.id as any)}
                  className={cn(
-                   "w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all font-bold text-sm",
+                   "w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all font-bold text-sm",
                    activeTab === tab.id 
                     ? "bg-slate-900 text-white shadow-xl shadow-slate-200"
-                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                    : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
                  )}
                >
-                 <tab.icon className="w-5 h-5" />
+                 <tab.icon className={cn("w-5 h-5", activeTab === tab.id ? "text-indigo-400" : "text-slate-400")} />
                  {tab.label}
                </button>
              ))}
@@ -118,8 +118,16 @@ import { cn } from '../../../lib/utils';export default function InstitutionalCon
 
           <main className="lg:col-span-3">
              <div className="bg-white border border-slate-200 rounded-[2.5rem] p-10 shadow-sm min-h-[500px]">
+              <AnimatePresence mode="wait">
                 {activeTab === 'GENERAL' && (
-                  <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
+                  <motion.div
+                    key="GENERAL"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                    className="space-y-8"
+                  >
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div>
                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 px-1">Nome da Instituição</label>
@@ -127,7 +135,7 @@ import { cn } from '../../../lib/utils';export default function InstitutionalCon
                              type="text" 
                              value={config.nomeInstituicao}
                              onChange={(e) => setConfig({...config, nomeInstituicao: e.target.value})}
-                             className="w-full bg-slate-50 border border-slate-100 px-6 py-4 rounded-2xl outline-none focus:ring-2 focus:ring-slate-900 transition-all font-bold text-slate-900"
+                             className="w-full bg-slate-50 border border-slate-200 px-6 py-4 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all font-bold text-slate-900"
                            />
                         </div>
                         <div>
@@ -136,30 +144,39 @@ import { cn } from '../../../lib/utils';export default function InstitutionalCon
                              type="text" 
                              value={config.logoUrl}
                              onChange={(e) => setConfig({...config, logoUrl: e.target.value})}
-                             className="w-full bg-slate-50 border border-slate-100 px-6 py-4 rounded-2xl outline-none focus:ring-2 focus:ring-slate-900 transition-all font-bold text-slate-900"
+                             className="w-full bg-slate-50 border border-slate-200 px-6 py-4 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all font-bold text-slate-900"
                            />
                         </div>
                      </div>
-                     <div className="p-8 bg-slate-50 rounded-3xl border border-slate-100">
+                     <div className="p-8 bg-slate-50 rounded-3xl border border-slate-200 shadow-inner">
                         <h4 className="font-black text-slate-900 uppercase tracking-tighter italic mb-2 flex items-center gap-2">
                            <Shield className="w-4 h-4 text-emerald-500" /> Segurança Institucional
                         </h4>
                         <p className="text-slate-500 text-sm font-medium mb-6">Controle as políticas de acesso e segurança global.</p>
                         <div className="flex items-center gap-4">
-                           <button className="flex-1 bg-white border border-slate-200 py-3 rounded-xl font-bold text-xs text-slate-600 hover:bg-slate-100 transition-colors">Visualizar Certificados SSL</button>
-                           <button className="flex-1 bg-white border border-slate-200 py-3 rounded-xl font-bold text-xs text-slate-600 hover:bg-slate-100 transition-colors">Configurar SSO/OIDC</button>
+                           <button className="flex-1 bg-white border border-slate-200 py-4 rounded-xl font-black text-xs text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition-all uppercase tracking-widest">Visualizar SSL</button>
+                           <button className="flex-1 bg-white border border-slate-200 py-4 rounded-xl font-black text-xs text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition-all uppercase tracking-widest">Configurar SSO/OIDC</button>
                         </div>
                      </div>
-                  </div>
+                  </motion.div>
                 )}
 
                 {activeTab === 'IA' && (
-                  <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
-                     <div className="flex items-center gap-4 p-6 bg-indigo-50 border border-indigo-100 rounded-3xl">
-                        <Bot className="w-10 h-10 text-indigo-600" />
+                  <motion.div
+                    key="IA"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                    className="space-y-8"
+                  >
+                     <div className="flex items-center gap-5 p-8 bg-indigo-50 border border-indigo-100 rounded-3xl shadow-sm">
+                        <div className="p-4 bg-white rounded-2xl shadow-sm">
+                          <Bot className="w-8 h-8 text-indigo-600" />
+                        </div>
                         <div>
-                           <h4 className="font-bold text-indigo-900">Motor de Inteligência Pedagógica</h4>
-                           <p className="text-xs text-indigo-600 font-medium">Configure as diretrizes éticas e pedagógicas da IA para todos os alunos.</p>
+                           <h4 className="font-bold text-indigo-900 text-lg">Motor de Inteligência Pedagógica</h4>
+                           <p className="text-sm text-indigo-700/80">Configure as diretrizes éticas e pedagógicas da IA para todos os alunos.</p>
                         </div>
                      </div>
 
@@ -169,7 +186,7 @@ import { cn } from '../../../lib/utils';export default function InstitutionalCon
                            <select 
                              value={config.iaRules.tutorTone}
                              onChange={(e) => setConfig({...config, iaRules: {...config.iaRules, tutorTone: e.target.value}})}
-                             className="w-full bg-slate-50 border border-slate-100 px-6 py-4 rounded-2xl outline-none focus:ring-2 focus:ring-slate-900 transition-all font-bold text-slate-900"
+                             className="w-full bg-slate-50 border border-slate-200 px-6 py-4 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all font-bold text-slate-900 appearance-none"
                            >
                               <option value="PEDAGOGICAL">Socrático (Pedagógico)</option>
                               <option value="DIRECT">Direto (Instrutivo)</option>
@@ -182,20 +199,27 @@ import { cn } from '../../../lib/utils';export default function InstitutionalCon
                              type="number" 
                              value={config.iaRules.maxTokensPerUserDay}
                              onChange={(e) => setConfig({...config, iaRules: {...config.iaRules, maxTokensPerUserDay: parseInt(e.target.value)}})}
-                             className="w-full bg-slate-50 border border-slate-100 px-6 py-4 rounded-2xl outline-none focus:ring-2 focus:ring-slate-900 transition-all font-bold text-slate-900"
+                             className="w-full bg-slate-50 border border-slate-200 px-6 py-4 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all font-bold text-slate-900"
                            />
                         </div>
                      </div>
-                  </div>
+                  </motion.div>
                 )}
 
                 {activeTab === 'MODULES' && (
-                  <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <motion.div
+                    key="MODULES"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                    className="space-y-6"
+                  >
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {Object.entries(config.moduloStatus).map(([key, val]: [string, any]) => (
-                           <div key={key} className="flex items-center justify-between p-6 bg-slate-50 border border-slate-100 rounded-3xl hover:border-slate-300 transition-all">
+                           <div key={key} className="flex items-center justify-between p-7 bg-slate-50 border border-slate-100 rounded-3xl hover:shadow-md transition-all">
                               <div>
-                                 <h4 className="font-black text-slate-900 uppercase tracking-tighter mb-1">{key}</h4>
+                                 <h4 className="font-black text-slate-900 uppercase tracking-tighter text-lg mb-1">{key}</h4>
                                  <p className="text-[10px] font-bold text-slate-400 uppercase">Status: {val ? 'ATIVO' : 'INATIVO'}</p>
                               </div>
                               <button 
@@ -204,17 +228,18 @@ import { cn } from '../../../lib/utils';export default function InstitutionalCon
                                   moduloStatus: { ...config.moduloStatus, [key]: !val }
                                 })}
                                 className={cn(
-                                  "w-14 h-8 rounded-full transition-all relative flex items-center p-1",
+                                  "w-16 h-9 rounded-full transition-all relative flex items-center p-1",
                                   val ? "bg-emerald-500 justify-end" : "bg-slate-300 justify-start"
                                 )}
                               >
-                                 <div className="w-6 h-6 bg-white rounded-full shadow-md" />
+                                 <div className="w-7 h-7 bg-white rounded-full shadow-md" />
                               </button>
                            </div>
                         ))}
                      </div>
-                  </div>
+                  </motion.div>
                 )}
+                </AnimatePresence>
              </div>
           </main>
        </div>

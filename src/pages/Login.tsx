@@ -85,12 +85,12 @@ export default function Login() {
         className="max-w-md w-full bg-white rounded-2xl shadow-xl shadow-slate-200/50 p-8 border border-slate-100"
       >
         <div className="flex flex-col items-center mb-8">
-          <div className="bg-blue-600 p-4 rounded-2xl mb-4 shadow-lg shadow-blue-200">
+          <div className="bg-slate-900 p-4 rounded-2xl mb-4 shadow-lg shadow-slate-200">
             <GraduationCap className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">EduQuest</h1>
-          <p className="text-slate-500 mt-2 text-center">
-            Plataforma educacional para estudantes de Desenvolvimento de Sistemas.
+          <h1 className="text-3xl font-black italic uppercase tracking-tighter text-slate-900">NexusInt AI</h1>
+          <p className="text-slate-500 mt-2 text-center text-xs font-bold uppercase tracking-widest leading-relaxed">
+            Plataforma de Inteligência Educacional Disruptiva
           </p>
         </div>
 

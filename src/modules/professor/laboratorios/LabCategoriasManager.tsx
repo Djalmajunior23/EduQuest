@@ -1,6 +1,5 @@
 import { api } from '../../../lib/api';
-
-
+import { normalizeArray } from '../../../utils/normalizeArray';
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../../lib/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
@@ -183,7 +182,7 @@ import { LaboratorioCategoria, laboratorioService } from '../../../services/labo
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <AnimatePresence>
-            {(filteredCategorias || []).map((cat) => (
+            {normalizeArray(filteredCategorias).map((cat) => (
               <motion.div 
                 key={cat.id}
                 initial={{ opacity: 0, scale: 0.95 }}
@@ -217,7 +216,7 @@ import { LaboratorioCategoria, laboratorioService } from '../../../services/labo
               </motion.div>
             ))}
           </AnimatePresence>
-          {(filteredCategorias || []).length === 0 && (
+          {normalizeArray(filteredCategorias).length === 0 && (
             <div className="col-span-full p-10 text-center border-2 border-dashed border-slate-200 rounded-3xl text-slate-500">
                Nenhuma categoria cadastrada.
             </div>

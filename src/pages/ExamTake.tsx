@@ -1,3 +1,4 @@
+import { normalizeArray } from '../utils/normalizeArray';
 import { api } from '../lib/api';
 
 
@@ -44,14 +45,14 @@ import { cn } from '../lib/utils';export default function ExamTake() {
         setExam(examData);
         setTimeLeft(60 * 60); // Default or from data if available
 
-        if (examData.questoes) {
+        if (examData && examData.questoes) {
           // Map backend structure to frontend structure
-          const mappedQuestions = examData.questoes.map((q: any) => ({
+          const mappedQuestions = normalizeArray(examData.questoes).map((q: any) => ({
              id: q.id,
              text: q.enunciado,
-             options: q.alternativas.map((a: any) => a.texto),
-             correctOptionIndex: q.alternativas.findIndex((a: any) => a.correta),
-             explanation: q.explicacao // If added to DB later
+             options: normalizeArray(q.alternativas).map((a: any) => a.texto),
+             correctOptionIndex: normalizeArray(q.alternativas).findIndex((a: any) => a.correta),
+             explanation: q.explicacao
           }));
           setQuestions(mappedQuestions);
         }
@@ -84,13 +85,14 @@ import { cn } from '../lib/utils';export default function ExamTake() {
 
     try {
       let correctCount = 0;
-      questions.forEach((q, idx) => {
-        if (answers[idx] === q.correct_option_index) {
+      const qList = normalizeArray(questions);
+      qList.forEach((q, idx) => {
+        if (answers[idx] === q.correctOptionIndex) {
           correctCount++;
         }
       });
 
-      const score = Math.round((correctCount / (questions || []).length) * 100);
+      const score = Math.round((correctCount / qList.length) * 100);
       
       const attemptData = {
         usuarioId: profile.id,
@@ -128,7 +130,7 @@ import { cn } from '../lib/utils';export default function ExamTake() {
         }).catch(err => console.error('Webhook error:', err));
       }
 
-      setResult({ score, correctCount, total: (questions || []).length });
+      setResult({ score, correctCount, total: normalizeArray(questions).length });
       setFinished(true);
     } catch (error) {
       console.error('Error submitting exam:', error);
@@ -204,7 +206,7 @@ import { cn } from '../lib/utils';export default function ExamTake() {
           <div>
             <h1 className="font-bold text-slate-900 truncate max-w-[200px] md:max-w-md">{exam.title}</h1>
             <p className="text-xs text-slate-500">
-              {showReview ? 'Revisão' : 'Questão'} {currentQuestionIndex + 1} de {(questions || []).length}
+              {showReview ? 'Revisão' : 'Questão'} {currentQuestionIndex + 1} de {normalizeArray(questions).length}
             </p>
           </div>
         </div>
@@ -227,7 +229,7 @@ import { cn } from '../lib/utils';export default function ExamTake() {
       {/* Progress Bar & Navigation */}
       <div className="w-full bg-white border-b border-slate-200">
         <div className="max-w-3xl mx-auto flex items-center p-2 gap-1 overflow-x-auto no-scrollbar">
-          {(questions || []).map((_, idx) => (
+          {normalizeArray(questions).map((_, idx) => (
             <button
               key={idx}
               onClick={() => setCurrentQuestionIndex(idx)}
@@ -262,7 +264,7 @@ import { cn } from '../lib/utils';export default function ExamTake() {
               </div>
 
               <div className="space-y-4">
-                {(currentQuestion?.options || []).map((option: string, idx: number) => {
+                {normalizeArray(currentQuestion?.options).map((option: string, idx: number) => {
                   const isSelected = answers[currentQuestionIndex] === idx;
                   const isCorrect = currentQuestion.correctOptionIndex === idx;
                   
@@ -330,7 +332,7 @@ import { cn } from '../lib/utils';export default function ExamTake() {
             Anterior
           </button>
 
-          {currentQuestionIndex === (questions || []).length - 1 ? (
+          {currentQuestionIndex === normalizeArray(questions).length - 1 ? (
             showReview ? (
               <button
                 onClick={() => navigate('/')}
@@ -341,7 +343,7 @@ import { cn } from '../lib/utils';export default function ExamTake() {
             ) : (
               <button
                 onClick={handleSubmit}
-                disabled={submitting || Object.keys(answers).length < (questions || []).length}
+                disabled={submitting || Object.keys(answers).length < normalizeArray(questions).length}
                 className="flex items-center gap-2 px-8 py-3 rounded-xl font-bold bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 shadow-lg shadow-blue-200"
               >
                 {submitting ? 'Enviando...' : 'Finalizar'}

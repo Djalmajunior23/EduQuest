@@ -1,4 +1,5 @@
 import { api } from '../lib/api';
+import { normalizeArray } from '../utils/normalizeArray';
 
 
 
@@ -35,7 +36,7 @@ export const laboratorioService = {
       .eq('tenant_id', tenantId);
     
     if (error) throw error;
-    return (data || []).map(d => ({
+    return normalizeArray(data).map(d => ({
       ...d,
       tenantId: d.tenant_id,
       versaoProfessor: d.versao_professor,
@@ -87,7 +88,7 @@ export const laboratorioService = {
       .eq('tenant_id', tenantId);
     
     if (error) throw error;
-    return (data || []).map(d => ({
+    return normalizeArray(data).map(d => ({
       ...d,
       tenantId: d.tenant_id,
       cursoId: d.curso_id,

@@ -1,4 +1,5 @@
 import { api } from '../../../lib/api';
+import { normalizeArray } from '../../../utils/normalizeArray';
 
 
 import React, { useState, useEffect } from 'react';
@@ -47,7 +48,7 @@ export default function CollaborativeWorkspace() {
           .eq('grupo_id', groupData.id);
         
         if (taskData) {
-          setTasks(taskData.map(t => ({
+          setTasks(normalizeArray(taskData).map(t => ({
             ...t,
             responsavelId: t.responsavel_id
           } as GroupTask)));

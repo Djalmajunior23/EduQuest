@@ -1,6 +1,6 @@
 {
-  "name": "EduQuest Enterprise AI",
-  "description": "SaaS educacional com o ecossistema multiagente EduJarvis Fase 5 para automação pedagógica e IA Enterprise.",
+  "name": "NexusInt AI",
+  "description": "SaaS de Inteligência Educacional Disruptiva com o ecossistema multiagente EduJarvis e Nexus Core.",
   "requestFramePermissions": [
     "camera",
     "microphone"

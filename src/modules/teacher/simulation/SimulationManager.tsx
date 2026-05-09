@@ -1,4 +1,5 @@
 import { api } from '../../../lib/api';
+import { normalizeArray } from '../../../utils/normalizeArray';
 
 
 import React, { useEffect, useState } from 'react';interface Simulation {
@@ -19,7 +20,7 @@ export default function SimulationManager() {
       if (error) {
         console.error('Error fetching simulations:', error);
       } else {
-        setSimulations((data || []).map(doc => ({ 
+        setSimulations(normalizeArray(data).map(doc => ({ 
           id: doc.id, 
           title: doc.title, 
           passingScore: doc.passing_score 

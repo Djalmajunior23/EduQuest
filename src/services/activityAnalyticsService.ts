@@ -1,4 +1,5 @@
 import { api } from '../lib/api';
+import { normalizeArray } from '../utils/normalizeArray';
 
 
 import { Activity, ActivitySubmission } from '../types/activities';export const activityAnalyticsService = {
@@ -12,9 +13,9 @@ import { Activity, ActivitySubmission } from '../types/activities';export const 
     if (activitiesError) throw activitiesError;
     const activities = activitiesData || [];
 
-    if ((activities || []).length === 0) return { totalActivities: 0, pendingSubmissions: 0, averageScore: 0 };
+    if (normalizeArray(activities).length === 0) return { totalActivities: 0, pendingSubmissions: 0, averageScore: 0 };
 
-    const activityIds = (activities || []).map(a => a.id);
+    const activityIds = normalizeArray(activities).map(a => a.id);
     
     // Fetch all submissions for these activities
     const { data: submissionsData, error: submissionsError } = await api
@@ -23,7 +24,7 @@ import { Activity, ActivitySubmission } from '../types/activities';export const 
       .in('activity_id', activityIds);
     
     if (submissionsError) throw submissionsError;
-    const submissions = (submissionsData || []).map(s => ({
+    const submissions = normalizeArray(submissionsData).map(s => ({
       ...s,
       finalScore: s.final_score
     } as any)) as ActivitySubmission[];
@@ -36,7 +37,7 @@ import { Activity, ActivitySubmission } from '../types/activities';export const 
       : 0;
 
     return {
-      totalActivities: (activities || []).length,
+      totalActivities: normalizeArray(activities).length,
       pendingSubmissions: pending,
       averageScore: avgScore,
       totalSubmissions: submissions.length

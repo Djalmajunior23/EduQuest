@@ -7,24 +7,19 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 
-// Legacy AI Services
-import { generateQuestions, generateSA } from './src/services/aiAssistantService';
-import advancedAIRoutes from './src/server/routes/advancedAI.routes';
-import adaptiveExamRoutes from './src/server/routes/adaptiveExam.routes';
-import phase07Routes from './src/server/routes/phase07.routes';
-import phase11Routes from './src/server/routes/phase11.routes';
-import phase12Routes from './src/server/routes/phase12.routes';
-import phase12AdvancedRoutes from './src/server/routes/phase12Advanced.routes';
-import phase13Routes from './src/server/routes/phase13.routes';
-import mvpRoutes from './src/server/routes/mvp.routes';
+// Legacy AI Services (Redundant or Deactivated)
+// import advancedAIRoutes from './src/server/routes/advancedAI.routes';
+// import adaptiveExamRoutes from './src/server/routes/adaptiveExam.routes';
 
-// New Backend Modules (from backend/src)
-import authRoutes from './backend/src/modules/auth/auth.routes';
-import turmaRoutes from './backend/src/modules/turmas/turmas.routes';
-import atividadeRoutes from './backend/src/modules/atividades/atividades.routes';
-import cursoRoutes from './backend/src/modules/cursos/cursos.routes';
-import tenantRoutes from './backend/src/modules/tenants/tenants.routes';
-import simuladoRoutes from './backend/src/modules/simulados/simulados.routes';
+// New Backend Modules (from src/server)
+import authRoutes from './src/server/modules/auth/auth.routes';
+import turmaRoutes from './src/server/modules/turmas/turmas.routes';
+import atividadeRoutes from './src/server/modules/atividades/atividades.routes';
+import cursoRoutes from './src/server/modules/cursos/cursos.routes';
+import tenantRoutes from './src/server/modules/tenants/tenants.routes';
+import simuladoRoutes from './src/server/modules/simulados/simulados.routes';
+import usuarioRoutes from './src/server/modules/usuarios/usuarios.routes';
+import questoesRoutes from './src/server/modules/questoes/questoes.routes';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -53,71 +48,53 @@ async function startServer() {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
   });
 
-  // New API Modules
+  // API Modules
   app.use('/api/auth', authRoutes);
   app.use('/api/turmas', turmaRoutes);
   app.use('/api/atividades', atividadeRoutes);
   app.use('/api/cursos', cursoRoutes);
   app.use('/api/tenants', tenantRoutes);
   app.use('/api/simulados', simuladoRoutes);
+  app.use('/api/usuarios', usuarioRoutes);
+  app.use('/api/questoes', questoesRoutes);
 
-  // Validate Database Connection
-  const { prisma } = await import('./src/lib/prisma');
-  try {
-    await prisma.$connect();
-    console.log('Successfully connected to Neon PostgreSQL');
-  } catch (err) {
-    console.error('Failed to connect to database:', err);
-    // Continue starting server even if DB is offline, but log error
-  }
-
-  // IA Routes
+  // IA Routes (New Neural Core API)
   app.post('/api/ai/generate', async (req, res) => {
     try {
-      const { model, contents, systemInstruction } = req.body;
+      const { model, contents, systemInstruction, config } = req.body;
       const { GoogleGenAI } = await import('@google/genai');
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY as string });
-      const response = await ai.models.generateContent({ 
-        model: model || 'gemini-1.5-flash', 
-        contents, 
-        systemInstruction 
+      const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
+      
+      const result = await genAI.models.generateContent({
+        model: model || 'gemini-3-flash-preview',
+        systemInstruction: systemInstruction,
+        contents: contents,
+        config: config
       });
-      res.json({ text: response.text });
+
+      res.json({ text: result.text });
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: (error as Error).message });
     }
   });
 
-  app.post('/api/ai/generate-questions', async (req, res) => {
+  app.post('/api/ai/chat', async (req, res) => {
     try {
-      const { prompt } = req.body;
-      const questions = await generateQuestions(prompt);
-      res.json(questions);
+      const { message, profile, context } = req.body;
+      const { EduJarvisService } = await import('./src/services/edujarvis-service');
+      const response = await EduJarvisService.sendMessage(message, profile, context);
+      res.json(response);
     } catch (error) {
+      console.error(error);
       res.status(500).json({ error: (error as Error).message });
     }
   });
 
-  app.post('/api/ai/generate-sa', async (req, res) => {
-    try {
-      const { context } = req.body;
-      const sa = await generateSA(context);
-      res.json({ content: sa });
-    } catch (error) {
-      res.status(500).json({ error: (error as Error).message });
-    }
-  });
-
-  // Legacy/Phase Routes
-  app.use('/api/advanced-ai', advancedAIRoutes);
-  app.use('/api/adaptive-exam', adaptiveExamRoutes);
-  app.use('/api/phase07', phase07Routes);
-  app.use('/api/phase11', phase11Routes);
-  app.use('/api/phase12', phase12Routes);
-  app.use('/api/phase12-advanced', phase12AdvancedRoutes);
-  app.use('/api/phase13', phase13Routes);
-  app.use('/api/mvp', mvpRoutes);
+  // Legacy/Phase Routes (Deactivated for system cleanup)
+  // app.use('/api/advanced-ai', advancedAIRoutes);
+  // app.use('/api/adaptive-exam', adaptiveExamRoutes);
+  // ...
 
   // n8n Webhook Proxy
   app.post('/api/webhook/n8n', async (req, res) => {
@@ -156,6 +133,13 @@ async function startServer() {
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://localhost:${PORT}`);
+    
+    // Validate Database Connection AFTER starting the server (non-blocking)
+    import('./src/lib/prisma').then(({ prisma }) => {
+      prisma.$connect()
+        .then(() => console.log('Successfully connected to Neon PostgreSQL'))
+        .catch(err => console.error('Failed to connect to database asynchronously:', err));
+    }).catch(err => console.error('Failed to load Prisma client:', err));
   });
 }
 

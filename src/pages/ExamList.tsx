@@ -1,6 +1,5 @@
 import { api } from '../lib/api';
-
-
+import { normalizeArray } from '../utils/normalizeArray';
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../lib/AuthContext';
 import {   BookOpen, 
@@ -39,7 +38,7 @@ import { Link, useNavigate } from 'react-router-dom';export default function Exa
     async function fetchExams() {
       try {
         const { data } = await api.get('/api/simulados');
-        setExams(data || []);
+        setExams(normalizeArray(data));
       } catch (error) {
         console.error('Error fetching exams:', error);
       } finally {
@@ -110,7 +109,7 @@ import { Link, useNavigate } from 'react-router-dom';export default function Exa
 
       {/* Exam Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {(filteredExams || []).map((exam) => (
+        {normalizeArray(filteredExams).map((exam) => (
           <motion.div
             key={exam.id}
             initial={{ opacity: 0, scale: 0.95 }}

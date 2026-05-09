@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { normalizeArray } from '../../utils/normalizeArray';
 import { useAuth } from '../../lib/AuthContext';
 import { activityService } from '../../services/activityService';
 import { Activity, ActivitySubmission } from '../../types/activities';
-import { FileUp, Save, CheckCircle, Clock } from 'lucide-react';
+import { FileUp, Save, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function StudentActivityView() {
@@ -16,6 +17,11 @@ export default function StudentActivityView() {
   const [studentCode, setStudentCode] = useState('');
   const [programmingLanguage, setProgrammingLanguage] = useState('javascript');
   const [submitting, setSubmitting] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
+
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+  const ALLOWED_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
   useEffect(() => {
     if (user && profile?.perfil === 'ALUNO') {
@@ -39,6 +45,27 @@ export default function StudentActivityView() {
 
   const getSub = (actId: string) => submissions.find(s => s.activityId === actId);
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    setFileError(null);
+
+    if (file) {
+      if (!ALLOWED_TYPES.includes(file.type)) {
+        setFileError('Tipo de arquivo não permitido. Apenas PDFs e imagens (JPG, PNG, GIF, WebP).');
+        setSelectedFile(null);
+        return;
+      }
+
+      if (file.size > MAX_FILE_SIZE) {
+        setFileError('Arquivo muito grande. O limite é de 5MB.');
+        setSelectedFile(null);
+        return;
+      }
+
+      setSelectedFile(file);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!activeActivity || !user) return;
     setSubmitting(true);
@@ -46,6 +73,10 @@ export default function StudentActivityView() {
       const existingSub = getSub(activeActivity.id!);
       const newAttempt = (existingSub?.attemptNumber || 0) + 1;
       
+      // In a real app, we would upload the file to storage and get a URL
+      // For this demo, we'll simulate the URL if a file was selected
+      const fileUrls = selectedFile ? [`https://storage.nexus.edu.br/submissions/${selectedFile.name}`] : [];
+
       const newSub: Omit<ActivitySubmission, 'id' | 'createdAt'> = {
         activityId: activeActivity.id!,
         studentId: user.id,
@@ -53,6 +84,7 @@ export default function StudentActivityView() {
         answerText,
         studentCode,
         programmingLanguage,
+        fileUrls,
         status: 'submitted',
         attemptNumber: newAttempt
       };
@@ -61,6 +93,8 @@ export default function StudentActivityView() {
       alert('Atividade enviada com sucesso!');
       setActiveActivity(null);
       setAnswerText('');
+      setStudentCode('');
+      setSelectedFile(null);
       loadData();
     } catch (e) {
       console.error(e);
@@ -147,6 +181,18 @@ export default function StudentActivityView() {
                              </div>
                           )}
                           {sub.answerText}
+                          {normalizeArray(sub.fileUrls).length > 0 && (
+                            <div className="mt-4 pt-4 border-t border-slate-200">
+                              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Arquivos Enviados</p>
+                              <div className="flex flex-wrap gap-2">
+                                {normalizeArray(sub.fileUrls).map((url, i) => (
+                                  <a key={i} href={url} target="_blank" rel="noreferrer" className="bg-white px-3 py-2 rounded-lg border border-slate-200 text-indigo-600 hover:text-indigo-700 font-bold text-xs flex items-center gap-2 transition-colors">
+                                    <FileUp className="w-3 h-3" /> Anexo {i + 1}
+                                  </a>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
 
                         {(sub.status === 'corrected' || sub.status === 'reviewed') && (
@@ -210,9 +256,42 @@ export default function StudentActivityView() {
                         className="w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none min-h-[150px]"
                       />
                     </div>
+
+                    <div className="space-y-4">
+                      <label className="block text-sm font-bold text-slate-700">Anexo (Opcional)</label>
+                      <div 
+                        className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center transition-all ${
+                          selectedFile ? 'border-indigo-400 bg-indigo-50/30' : 'border-slate-200 hover:border-indigo-300 bg-slate-50'
+                        }`}
+                      >
+                        <input 
+                          type="file" 
+                          accept={ALLOWED_TYPES.join(',')} 
+                          onChange={handleFileChange} 
+                          className="hidden" 
+                          id="activity-file-upload" 
+                        />
+                        <label htmlFor="activity-file-upload" className="cursor-pointer flex flex-col items-center text-center w-full">
+                          <FileUp className={`w-8 h-8 mb-2 ${selectedFile ? 'text-indigo-600' : 'text-slate-400'}`} />
+                          <span className="text-sm font-bold text-slate-700">
+                            {selectedFile ? selectedFile.name : 'Selecionar Arquivo'}
+                          </span>
+                          <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest mt-1">
+                            PDF ou Imagem (Máx 5MB)
+                          </span>
+                        </label>
+                      </div>
+                      {fileError && (
+                        <p className="text-xs font-bold text-rose-500 flex items-center gap-1">
+                          <AlertCircle className="w-4 h-4" />
+                          {fileError}
+                        </p>
+                      )}
+                    </div>
+
                     <button 
                       onClick={handleSubmit}
-                      disabled={submitting || (!answerText.trim() && !studentCode.trim())}
+                      disabled={submitting || (!answerText.trim() && !studentCode.trim() && !selectedFile)}
                       className="w-full bg-indigo-600 text-white px-5 py-4 rounded-xl font-bold hover:bg-indigo-700 transition flex items-center justify-center gap-2 shadow-lg shadow-indigo-200 disabled:opacity-50"
                     >
                       {submitting ? 'Enviando...' : <><FileUp className="w-5 h-5"/> Entregar Atividade</>}

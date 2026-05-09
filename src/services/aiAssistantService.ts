@@ -1,4 +1,5 @@
 import { AIService } from './aiService';
+import { normalizeArray } from '../utils/normalizeArray';
 
 export async function generateQuestions(params: {
   topic: string;
@@ -115,7 +116,7 @@ export async function suggestQuestionMetadata(questionData: { text: string; opti
 
     Questão: ${questionData.text}
     Opções:
-    ${questionData.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')}
+    ${normalizeArray(questionData.options).map((opt: string, i: number) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')}
     Alternativa Correta: ${String.fromCharCode(65 + questionData.correctIndex)}
   `;
 
@@ -231,3 +232,49 @@ export async function predictStudentRisk(studentData: any): Promise<any> {
     throw new Error("Failed to predict student risk.");
   }
 }
+
+export async function calculateSuggestedGrade(submission: any, criteria: any[]): Promise<any> {
+    const prompt = `
+      [SISTEMA]: Você é um assistente de correção pedagógica sênior da Nexus Institucional.
+      [TAREFA]: Analise a entrega do aluno e sugira uma nota de 0 a 10 com base nos critérios fornecidos. 
+      Seja justo, técnico e pedagógico.
+      
+      SUBMISSÃO DO ALUNO:
+      ${JSON.stringify(submission)}
+      
+      CRITÉRIOS DE AVALIAÇÃO:
+      ${JSON.stringify(criteria)}
+  
+      Analise detalhadamente cada critério. 
+    `;
+  
+    const schema = {
+      type: "object",
+      properties: {
+        suggestedGrade: { type: "number" },
+        feedback: { type: "string" },
+        strengths: { type: "array", items: { type: "string" } },
+        improvements: { type: "array", items: { type: "string" } },
+        criteriaMatched: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              criterion: { type: "string" },
+              met: { type: "boolean" },
+              comment: { type: "string" }
+            },
+            required: ["criterion", "met", "comment"]
+          }
+        }
+      },
+      required: ["suggestedGrade", "feedback", "strengths", "improvements", "criteriaMatched"]
+    };
+  
+    try {
+      return await AIService.generateJSON(prompt, schema, 'PREMIUM');
+    } catch (error) {
+      console.error("Error calculating suggested grade:", error);
+      throw new Error("Failed to calculate suggested grade.");
+    }
+  }

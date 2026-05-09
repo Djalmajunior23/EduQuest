@@ -46,48 +46,53 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({ isOpen, onClos
     link.click();
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-md">
       <motion.div 
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200"
+        initial={{ scale: 0.95, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        className="bg-white rounded-[3rem] shadow-2xl w-full max-w-xl overflow-hidden border border-slate-200"
       >
-        <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-          <div>
-            <h2 className="text-xl font-black text-slate-900 italic uppercase">Importação em Lote</h2>
-            <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Alunos e Usuários</p>
+        <div className="p-10 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
+          <div className="space-y-1">
+            <h2 className="text-2xl font-black text-slate-900 italic uppercase leading-none tracking-tighter">Importação <span className="text-indigo-600">Lote</span></h2>
+            <div className="flex items-center gap-2">
+               <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+               <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">EduJarvis Data Core</p>
+            </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-xl transition-colors">
-            <X className="w-5 h-5 text-slate-500" />
+          <button onClick={onClose} className="p-3 hover:bg-slate-200 rounded-2xl transition-all">
+            <X className="w-6 h-6 text-slate-400" />
           </button>
         </div>
 
-        <div className="p-8 space-y-6">
+        <div className="p-10 space-y-8">
           {!result && (
             <>
-              <div className="bg-blue-50 border border-blue-100 p-4 rounded-2xl flex items-start gap-4">
-                <FileDown className="w-6 h-6 text-blue-600 shrink-0 mt-1" />
-                <div className="flex-1">
-                  <p className="text-xs font-black text-blue-900 uppercase tracking-tight">Utilize nosso template oficial</p>
-                  <p className="text-[10px] font-bold text-blue-700/70 uppercase leading-relaxed mt-1">
-                    Baixe o modelo CSV para garantir que os campos estejam no formato correto.
+              <div className="bg-indigo-50 border border-indigo-100 p-6 rounded-[2rem] flex items-start gap-5 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                   <FileDown className="w-16 h-16 text-indigo-600" />
+                </div>
+                <div className="bg-indigo-600 p-3 rounded-xl shadow-lg shadow-indigo-200 relative z-10">
+                   <FileDown className="w-6 h-6 text-white shrink-0" />
+                </div>
+                <div className="flex-1 relative z-10">
+                  <p className="text-xs font-black text-indigo-900 uppercase tracking-tight mb-2">Protocolo de Importação</p>
+                  <p className="text-[10px] font-bold text-indigo-700/70 uppercase leading-relaxed max-w-sm">
+                    Utilize o template oficial para garantir a integridade dos dados durante a sincronização.
                   </p>
                   <button 
                     onClick={downloadTemplate}
-                    className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all flex items-center gap-2"
+                    className="mt-4 px-6 py-3 bg-white border border-indigo-200 text-indigo-600 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all shadow-sm flex items-center gap-2"
                   >
-                    <FileDown className="w-3 h-3" />
-                    Download Template
+                    Baixar Template CSV
                   </button>
                 </div>
               </div>
 
               <div 
-                className={`border-2 border-dashed rounded-3xl p-10 flex flex-col items-center justify-center transition-all ${
-                  file ? 'border-blue-400 bg-blue-50' : 'border-slate-200 hover:border-blue-400 hover:bg-slate-50'
+                className={`border-2 border-dashed rounded-[2.5rem] p-12 flex flex-col items-center justify-center transition-all group relative ${
+                  file ? 'border-indigo-400 bg-indigo-50/30' : 'border-slate-200 hover:border-indigo-300 hover:bg-slate-50/50'
                 }`}
               >
                 <input 
@@ -97,71 +102,83 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({ isOpen, onClos
                   className="hidden" 
                   id="csv-upload" 
                 />
-                <label htmlFor="csv-upload" className="cursor-pointer flex flex-col items-center">
-                  <div className="w-16 h-16 rounded-2xl bg-white shadow-lg flex items-center justify-center mb-4 text-blue-600">
-                    <Upload className="w-8 h-8" />
+                <label htmlFor="csv-upload" className="cursor-pointer flex flex-col items-center text-center">
+                  <div className="w-20 h-20 rounded-[1.5rem] bg-white shadow-2xl flex items-center justify-center mb-6 text-indigo-600 group-hover:scale-110 transition-transform">
+                    <Upload className="w-10 h-10" />
                   </div>
-                  <span className="text-sm font-black text-slate-900 uppercase tracking-tight">
-                    {file ? file.name : 'Clique para selecionar o CSV'}
+                  <span className="text-base font-black text-slate-900 uppercase tracking-tighter mb-1">
+                    {file ? file.name : 'Vincular Arquivo Dataset'}
                   </span>
-                  <span className="text-[10px] font-bold text-slate-500 uppercase mt-1">Apenas arquivos .csv</span>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">
+                     Arraste ou clique para selecionar (.csv)
+                  </span>
                 </label>
               </div>
 
-              <button
-                disabled={!file || loading}
-                onClick={handleImport}
-                className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-[0.2em] text-xs hover:bg-blue-600 disabled:opacity-50 disabled:hover:bg-slate-900 transition-all shadow-xl flex items-center justify-center gap-3"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Processando...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 className="w-4 h-4" />
-                    Iniciar Importação
-                  </>
-                )}
-              </button>
+              <div className="pt-4 space-y-4">
+                 <button
+                   disabled={!file || loading}
+                   onClick={handleImport}
+                   className="w-full py-5 bg-slate-900 text-white rounded-[1.5rem] font-black uppercase tracking-[0.2em] text-[10px] hover:bg-indigo-600 shadow-2xl shadow-slate-200 transition-all flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50"
+                 >
+                   {loading ? (
+                     <>
+                       <Loader2 className="w-5 h-5 animate-spin" />
+                       Processando Heurísticas...
+                     </>
+                   ) : (
+                     <>
+                       <CheckCircle2 className="w-5 h-5" />
+                       Executar Sincronização
+                     </>
+                   )}
+                 </button>
+                 <p className="text-[9px] text-center text-slate-300 font-bold uppercase tracking-widest leading-none">
+                    O processamento em lote requer validação de esquema EduJarvis v2.0
+                 </p>
+              </div>
             </>
           )}
 
           {result && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-              <div className="grid grid-cols-3 gap-4">
-                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-center">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total</p>
-                  <p className="text-2xl font-black text-slate-900 mt-1">{result.total}</p>
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
+              <div className="grid grid-cols-3 gap-6">
+                <div className="p-6 bg-slate-50 rounded-[2rem] border border-slate-100 text-center shadow-inner">
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Total</p>
+                  <p className="text-4xl font-black text-slate-900 italic uppercase tabular-nums">{result.total}</p>
                 </div>
-                <div className="p-4 bg-green-50 rounded-2xl border border-green-100 text-center">
-                  <p className="text-[10px] font-black text-green-600 uppercase tracking-widest">Sucesso</p>
-                  <p className="text-2xl font-black text-green-700 mt-1">{result.success}</p>
+                <div className="p-6 bg-emerald-50 rounded-[2rem] border border-emerald-100 text-center shadow-inner">
+                  <p className="text-[9px] font-black text-emerald-600 uppercase tracking-[0.2em] mb-2">Sucesso</p>
+                  <p className="text-4xl font-black text-emerald-700 italic uppercase tabular-nums">{result.success}</p>
                 </div>
-                <div className="p-4 bg-red-50 rounded-2xl border border-red-100 text-center">
-                  <p className="text-[10px] font-black text-red-600 uppercase tracking-widest">Falhas</p>
-                  <p className="text-2xl font-black text-red-700 mt-1">{result.failed}</p>
+                <div className="p-6 bg-rose-50 rounded-[2rem] border border-rose-100 text-center shadow-inner">
+                  <p className="text-[9px] font-black text-rose-600 uppercase tracking-[0.2em] mb-2">Falhas</p>
+                  <p className="text-4xl font-black text-rose-700 italic uppercase tabular-nums">{result.failed}</p>
                 </div>
               </div>
 
               {result.errors.length > 0 && (
-                <div className="p-4 bg-red-50 border border-red-100 rounded-2xl max-h-40 overflow-y-auto">
-                  <p className="text-[10px] font-black text-red-600 uppercase tracking-widest flex items-center gap-2 mb-2">
-                    <AlertCircle className="w-3 h-3" />
-                    Erros Identificados:
-                  </p>
-                  {result.errors.map((error, idx) => (
-                    <p key={idx} className="text-[10px] font-bold text-red-700 leading-tight mb-1">• {error}</p>
-                  ))}
+                <div className="p-8 bg-rose-50 border border-rose-100 rounded-[2rem] max-h-60 overflow-y-auto space-y-4">
+                  <div className="flex items-center gap-2 text-rose-600">
+                    <AlertCircle className="w-5 h-5" />
+                    <p className="text-[10px] font-black uppercase tracking-widest">Inconsistências Detectadas:</p>
+                  </div>
+                  <div className="space-y-2">
+                    {result.errors.map((error, idx) => (
+                      <div key={idx} className="flex gap-3">
+                         <div className="w-1.5 h-1.5 rounded-full bg-rose-300 mt-1 shrink-0" />
+                         <p className="text-xs font-bold text-rose-700/80 leading-relaxed">{error}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 
               <button
                 onClick={onClose}
-                className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-[0.2em] text-xs hover:bg-slate-800 transition-all"
+                className="w-full py-5 bg-slate-900 text-white rounded-[1.5rem] font-black uppercase tracking-[0.2em] text-[10px] hover:bg-slate-800 transition-all shadow-xl"
               >
-                Concluído
+                Concluir Operação
               </button>
             </motion.div>
           )}

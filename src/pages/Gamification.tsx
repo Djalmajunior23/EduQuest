@@ -1,3 +1,4 @@
+import { normalizeArray } from '../utils/normalizeArray';
 import { api } from '../lib/api';
 
 
@@ -37,8 +38,8 @@ import { motion } from 'motion/react';export default function Gamification() {
           .order('xp', { ascending: false })
           .limit(10);
 
-        if (rankData && rankData.length > 0 && !rankError) {
-          const userRankIndex = rankData.findIndex(r => r.uid === profile.id);
+        if (rankData && !rankError) {
+          const userRankIndex = normalizeArray(rankData).findIndex(r => r.uid === profile.id);
           
           if (userRankIndex !== -1) {
              setGamificationData((prev: any) => prev ? { ...prev, rank: userRankIndex + 1 } : prev);
@@ -46,7 +47,7 @@ import { motion } from 'motion/react';export default function Gamification() {
              setGamificationData((prev: any) => prev ? { ...prev, rank: '+10' } : prev);
           }
 
-          setRankings(rankData.map(r => ({
+          setRankings(normalizeArray(rankData).map(r => ({
             aluno_id: r.uid,
             nome: r.nome || 'Usuário Anônimo',
             level: Math.floor((r.xp || 0) / 1000) + 1,
@@ -71,7 +72,7 @@ import { motion } from 'motion/react';export default function Gamification() {
           .eq('status', 'ATIVA');
 
         if (missionData && !missionError) {
-           setActiveMissions(missionData);
+           setActiveMissions(normalizeArray(missionData));
         } else {
           setActiveMissions([
             { id: 'm1', title: 'Comandos Básicos de CLI', type: 'DIARIA', xp: 150, completed: false },

@@ -1,4 +1,5 @@
 import { api } from '../lib/api';
+import { normalizeArray } from '../utils/normalizeArray';
 
 
 // src/services/caseStudyService.ts
@@ -42,7 +43,7 @@ export const caseStudyService = {
       .eq('tenant_id', tenantId);
     
     if (error) throw error;
-    return (data || []).map(d => ({
+    return normalizeArray(data).map(d => ({
       id: d.id,
       tenantId: d.tenant_id,
       titulo: d.titulo,

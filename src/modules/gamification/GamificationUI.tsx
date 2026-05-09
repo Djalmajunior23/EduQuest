@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { Trophy, Star, Zap, Flame, Shield } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { normalizeArray } from '../../utils/normalizeArray';
 
 interface GamificationStatsProps {
   stats: {
@@ -96,7 +97,7 @@ export function MissionList({ missions }: { missions: any[] }) {
   return (
     <div className="space-y-4">
       <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-2">Ordens de Serviço Ativas</h3>
-      {(missions || []).map((mission, idx) => (
+      {normalizeArray(missions).map((mission, idx) => (
         <motion.div 
           key={mission.id} 
           initial={{ opacity: 0, x: -20 }}
@@ -137,7 +138,7 @@ export function RankingBoard({ rankings }: { rankings: any[] }) {
     <div className="bg-white border border-slate-200 rounded-[2.5rem] p-8 shadow-sm">
       <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-8 px-2 text-center">Top 10: Arena de Elite</h3>
       <div className="space-y-2">
-        {rankings.map((rank, idx) => (
+        {normalizeArray(rankings).map((rank, idx) => (
           <div 
             key={rank.aluno_id} 
             className={cn(

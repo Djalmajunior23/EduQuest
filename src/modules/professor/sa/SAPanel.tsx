@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { normalizeArray } from '../../../utils/normalizeArray';
 import { useNavigate } from 'react-router-dom';
 import { saService, LearningSituation } from '../../../services/saService';
 import { useAuth } from '../../../lib/AuthContext';
@@ -30,9 +31,10 @@ export default function SAPanel() {
     async function fetchSAs() {
       try {
         const data = await saService.listSAs(profile?.perfil === 'ADMIN' ? undefined : profile?.uid);
-        setSas(data);
+        setSas(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("Erro ao buscar SAs:", error);
+        setSas([]);
       } finally {
         setLoading(false);
       }
@@ -40,8 +42,8 @@ export default function SAPanel() {
     fetchSAs();
   }, [profile]);
 
-  const filteredSAs = sas.filter(sa => 
-    sa.titulo.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredSAs = (Array.isArray(sas) ? sas : []).filter(sa => 
+    sa.titulo?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const seedModelSA = async () => {
@@ -76,9 +78,10 @@ export default function SAPanel() {
       };
       await saService.createSA(modelSA as any);
       const data = await saService.listSAs(profile?.perfil === 'ADMIN' ? undefined : profile?.uid);
-      setSas(data);
+      setSas(Array.isArray(data) ? data : []);
     } catch (error) {
        console.error(error);
+       setSas([]);
     } finally {
        setLoading(false);
     }
@@ -149,7 +152,7 @@ export default function SAPanel() {
         </div>
       ) : (filteredSAs || []).length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {(filteredSAs || []).map((sa) => (
+          {normalizeArray(filteredSAs).map((sa) => (
             <motion.div 
               key={sa.id}
               initial={{ opacity: 0, y: 20 }}

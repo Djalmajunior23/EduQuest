@@ -96,11 +96,11 @@ import { predictStudentRisk } from '../services/aiAssistantService';export defau
         </button>
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center ring-4 ring-white shadow-sm overflow-hidden text-indigo-600 font-bold text-2xl">
-            {student.foto_url ? <img src={student.foto_url} alt={student.nome} className="w-full h-full object-cover" /> : student.nome.charAt(0)}
+            {student?.foto_url ? <img src={student.foto_url} alt={student.nome} className="w-full h-full object-cover" /> : student?.nome?.charAt(0) || <User />}
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">{student.nome}</h1>
-            <p className="text-slate-500">{student.email} • {student.perfil}</p>
+            <h1 className="text-3xl font-bold text-slate-900">{student?.nome || 'Operador'}</h1>
+            <p className="text-slate-500">{student?.email} • {student?.perfil}</p>
           </div>
         </div>
         <div className="ml-auto">

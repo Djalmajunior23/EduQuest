@@ -1,4 +1,5 @@
 import { api } from '../lib/api';
+import { normalizeArray } from '../utils/normalizeArray';
 
 
 // src/services/paymentConfigService.ts
@@ -10,7 +11,7 @@ import { PaymentProviderConfig } from '../types/payment';export const paymentCon
       .eq('tenant_id', tenantId);
     
     if (error) throw error;
-    return (data || []).map(d => ({
+    return normalizeArray(data).map(d => ({
       ...d,
       tenantId: d.tenant_id,
       updatedAt: d.updated_at,

@@ -23,6 +23,32 @@ model Tenant {
   simulados        Simulado[]
   turmas           Turma[]
   badges           Badge[]
+  instituicao      Instituicao?
+  notificacoes     Notificacao[]
+}
+
+model Notificacao {
+  id          String   @id @default(uuid())
+  titulo      String
+  mensagem    String
+  lida        Boolean  @default(false)
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  usuarioId   String?
+  usuario     Usuario? @relation(fields: [usuarioId], references: [id])
+  tipo        String   @default("INFO") // INFO, ALERTA, SUCESSO
+  createdAt   DateTime @default(now())
+}
+
+model Instituicao {
+  id          String   @id @default(uuid())
+  nome        String
+  cnpj        String?  @unique
+  endereco    String?
+  tenantId    String   @unique
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Usuario {
@@ -32,6 +58,8 @@ model Usuario {
   senhaHash       String
   perfil          PerfilUsuario @default(ALUNO)
   ativo           Boolean       @default(true)
+  deveTrocarSenha Boolean       @default(false)
+  permissoes_granulares Json?
   tenantId        String?
   tenant          Tenant?       @relation(fields: [tenantId], references: [id])
   turmaId         String?
@@ -43,6 +71,42 @@ model Usuario {
   submissoes      Submissao[]
   conquistas      ConquistaUsuario[]
   logs            LogSistema[]
+  chats           ChatHistory[]
+  notificacoes    Notificacao[]
+  planosEstudo    PlanoEstudo[]
+}
+
+model Competencia {
+  id          String   @id @default(uuid())
+  nome        String
+  descricao   String?
+  cursoId     String
+  curso       Curso    @relation(fields: [cursoId], references: [id])
+  capacidades CapacidadeTecnica[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model CapacidadeTecnica {
+  id            String   @id @default(uuid())
+  nome          String
+  descricao     String?
+  competenciaId String
+  competencia   Competencia @relation(fields: [competenciaId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model PlanoEstudo {
+  id          String   @id @default(uuid())
+  usuarioId   String
+  usuario     Usuario  @relation(fields: [usuarioId], references: [id])
+  objetivos   String?  @db.Text
+  conteudo    Json?    // Array de materiais/links
+  progresso   Float    @default(0)
+  status      String   @default("ATIVO")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 enum PerfilUsuario {
@@ -80,8 +144,20 @@ model Curso {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  unidades    UnidadeCurricular[]
+  disciplinas Disciplina[]
   turmas      Turma[]
+  competencias Competencia[]
+}
+
+model Disciplina {
+  id          String   @id @default(uuid())
+  nome        String
+  cursoId     String
+  curso       Curso    @relation(fields: [cursoId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  unidades    UnidadeCurricular[]
 }
 
 model UnidadeCurricular {
@@ -89,8 +165,8 @@ model UnidadeCurricular {
   nome        String
   descricao   String?
   cargaHoraria Int      @default(0)
-  cursoId     String
-  curso       Curso    @relation(fields: [cursoId], references: [id])
+  disciplinaId String
+  disciplina   Disciplina @relation(fields: [disciplinaId], references: [id])
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -121,12 +197,23 @@ model Submissao {
   usuario             Usuario  @relation(fields: [usuarioId], references: [id])
   codigoFont          String?
   respostaDiscursiva  String?
-  nota                Float?
-  feedback            String?  @db.Text
   status              String   @default("PENDENTE") // PENDENTE, CORRIGIDA, ERRO
   tempoGasto          Int?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
+
+  correcao            Correcao?
+}
+
+model Correcao {
+  id            String   @id @default(uuid())
+  submissaoId   String   @unique
+  submissao     Submissao @relation(fields: [submissaoId], references: [id])
+  nota          Float
+  feedback      String   @db.Text
+  competencias  Json?
+  corrigidoPor  String?  // ID do usuario ou 'IA'
+  createdAt     DateTime @default(now())
 }
 
 model Simulado {
@@ -181,6 +268,26 @@ model ConquistaUsuario {
   badgeId     String
   badge       Badge    @relation(fields: [badgeId], references: [id])
   conquistadoEm DateTime @default(now())
+}
+
+model Ranking {
+  id          String   @id @default(uuid())
+  contexto    String   // TURMA, CURSO, GLOBAL
+  contextoId  String?
+  posicao     Int
+  pontuacao   Float
+  usuarioId   String
+  updatedAt   DateTime @updatedAt
+}
+
+model ChatHistory {
+  id          String   @id @default(uuid())
+  usuarioId   String
+  usuario     Usuario  @relation(fields: [usuarioId], references: [id])
+  modelo      String?
+  mensagens   Json     // Array de mensagens
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model LogSistema {

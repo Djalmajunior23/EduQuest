@@ -1,3 +1,4 @@
+import { normalizeArray } from '../utils/normalizeArray';
 import { api } from '../lib/api';
 
 
@@ -71,12 +72,18 @@ import { generateQuestions, suggestQuestionMetadata } from '../services/aiAssist
     async function fetchQuestions() {
       try {
         const { data, error } = await api
-          .from('questions')
-          .select('*')
-          .eq('teacher_id', profile?.id);
+          .from('questoes')
+          .select('*');
         
         if (error) throw error;
-        setQuestions(data || []);
+        
+        setQuestions(normalizeArray(data).map(q => ({
+          ...q,
+          text: q.enunciado || q.text,
+          type: q.tipo || q.type,
+          options: q.alternativas?.map((a: any) => a.texto) || q.options || [],
+          correctOptionIndex: q.alternativas?.findIndex((a: any) => a.correta) ?? q.correctOptionIndex
+        })));
       } catch (error) {
         console.error('Error fetching questions:', error);
       } finally {
@@ -118,14 +125,14 @@ import { generateQuestions, suggestQuestionMetadata } from '../services/aiAssist
 
       if (editingId) {
         const { error } = await api
-          .from('questions')
+          .from('questoes')
           .update(questionData)
           .eq('id', editingId);
         if (error) throw error;
-        setQuestions((questions || []).map(q => q.id === editingId ? { ...q, ...questionData } : q));
+        setQuestions(normalizeArray(questions).map(q => q.id === editingId ? { ...q, ...questionData } : q));
       } else {
         const { data, error } = await api
-          .from('questions')
+          .from('questoes')
           .insert({
             ...questionData,
             created_at: new Date().toISOString()
@@ -133,7 +140,7 @@ import { generateQuestions, suggestQuestionMetadata } from '../services/aiAssist
           .select()
           .maybeSingle();
         if (error) throw error;
-        setQuestions([data, ...questions]);
+        setQuestions([data, ...normalizeArray(questions)]);
       }
       
       setIsModalOpen(false);
@@ -236,13 +243,13 @@ import { generateQuestions, suggestQuestionMetadata } from '../services/aiAssist
       }));
 
       const { data, error } = await api
-        .from('questions')
+        .from('questoes')
         .insert(newQuestionsData)
         .select();
 
       if (error) throw error;
       
-      setQuestions([...(data || []), ...questions]);
+      setQuestions([...normalizeArray(data), ...normalizeArray(questions)]);
       setIsAIModalOpen(false);
       setAiPrompt('');
       setGeneratedQuestions([]);
@@ -256,7 +263,7 @@ import { generateQuestions, suggestQuestionMetadata } from '../services/aiAssist
 
   const handleDelete = async (id: string) => {
     if (confirm('Deseja excluir esta questão?')) {
-      const { error } = await api.from('questions').delete().eq('id', id);
+      const { error } = await api.from('questoes').delete().eq('id', id);
       if (error) {
         console.error('Error deleting question:', error);
         alert('Erro ao excluir questão.');
@@ -269,11 +276,11 @@ import { generateQuestions, suggestQuestionMetadata } from '../services/aiAssist
   const handleUpdateDifficulty = async (id: string, newDifficulty: string) => {
     try {
       const { error } = await api
-        .from('questions')
+        .from('questoes')
         .update({ difficulty: newDifficulty })
         .eq('id', id);
       if (error) throw error;
-      setQuestions((questions || []).map(q => q.id === id ? { ...q, difficulty: newDifficulty } : q));
+      setQuestions(normalizeArray(questions).map(q => q.id === id ? { ...q, difficulty: newDifficulty } : q));
     } catch (error) {
       console.error('Error updating difficulty:', error);
     }
@@ -284,7 +291,7 @@ import { generateQuestions, suggestQuestionMetadata } from '../services/aiAssist
     setIsGenerating(true);
     try {
       const { data: taggedQuestions, error } = await api
-        .from('questions')
+        .from('questoes')
         .select('id')
         .eq('teacher_id', profile.id)
         .contains('tags', [quickExamConfig.tag]);
@@ -330,7 +337,7 @@ import { generateQuestions, suggestQuestionMetadata } from '../services/aiAssist
 
   const handleExportCSV = () => {
     const headers = ['ID', 'Enunciado', 'Opções', 'Resposta Correta', 'Dificuldade', 'Taxonomia de Bloom', 'Tags', 'Explicação'];
-    const rows = (questions || []).map(q => [
+    const rows = normalizeArray(questions).map(q => [
       q.id,
       `"${(q.text || '').replace(/"/g, '""')}"`,
       `"${(q.options?.join(' | ') || '').replace(/"/g, '""')}"`,
@@ -444,7 +451,7 @@ import { generateQuestions, suggestQuestionMetadata } from '../services/aiAssist
       </div>
 
       <div className="grid grid-cols-1 gap-4">
-        {(filteredQuestions || []).map((q) => (
+        {normalizeArray(filteredQuestions).map((q) => (
           <div key={q.id} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg hover:border-indigo-300 transition-all duration-300">
             <div className="flex justify-between gap-4 mb-4">
               <div className="flex flex-wrap gap-2">

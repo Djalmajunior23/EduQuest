@@ -1,4 +1,5 @@
 import { api } from '../../../lib/api';
+import { normalizeArray } from '../../../utils/normalizeArray';
 
 
 import React, { useState, useEffect } from 'react';
@@ -36,7 +37,7 @@ import { cn } from '../../../lib/utils';export default function ProfessorInsight
       if (error) {
         console.error('Error fetching alerts:', error);
       } else {
-        setAlertas((data || []).map(d => ({
+        setAlertas(normalizeArray(data).map(d => ({
           ...d,
           targetProfessorId: d.target_professor_id,
           alunoNome: d.aluno_nome,

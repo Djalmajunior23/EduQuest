@@ -1,4 +1,5 @@
 import { api } from '../../../lib/api';
+import { normalizeArray } from '../../../utils/normalizeArray';
 
 
 import React, { useState, useEffect } from 'react';
@@ -228,7 +229,7 @@ import { cn } from '../../../lib/utils';export default function UCManager() {
                    </thead>
                    <tbody className="divide-y divide-slate-100">
                       <AnimatePresence>
-                        {(filteredUcs || []).map((uc) => (
+                        {normalizeArray(filteredUcs).map((uc) => (
                           <motion.tr 
                             key={uc.id}
                             initial={{ opacity: 0 }}
@@ -284,7 +285,7 @@ import { cn } from '../../../lib/utils';export default function UCManager() {
                       </AnimatePresence>
                    </tbody>
                 </table>
-                {(filteredUcs || []).length === 0 && (
+                {normalizeArray(filteredUcs).length === 0 && (
                    <div className="py-16 text-center text-slate-400 bg-slate-50/50">
                       <Library className="w-12 h-12 text-slate-200 mx-auto mb-4" />
                       <p className="font-black tracking-widest text-[10px] uppercase">Nenhuma UC encontrada no filtro.</p>

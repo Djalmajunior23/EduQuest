@@ -1,3 +1,4 @@
+import { normalizeArray } from '../utils/normalizeArray';
 import { api } from '../lib/api';
 
 
@@ -54,7 +55,7 @@ import { useAuth } from '../lib/AuthContext';export default function LessonPlann
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      setPlans(data || []);
+      setPlans(normalizeArray(data));
     } catch (error) {
       console.error('Error fetching plans:', error);
     }
@@ -169,14 +170,14 @@ import { useAuth } from '../lib/AuthContext';export default function LessonPlann
         {/* Main Content Area */}
         <div className="lg:col-span-3">
           <div className="grid grid-cols-1 gap-6">
-            {plans.length === 0 ? (
+            {normalizeArray(plans).length === 0 ? (
               <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-3xl h-96 flex flex-col items-center justify-center text-center p-12 text-slate-400">
                 <FileText className="w-12 h-12 mb-4 opacity-20" />
                 <p className="font-bold text-lg mb-2">Nenhum plano gerado ainda</p>
                 <p className="text-sm max-w-xs">Use a IA para gerar sequências didáticas personalizadas com base na fragilidade da sua turma.</p>
               </div>
             ) : (
-              plans.map(plan => (
+              normalizeArray(plans).map(plan => (
                 <motion.div 
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -210,7 +211,7 @@ import { useAuth } from '../lib/AuthContext';export default function LessonPlann
                     <div>
                       <h4 className="text-sm font-black text-slate-400 uppercase mb-4 tracking-tighter">Sequência Didática</h4>
                       <div className="space-y-4">
-                        {(plan.activities || []).slice(0, 4).map((step: any, idx: number) => (
+                        {normalizeArray(plan.activities).slice(0, 4).map((step: any, idx: number) => (
                           <div key={idx} className="flex gap-3">
                             <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500 shrink-0">
                               {step.time}
