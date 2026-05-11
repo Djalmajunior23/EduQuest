@@ -22,7 +22,10 @@ export class EduJarvisService {
 
   public static getInstance(): EduJarvisService {
     if (!EduJarvisService.instance) {
-      const apiKey = process.env.GEMINI_API_KEY || '';
+      const apiKey = process.env.GEMINI_API_KEY || "SAFE_MODE_KEY";
+      if (!process.env.GEMINI_API_KEY) {
+        console.warn('[EduJarvis] GEMINI_API_KEY ausente. Operando em modo de fallback limitado.');
+      }
       EduJarvisService.instance = new EduJarvisService(apiKey);
     }
     return EduJarvisService.instance;
@@ -31,34 +34,54 @@ export class EduJarvisService {
   public static async sendMessage(text: string, profile: any, context: any = {}) {
     const service = EduJarvisService.getInstance();
     
-    // Neural Intent Identification & Routing
-    let agentType = EduJarvisAgent.TUTOR;
+    // 1. Prioridade para o AgentId enviado explicitamente (do seletor de agentes)
+    let agentType = context.agentId as EduJarvisAgent;
     
-    if (profile?.perfil === 'PROFESSOR' || profile?.perfil === 'ADMIN' || profile?.perfil === 'COORDENADOR') {
-      agentType = EduJarvisAgent.PEDAGOGICAL;
-    }
-
-    if (text.toLowerCase().includes('corrija') || text.toLowerCase().includes('avalie')) {
-      agentType = EduJarvisAgent.CORRECTION;
-    }
-
-    const response = await service.orchestrator.run({
-      agent: agentType,
-      context: {
-        ...context,
-        query: text,
-        userName: profile?.nome,
-        course: context.course || 'Tecnologia',
-        uc: context.uc || 'Geral',
-        userRole: profile?.perfil
+    // 2. Fallback: Neural Intent Identification & Routing (se não houver agentId)
+    if (!agentType) {
+      agentType = EduJarvisAgent.TUTOR;
+      
+      if (profile?.perfil === 'PROFESSOR' || profile?.perfil === 'ADMIN' || profile?.perfil === 'COORDENADOR') {
+        agentType = EduJarvisAgent.PEDAGOGICAL;
       }
-    });
 
-    return {
-      role: 'ASSISTANT',
-      content: response,
-      timestamp: new Date().toISOString(),
-      agent: agentType
-    };
+      if (text.toLowerCase().includes('corrija') || text.toLowerCase().includes('avalie') || text.toLowerCase().includes('nota')) {
+        agentType = EduJarvisAgent.CORRECTION;
+      }
+
+      if (text.toLowerCase().includes('dashboard') || text.toLowerCase().includes('dados') || text.toLowerCase().includes('analise')) {
+        agentType = EduJarvisAgent.ANALYTICS;
+      }
+    }
+
+    try {
+      const response = await service.orchestrator.run({
+        agent: agentType,
+        context: {
+          ...context,
+          query: text,
+          userName: profile?.nome,
+          course: context.course || 'Tecnologia',
+          uc: context.uc || 'Geral',
+          userRole: profile?.perfil
+        }
+      });
+
+      return {
+        role: 'ASSISTANT',
+        content: response,
+        timestamp: new Date().toISOString(),
+        agent: agentType
+      };
+    } catch (error) {
+      console.error("[EduJarvis] Orchestrator fail:", error);
+      return {
+        role: 'ASSISTANT',
+        content: "O EduJarvis está operando em modo de segurança simplificado devido a uma instabilidade momentânea na conexão neural. No que posso te ajudar?",
+        timestamp: new Date().toISOString(),
+        agent: agentType,
+        fallback: true
+      };
+    }
   }
 }

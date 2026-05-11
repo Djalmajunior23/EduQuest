@@ -6,6 +6,7 @@ import { Activity } from '../../types/activities';
 import { Plus, List, BarChart3, CheckSquare } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
+import { normalizeArray } from '../../utils/normalizeArray';
 
 export default function ActivitiesDashboard() {
   const { user, profile } = useAuth();
@@ -105,7 +106,7 @@ export default function ActivitiesDashboard() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {(activities || []).map(act => (
+              {normalizeArray(activities).map(act => (
                 <tr key={act.id} className="hover:bg-slate-50 transition">
                   <td className="p-4 font-medium text-slate-800">{act.title}</td>
                   <td className="p-4 text-slate-600 capitalize">{act.type.replace('_', ' ')}</td>

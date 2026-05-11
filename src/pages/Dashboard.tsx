@@ -291,7 +291,7 @@ export default function Dashboard() {
                            </Link>
                         </div>
                         <div className="space-y-6">
-                           {stats.recentAttempts.map((attempt) => (
+                           {normalizeArray(stats.recentAttempts).map((attempt) => (
                              <motion.div 
                                 key={attempt.id}
                                 whileHover={{ x: 10 }}

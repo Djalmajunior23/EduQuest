@@ -155,70 +155,57 @@ import { cn } from '../../../lib/utils';export default function ProfessorInsight
          </div>
       </div>
 
-      {/* FEED DE ALERTAS (ACIONÁVEL) */}
-      <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 pt-4">Central de Intervenção Pedagógica (Em tempo real)</h3>
+      {/* SUGESTÕES CONTEXTUAIS DO EDUJARVIS */}
+      <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 pt-8 flex items-center gap-2">
+         <Sparkles className="w-4 h-4 text-indigo-500" /> Inteligência de Intervenção
+      </h3>
       
-      <div className="grid grid-cols-1 gap-4">
-         <AnimatePresence>
-            {alertas.length === 0 ? (
-               <div className="p-12 text-center border-2 border-dashed border-slate-100 rounded-[2rem] text-slate-400 font-bold uppercase text-[10px] tracking-widest">
-                  Nenhum aviso neural detectado pelo motor tático.
-               </div>
-            ) : alertas.map((alerta, i) => (
-                <motion.div
-                   key={alerta.id}
-                   initial={{ opacity: 0, x: -20 }}
-                   animate={{ opacity: 1, x: 0 }}
-                   transition={{ delay: i * 0.1 }}
-                   className={cn(
-                      "rounded-[2rem] p-6 border shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden hover:-translate-y-1 transition-transform",
-                      alerta.severidade === 'VERMELHA' ? "bg-red-50 border-red-100" :
-                      alerta.severidade === 'AMARELA' ? "bg-amber-50 border-amber-100" :
-                      "bg-emerald-50 border-emerald-100"
-                   )}
-                >
-                   <div className="flex gap-4 items-start md:items-center">
-                      <div className={cn(
-                         "p-4 rounded-full flex items-center justify-center",
-                         alerta.severidade === 'VERMELHA' ? "bg-red-100 text-red-600" :
-                         alerta.severidade === 'AMARELA' ? "bg-amber-100 text-amber-600" :
-                         "bg-emerald-100 text-emerald-600"
-                      )}>
-                         {alerta.severidade === 'VERMELHA' ? <XOctagon className="w-6 h-6" /> :
-                          alerta.severidade === 'AMARELA' ? <AlertTriangle className="w-6 h-6" /> :
-                          <CheckCircle2 className="w-6 h-6" />}
-                      </div>
-                      
-                      <div className="max-w-xl">
-                         <div className="flex items-center gap-2 mb-1">
-                            <span className="font-bold text-slate-900">{alerta.alunoNome || 'Desconhecido'}</span>
-                            <span className={cn(
-                               "px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest",
-                               alerta.severidade === 'VERMELHA' ? "bg-red-200 text-red-700" :
-                               alerta.severidade === 'AMARELA' ? "bg-amber-200 text-amber-700" :
-                               "bg-emerald-200 text-emerald-700"
-                            )}>Risco Identificado</span>
-                         </div>
-                         <p className="text-sm font-medium text-slate-700 leading-relaxed mb-1.5">{alerta.motivo}</p>
-                         <p className="text-xs font-bold text-indigo-700 bg-white/50 px-3 py-2 rounded-lg border border-indigo-100/50 flex gap-2 w-max">
-                            <BrainCircuit className="w-4 h-4 text-indigo-500" />
-                            Ação Automática: {alerta.sugestao}
-                         </p>
-                      </div>
-                   </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Sugestão Dinâmica com base na Turma */}
+        <motion.div
+           initial={{ opacity: 0, y: 10 }}
+           animate={{ opacity: 1, y: 0 }}
+           className="bg-indigo-600 rounded-[2rem] p-8 text-white shadow-xl shadow-indigo-100 flex flex-col justify-between"
+        >
+          <div className="flex items-start justify-between mb-6">
+             <div className="bg-white/20 p-3 rounded-2xl">
+               <BrainCircuit className="w-6 h-6 text-white" />
+             </div>
+             <span className="text-[9px] font-black uppercase tracking-widest bg-white/20 px-3 py-1 rounded-full">Turma S5</span>
+          </div>
+          <div>
+            <h4 className="text-xl font-black italic uppercase tracking-tighter mb-2">Acelerador de Tópicos</h4>
+            <p className="text-xs text-indigo-100 font-medium leading-relaxed">
+               Engajamento está em alta (85% para 90%). A IA sugere subir o nível de complexidade em 15% para a próxima aula.
+            </p>
+          </div>
+          <button className="mt-6 w-full py-4 bg-white text-indigo-600 rounded-xl font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-2 hover:bg-slate-950 hover:text-white transition-all">
+             Aplicar Sincronização <ChevronRight className="w-4 h-4" />
+          </button>
+        </motion.div>
 
-                   <div className="flex gap-3 mt-4 md:mt-0 shrink-0">
-                      <button className="flex items-center justify-center bg-white border border-slate-200 hover:border-slate-300 text-slate-600 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all">
-                         Ignorar
-                      </button>
-                      <button className="flex items-center justify-center bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-slate-200">
-                         Autorizar Mudança
-                      </button>
-                   </div>
-                </motion.div>
-            ))}
-         </AnimatePresence>
+        {/* Feed de Alertas Pedagógicos como era */}
+        <div className="space-y-4">
+           {alertas.length === 0 ? (
+             <div className="p-8 text-center border-2 border-dashed border-slate-100 rounded-[2rem] text-slate-400 font-bold uppercase text-[10px] tracking-widest">
+                Motor tático estável.
+             </div>
+           ) : alertas.slice(0, 2).map((alerta) => (
+             <div key={alerta.id} className="p-6 bg-white border border-slate-100 rounded-[2rem] flex items-center gap-4 hover:shadow-lg transition-all">
+               <AlertTriangle className={cn(
+                  "w-8 h-8 shrink-0",
+                  alerta.severidade === 'VERMELHA' ? "text-red-500" : "text-amber-500"
+               )} />
+               <div>
+                  <p className="text-xs font-black text-slate-900">{alerta.alunoNome}</p>
+                  <p className="text-[10px] font-medium text-slate-500 line-clamp-1">{alerta.motivo}</p>
+               </div>
+               <ChevronRight className="w-4 h-4 text-slate-300 ml-auto" />
+             </div>
+           ))}
+        </div>
       </div>
+
     </div>
   );
 }

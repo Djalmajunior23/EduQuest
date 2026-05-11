@@ -7,8 +7,6 @@ import { Check, Zap, Shield, Building2, Star, ArrowRight, Lock, Unlock, Clock, L
 import { SAAS_PLANS } from '../../constants/saas';
 import { useAuth } from '../../lib/AuthContext';
 import { cn } from '../../lib/utils';
-// import { doc, getDoc, setDoc, updateDoc, onSnapshot } from 'firebase/firestore'; // Removed Firebase
-
 export default function SubscriptionPlans() {
   const { profile, user } = useAuth();
   const [liberatedPlans, setLiberatedPlans] = useState<string[]>([]);

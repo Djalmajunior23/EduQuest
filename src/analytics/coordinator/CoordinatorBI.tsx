@@ -10,9 +10,9 @@ import {
   TrendingUp, Activity, Globe, Sparkles, ChevronRight, Info
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { useAuth } from '../../../lib/AuthContext';
-import { useTenant } from '../../../lib/TenantContext';
-import { cn } from '../../../lib/utils';
+import { useAuth } from '../../lib/AuthContext';
+import { useTenant } from '../../lib/TenantContext';
+import { cn } from '../../lib/utils';
 
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 

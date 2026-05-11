@@ -1,5 +1,5 @@
 import { api } from '../lib/api';
-
+import { normalizeArray } from '../utils/normalizeArray';
 
 import React, { useEffect, useState } from 'react';
 import {   LineChart, Line, AreaChart, Area, BarChart, Bar, 
@@ -109,9 +109,9 @@ import { cn } from '../lib/utils';export default function AnalyticsDashboard() {
                   </div>
                </div>
             </div>
-            <div className="h-[300px]">
+            <div className="h-[300px] min-h-[300px] w-full">
                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={data?.performance || []}>
+                  <AreaChart data={normalizeArray(data?.performance)}>
                      <defs>
                         <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
                            <stop offset="5%" stopColor="#2563eb" stopOpacity={0.1}/>
@@ -143,7 +143,7 @@ import { cn } from '../lib/utils';export default function AnalyticsDashboard() {
                <Brain className="w-5 h-5 text-indigo-600" /> Domínio Técnico
             </h3>
             <div className="space-y-6">
-               {(data?.mastery || []).map((item: any) => (
+               {normalizeArray(data?.mastery).map((item: any) => (
                   <div key={item.subject}>
                      <div className="flex justify-between items-center mb-2">
                         <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider">{item.subject}</span>
@@ -171,9 +171,9 @@ import { cn } from '../lib/utils';export default function AnalyticsDashboard() {
             <h3 className="text-lg font-black italic uppercase tracking-tighter text-slate-900 mb-8 flex items-center gap-2">
                <Clock className="w-5 h-5 text-emerald-600" /> Engajamento Semanal
             </h3>
-            <div className="h-[200px]">
+            <div className="h-[200px] min-h-[200px] w-full">
                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={data?.engagement || []}>
+                  <BarChart data={normalizeArray(data?.engagement)}>
                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                      <XAxis 
                         dataKey="name" 

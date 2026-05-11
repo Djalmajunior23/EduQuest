@@ -20,7 +20,10 @@ import {   User,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '../lib/utils';
-import { predictStudentRisk } from '../services/aiAssistantService';export default function StudentDossier() {
+import { normalizeArray } from '../utils/normalizeArray';
+import { predictStudentRisk } from '../services/aiAssistantService';
+
+export default function StudentDossier() {
   const { studentId } = useParams();
   const navigate = useNavigate();
   const [student, setStudent] = useState<any>(null);

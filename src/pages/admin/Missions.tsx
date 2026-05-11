@@ -66,7 +66,7 @@ import { cn } from '../../lib/utils';export default function MissionManager() {
       { titulo: 'Mestre da Documentação', type: 'ESPECIAL', xp: 1000, ai_tokens: 50, tenant_id: profile.tenantId },
     ];
     try {
-      const { error } = await api.from('missoes').insert(defaultMissions.map(m => ({ ...m, created_at: new Date().toISOString() })));
+      const { error } = await api.from('missoes').insert(normalizeArray(defaultMissions).map(m => ({ ...m, created_at: new Date().toISOString() })));
       if (error) throw error;
     } catch (e) {
       console.error(e);

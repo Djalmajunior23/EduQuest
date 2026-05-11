@@ -1,9 +1,10 @@
-import { api } from '../../../lib/api';
-import { normalizeArray } from '../../../utils/normalizeArray';
+import { api } from '@/lib/api';
+import { normalizeArray } from '@/utils/normalizeArray';
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import * as LucideIcons from 'lucide-react';
-import {   Trophy, 
+import { 
+  Trophy, 
   Flame, 
   Zap, 
   Star, 
@@ -28,17 +29,20 @@ import {   Trophy,
   BrainCircuit,
   Bot
 } from 'lucide-react';
-import { ALL_BADGES, GamificationItem } from '../../gamification/libraries';
-import { BOSS_CHALLENGES, BossChallenge } from '../../gamification/bossChallenges';
-import { PRACTICAL_CHALLENGES } from '../../gamification/challengesLibrary';const DynamicIcon = ({ name, className }: { name: string, className?: string }) => {
+import { ALL_BADGES, GamificationItem } from '@/gamification/libraries';
+import { BOSS_CHALLENGES, BossChallenge } from '@/gamification/bossChallenges';
+import { PRACTICAL_CHALLENGES } from '@/gamification/challengesLibrary';
+import { useAuth } from '@/lib/AuthContext';
+import { useTenant } from '@/lib/TenantContext';
+import { missionService } from '@/services/missionService';
+import { adaptiveMissionService, AdaptiveMission, StudentProfileType } from '@/services/adaptiveMissionService';
+import { cn } from '@/lib/utils';
+
+const DynamicIcon = ({ name, className }: { name: string, className?: string }) => {
   const IconComponent = (LucideIcons as any)[name] || LucideIcons.Award;
   return <IconComponent className={className} />;
 };
-import { useAuth } from '../../../lib/AuthContext';
-import { useTenant } from '../../../lib/TenantContext';
-import { missionService } from '../../../services/missionService';
-import { adaptiveMissionService, AdaptiveMission, StudentProfileType } from '../../../services/adaptiveMissionService';
-import { cn } from '../../../lib/utils';interface MissionWithProgress {
+interface MissionWithProgress {
   id: string;
   title: string;
   description: string;
@@ -144,7 +148,6 @@ export default function StudentGamification() {
         "Não foi possível carregar o módulo de gamificação devido a uma falha de sincronização."
       );
     } finally {
-      console.log("[Gamificação] Finalizando loading...");
       setLoading(false);
     }
   }

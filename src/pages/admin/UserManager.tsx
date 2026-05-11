@@ -1,7 +1,3 @@
-import { UserTable } from '../../components/users/UserTable';
-import { normalizeArray } from '../../utils/normalizeArray';
-
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../lib/AuthContext';
 import {   Users, 
@@ -23,99 +19,12 @@ import {   Users,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../../lib/utils';
-import { inviteUser, createUser } from '../../services/userManagementService';
+import { normalizeArray } from '../../utils/normalizeArray';
+import { UserTable } from '../../components/users/UserTable';
+import { UserFormModal } from '../../components/users/UserFormModal';
 import { BulkImportModal } from '../../components/admin/BulkImportModal';
+import { listarUsuarios } from '../../services/userService';
 
-const CreateUserModal = ({ isOpen, onClose, onSave, loading }: any) => {
-  const [formData, setFormData] = useState({ nome: '', email: '', perfil: 'ALUNO', turmaId: '' });
-
-  if (!isOpen) return null;
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSave(formData);
-    setFormData({ nome: '', email: '', perfil: 'ALUNO', turmaId: '' });
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm">
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.95, y: 20 }} 
-        animate={{ opacity: 1, scale: 1, y: 0 }} 
-        className="bg-white w-full max-w-lg rounded-[3rem] shadow-2xl p-10 relative overflow-hidden"
-      >
-        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-indigo-600 to-violet-600" />
-        
-        <div className="flex justify-between items-start mb-8">
-          <div>
-            <h2 className="text-2xl font-black uppercase italic tracking-tighter text-slate-900">Novo Cadastro</h2>
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Registro Direto no Sistema</p>
-          </div>
-          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-            <X className="w-6 h-6 text-slate-400" />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Nome Completo</label>
-            <input 
-              required
-              type="text"
-              value={formData.nome}
-              onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-              className="w-full px-6 py-4 bg-slate-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-indigo-100 focus:ring-4 focus:ring-indigo-50 transition-all outline-none text-sm font-medium"
-              placeholder="Ex: João Silva"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Email Institucional</label>
-            <input 
-              required
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full px-6 py-4 bg-slate-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-indigo-100 focus:ring-4 focus:ring-indigo-50 transition-all outline-none text-sm font-medium"
-              placeholder="joao@nexus.edu.br"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Tipo de Perfil</label>
-            <select 
-              value={formData.perfil}
-              onChange={(e) => setFormData({ ...formData, perfil: e.target.value })}
-              className="w-full px-6 py-4 bg-slate-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-indigo-100 focus:ring-4 focus:ring-indigo-50 transition-all outline-none text-sm font-black uppercase text-[10px] tracking-widest"
-            >
-              <option value="ALUNO">ALUNO</option>
-              <option value="PROFESSOR">PROFESSOR</option>
-              <option value="ADMIN">ADMINISTRADOR</option>
-            </select>
-          </div>
-
-          <div className="flex gap-4 pt-4">
-            <button 
-              type="button"
-              onClick={onClose} 
-              className="flex-1 py-4 border-2 border-slate-100 rounded-2xl font-black uppercase text-[10px] tracking-widest text-slate-500 hover:bg-slate-50 transition-all"
-            >
-              Cancelar
-            </button>
-            <button 
-              disabled={loading}
-              type="submit" 
-              className="flex-1 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-indigo-600 shadow-xl shadow-slate-200 transition-all flex items-center justify-center gap-2"
-            >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
-              {loading ? 'Salvando...' : 'Cadastrar Usuário'}
-            </button>
-          </div>
-        </form>
-      </motion.div>
-    </div>
-  );
-};
 
 const PermissionModal = ({isOpen, onClose, user, permissions, toggle, onSave}: any) => {
   if (!isOpen) return null;
@@ -124,7 +33,7 @@ const PermissionModal = ({isOpen, onClose, user, permissions, toggle, onSave}: a
       <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white w-full max-w-lg rounded-[2rem] shadow-2xl p-8">
         <h2 className="text-xl font-black uppercase italic mb-6">Permissões de {user?.nome}</h2>
         <div className="grid grid-cols-2 gap-2 mb-8">
-          {['usar_ia_professor', 'gerenciar_turmas', 'gerenciar_cursos'].map(perm => (
+          {normalizeArray(['usar_ia_professor', 'gerenciar_turmas', 'gerenciar_cursos']).map(perm => (
               <button key={perm} onClick={() => toggle(perm)} className={cn("px-4 py-3 rounded-xl text-[10px] font-black uppercase text-left transition-all", permissions.includes(perm) ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-600")}>
               {perm}
               </button>
@@ -146,7 +55,6 @@ export default function UserManager() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState('ALL');
   const [filterStatus, setFilterStatus] = useState('ALL');
-  const [filterDate, setFilterDate] = useState('ALL');
   
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -154,33 +62,46 @@ export default function UserManager() {
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
   const [newPermissions, setNewPermissions] = useState<string[]>([]);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  const [inviteData, setInviteData] = useState({ nome: '', email: '', perfil: 'ALUNO', turmaId: '' });
-  const [isInviting, setIsInviting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 0 });
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('/api/usuarios');
-      const result = await response.json();
-      if (!result.success) throw new Error(result.error);
-      setUsers(normalizeArray(result.data));
+      setLoading(true);
+      const params: any = { 
+        page: pagination.page, 
+        limit: pagination.limit 
+      };
+      if (searchTerm) params.search = searchTerm;
+      if (filterRole !== 'ALL') params.perfil = filterRole;
+      if (filterStatus !== 'ALL') params.status = filterStatus;
+
+      const result = await listarUsuarios(params);
+      if (result.success) {
+        setUsers(normalizeArray(result.data));
+        setPagination(result.pagination);
+      }
+      setLoading(false);
     } catch (error) {
       console.error(error);
-    } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [pagination.page, searchTerm, filterRole, filterStatus]);
 
-  const handleCreate = async (data: any) => {
+  const handleSaveUser = async (data: any) => {
     if (!currentUser) return;
     
-    setIsInviting(true);
+    setIsSaving(true);
     try {
-      const response = await fetch('/api/usuarios', {
-        method: 'POST',
+      const url = selectedUser ? `/api/usuarios/${selectedUser.id}` : '/api/usuarios';
+      const method = selectedUser ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       });
@@ -188,11 +109,13 @@ export default function UserManager() {
       if (!result.success) throw new Error(result.error);
       
       setIsModalOpen(false);
+      setSelectedUser(null);
       fetchUsers();
     } catch (error) {
-      console.error('Failed to create user:', error);
+      console.error('Failed to save user:', error);
+      throw error;
     } finally {
-      setIsInviting(false);
+      setIsSaving(false);
     }
   };
 
@@ -223,23 +146,6 @@ export default function UserManager() {
     setIsPermissionModalOpen(true);
   };
 
-  const filteredUsers = normalizeArray(users).filter(u => {
-    const matchesSearch = u.nome?.toLowerCase().includes(searchTerm.toLowerCase()) || u.email?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = filterRole === 'ALL' || u.perfil === filterRole;
-    const matchesStatus = filterStatus === 'ALL' || u.status === filterStatus;
-    
-    let matchesDate = true;
-    if (filterDate === 'LAST_30') {
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-        const createdAt = new Date(u.created_at);
-        matchesDate = createdAt >= thirtyDaysAgo;
-    }
-    
-    return matchesSearch && matchesRole && matchesStatus && matchesDate;
-  });
-
-
   return (
     <div className="space-y-10 pb-12 relative font-sans">
       <header className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-8">
@@ -251,9 +157,9 @@ export default function UserManager() {
              <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-600">Diretório Central de Contas</h2>
           </div>
           <h1 className="text-4xl md:text-5xl font-black italic uppercase tracking-tighter text-slate-900 leading-none">
-            Gestão de <span className="text-indigo-600">Acessos</span>
+            Gestão de <span className="text-indigo-600">Usuários</span>
           </h1>
-          <p className="text-slate-500 font-medium max-w-xl">Administre identidades, perfis e permissões granulares da plataforma EduJarvis.</p>
+          <p className="text-slate-500 font-medium max-w-xl">Administre identidades, perfis e permissões granulares da plataforma EduQuest.</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-4">
@@ -264,94 +170,69 @@ export default function UserManager() {
              <Download className="w-4 h-4 rotate-180 group-hover:-translate-y-1 transition-transform" /> Importar Lote
            </button>
            <button 
-             onClick={() => setIsModalOpen(true)}
+             onClick={() => {
+                setSelectedUser(null);
+                setIsModalOpen(true);
+             }}
              className="flex items-center gap-3 px-8 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-2xl shadow-slate-200 hover:bg-indigo-600 hover:scale-[1.02] active:scale-95 transition-all"
            >
-             <UserPlus className="w-4 h-4" /> Cadastrar Usuário
+             <UserPlus className="w-4 h-4" /> Novo Usuário
            </button>
         </div>
       </header>
 
       {/* Admin Stats Grid */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-8">
-         <div className="bg-slate-900 p-10 rounded-[3rem] shadow-2xl relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-               <UserCheck className="w-24 h-24 text-white" />
+      <section className="grid grid-cols-1 md:grid-cols-4 gap-6">
+         <div className="bg-slate-900 p-8 rounded-[2rem] shadow-2xl relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
+               <Users className="w-20 h-20 text-white" />
             </div>
             <div className="relative z-10">
-               <h3 className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] mb-6">Total Ativos</h3>
-               <div className="flex items-baseline gap-4">
-                  <span className="text-5xl font-black italic uppercase tracking-tighter text-white">{normalizeArray(users).length}</span>
-                  <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Identidades Registradas</span>
-               </div>
-               <div className="mt-8 flex items-center gap-2">
-                  <div className="flex -space-x-3">
-                     {[1,2,3,4].map(i => (
-                        <div key={i} className="w-8 h-8 rounded-full border-2 border-slate-900 bg-slate-800 flex items-center justify-center text-[10px] font-black text-slate-400">
-                           {String.fromCharCode(64 + i)}
-                        </div>
-                     ))}
-                  </div>
-                  <span className="text-[9px] font-black uppercase text-slate-500 ml-2">+24 hoje</span>
+               <h3 className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] mb-4">Total de Registros</h3>
+               <div className="flex items-baseline gap-3">
+                  <span className="text-4xl font-black italic uppercase tracking-tighter text-white">{normalizeArray(users).length}</span>
                </div>
             </div>
          </div>
 
-         <div className="bg-white p-10 rounded-[3rem] border-2 border-slate-50 shadow-xl shadow-slate-100 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-8 opacity-0 group-hover:opacity-5 transition-opacity">
-               <Shield className="w-24 h-24 text-slate-900" />
+         <div className="bg-white p-8 rounded-[2rem] border-2 border-slate-50 shadow-xl shadow-slate-100 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
+               <UserCheck className="w-20 h-20 text-slate-900" />
             </div>
             <div className="relative z-10">
-               <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-6">Licenças Enterprise</h3>
-               <div className="flex items-baseline gap-4">
-                  <span className="text-5xl font-black italic uppercase tracking-tighter text-slate-900">450</span>
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Disponíveis</span>
-               </div>
-               <div className="mt-8 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-indigo-600 w-3/4" />
+               <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Alunos</h3>
+               <div className="flex items-baseline gap-3">
+                  <span className="text-4xl font-black italic uppercase tracking-tighter text-slate-900">{normalizeArray(users).filter(u => u.perfil === 'ALUNO').length}</span>
                </div>
             </div>
          </div>
 
-         <div className="bg-indigo-600 p-10 rounded-[3rem] shadow-2xl shadow-indigo-100 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
-               <Lock className="w-24 h-24 text-white" />
+         <div className="bg-white p-8 rounded-[2rem] border-2 border-slate-50 shadow-xl shadow-slate-100 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
+               <Shield className="w-20 h-20 text-indigo-600" />
             </div>
             <div className="relative z-10">
-               <h3 className="text-[10px] font-black text-indigo-200 uppercase tracking-[0.2em] mb-6">Security Pulse</h3>
-               <div className="flex items-baseline gap-4">
-                  <span className="text-5xl font-black italic uppercase tracking-tighter text-white">99.2%</span>
-                  <span className="text-xs font-bold text-indigo-100 uppercase tracking-widest">Score de Segurança</span>
+               <h3 className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em] mb-4">Professores e Admins</h3>
+               <div className="flex items-baseline gap-3">
+                  <span className="text-4xl font-black italic uppercase tracking-tighter text-indigo-900">
+                    {normalizeArray(users).filter(u => ['PROFESSOR', 'ADMIN', 'GESTOR', 'COORDENADOR'].includes(u.perfil)).length}
+                  </span>
                </div>
-               <div className="mt-8 flex items-center gap-4">
-                  <div className="px-3 py-1 bg-white/20 rounded-full text-[9px] font-black uppercase tracking-widest text-white">
-                     MFA Obrigatório
-                  </div>
-                  <div className="px-3 py-1 bg-white/20 rounded-full text-[9px] font-black uppercase tracking-widest text-white">
-                     Auditoria Ativa
-                  </div>
+            </div>
+         </div>
+
+         <div className="bg-rose-50 p-8 rounded-[2rem] shadow-xl shadow-rose-100 text-rose-600 relative overflow-hidden group border border-rose-100">
+            <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
+               <UserMinus className="w-20 h-20" />
+            </div>
+            <div className="relative z-10">
+               <h3 className="text-[10px] font-black uppercase tracking-[0.2em] mb-4">Inativos</h3>
+               <div className="flex items-baseline gap-3">
+                  <span className="text-4xl font-black italic uppercase tracking-tighter">{normalizeArray(users).filter(u => !u.ativo).length}</span>
                </div>
             </div>
          </div>
       </section>
-
-      {/* Tabs / Filters Navigation */}
-      <div className="flex gap-10 border-b border-slate-100">
-         {['TODOS_USUARIOS', 'CONVITES_PENDENTES', 'LOG_DE_AUDITORIA'].map((tab) => (
-            <button 
-               key={tab} 
-               className={cn(
-                  "pb-6 text-[10px] font-black uppercase tracking-[0.2em] transition-all relative",
-                  tab === 'TODOS_USUARIOS' ? "text-slate-900" : "text-slate-300 hover:text-slate-500"
-               )}
-            >
-               {tab.replace(/_/g, ' ')}
-               {tab === 'TODOS_USUARIOS' && (
-                  <motion.div layoutId="userTab" className="absolute bottom-0 left-0 right-0 h-1 bg-indigo-600 rounded-full" />
-               )}
-            </button>
-         ))}
-      </div>
 
       {/* Filters & Search - Sophisticated Panel */}
       <section className="space-y-6">
@@ -360,20 +241,20 @@ export default function UserManager() {
              <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
              <input 
                type="text" 
-               placeholder="Filtrar por nome, email ou turma..."
+               placeholder="Busca global por nome ou e-mail..."
                className="w-full pl-14 pr-6 py-5 bg-slate-50 border-2 border-transparent rounded-[1.5rem] text-sm font-medium focus:bg-white focus:border-indigo-100 focus:ring-4 focus:ring-indigo-50 transition-all outline-none"
                value={searchTerm}
                onChange={(e) => setSearchTerm(e.target.value)}
              />
           </div>
           
-          <div className="flex items-center gap-2 p-2 bg-slate-50 rounded-2xl border border-slate-100">
-             {['ALL', 'ALUNO', 'PROFESSOR', 'ADMIN'].map((role) => (
+          <div className="flex items-center gap-2 p-2 bg-slate-50 rounded-2xl border border-slate-100 overflow-x-auto">
+             {normalizeArray(['ALL', 'ALUNO', 'PROFESSOR', 'ADMIN', 'GESTOR']).map((role) => (
                <button
                  key={role}
                  onClick={() => setFilterRole(role)}
                  className={cn(
-                   "px-6 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all",
+                   "px-6 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all whitespace-nowrap",
                    filterRole === role ? "bg-white text-slate-900 shadow-md" : "text-slate-400 hover:text-slate-600"
                  )}
                >
@@ -382,14 +263,21 @@ export default function UserManager() {
              ))}
           </div>
 
-          <div className="flex items-center gap-2">
-             <button className="p-4 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-slate-900 transition-all shadow-sm">
-                <Filter className="w-5 h-5" />
-             </button>
-             <button className="px-6 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-slate-100">
-                Aplicar
-             </button>
+           <div className="flex items-center gap-2 p-2 bg-slate-50 rounded-2xl border border-slate-100">
+             {normalizeArray(['ALL', 'ATIVO', 'INATIVO']).map((status) => (
+               <button
+                 key={status}
+                 onClick={() => setFilterStatus(status)}
+                 className={cn(
+                   "px-6 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all",
+                   filterStatus === status ? "bg-white text-slate-900 shadow-md" : "text-slate-400 hover:text-slate-600"
+                 )}
+               >
+                 {status === 'ALL' ? 'Status' : status}
+               </button>
+             ))}
           </div>
+
         </div>
       </section>
 
@@ -397,7 +285,7 @@ export default function UserManager() {
       <section className="bg-white rounded-[3rem] border border-slate-100 shadow-2xl shadow-slate-100/50 overflow-hidden">
          <div className="overflow-x-auto">
             <UserTable
-              users={filteredUsers.map(u => ({
+              users={normalizeArray(users).map(u => ({
                 id: u.id,
                 nome: u.nome,
                 email: u.email,
@@ -405,13 +293,13 @@ export default function UserManager() {
                 ativo: u.ativo
               }))}
               onEdit={(user) => {
-                setSelectedUser(user);
-                // TODO: Open edit modal
+                setSelectedUser(users.find(u => u.id === user.id));
+                setIsModalOpen(true);
               }}
               onToggleStatus={async (userId, ativo) => {
                 try {
-                  await fetch(`/api/usuarios/${userId}`, {
-                    method: 'PUT',
+                  await fetch(`/api/usuarios/${userId}/status`, {
+                    method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ ativo })
                   });
@@ -420,19 +308,61 @@ export default function UserManager() {
                   console.error(e);
                 }
               }}
-              onResetPassword={(userId) => {
-                console.log('Resetting password for', userId);
+              onResetPassword={async (userId) => {
+                const novaSenha = prompt('Digite a nova senha para este usuário (mínimo 8 caracteres):');
+                if (!novaSenha || novaSenha.length < 8) {
+                    if (novaSenha) alert('A senha deve ter no mínimo 8 caracteres.');
+                    return;
+                }
+                
+                try {
+                  await fetch(`/api/usuarios/${userId}/reset-password`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ novaSenha })
+                  });
+                  alert('Senha redefinida com sucesso. O usuário precisará alterá-la no próximo login.');
+                } catch (e) {
+                  console.error(e);
+                  alert('Erro ao redefinir senha.');
+                }
               }}
               onDelete={async (userId) => {
-                if (!confirm('Tem certeza?')) return;
+                if (!confirm('Você tem certeza que deseja deletar este usuário? Esta ação não pode ser desfeita.')) return;
                 try {
-                  await fetch(`/api/usuarios/${userId}`, { method: 'DELETE' });
+                  const res = await fetch(`/api/usuarios/${userId}`, { method: 'DELETE' });
+                  const json = await res.json();
+                  if (!json.success) {
+                    alert(json.error || 'Erro ao deletar usuário.');
+                  }
                   fetchUsers();
                 } catch (e) {
                   console.error(e);
                 }
               }}
             />
+         </div>
+         {/* Pagination Controls */}
+         <div className="px-8 py-6 border-t border-slate-100 flex items-center justify-between">
+            <p className="text-xs font-medium text-slate-500">
+                Página {pagination.page} de {pagination.totalPages || 1}
+            </p>
+            <div className="flex items-center gap-2">
+                <button 
+                    disabled={pagination.page === 1}
+                    onClick={() => setPagination(p => ({ ...p, page: p.page - 1 }))}
+                    className="px-4 py-2 bg-slate-100 rounded-lg text-xs font-bold uppercase hover:bg-slate-200 disabled:opacity-50"
+                >
+                    Anterior
+                </button>
+                <button 
+                    disabled={pagination.page >= pagination.totalPages}
+                    onClick={() => setPagination(p => ({ ...p, page: p.page + 1 }))}
+                    className="px-4 py-2 bg-slate-100 rounded-lg text-xs font-bold uppercase hover:bg-slate-200 disabled:opacity-50"
+                >
+                    Próxima
+                </button>
+            </div>
          </div>
       </section>
 
@@ -442,11 +372,15 @@ export default function UserManager() {
         onSuccess={fetchUsers} 
       />
 
-      <CreateUserModal 
+      <UserFormModal 
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSave={handleCreate}
-        loading={isInviting}
+        onClose={() => {
+            setIsModalOpen(false);
+            setSelectedUser(null);
+        }}
+        onSave={handleSaveUser}
+        user={selectedUser}
+        loading={isSaving}
       />
 
       <PermissionModal 

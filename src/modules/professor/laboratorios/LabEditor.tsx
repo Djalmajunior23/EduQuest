@@ -26,6 +26,7 @@ export default function LabEditor() {
     titulo: '',
     versaoProfessor: '',
     versaoAluno: '',
+    video_url: '',
     status: 'DRAFT',
     tenantId: tenant?.id
   });
@@ -225,6 +226,16 @@ export default function LabEditor() {
                    onChange={e => setLab((p) => ({ ...p, titulo: e.target.value }))}
                    placeholder="Ex: Deploy de Kubernetes em Bare-Metal"
                    className="w-full bg-slate-50 px-6 py-4 rounded-2xl font-black text-xl text-slate-900 border-none focus:ring-4 focus:ring-slate-100 transition-all outline-none"
+                />
+             </div>
+
+             <div className="mb-6">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">URL do Vídeo de Instrução (Opcional)</label>
+                <input 
+                   value={lab.video_url}
+                   onChange={e => setLab((p) => ({ ...p, video_url: e.target.value }))}
+                   placeholder="https://www.youtube.com/watch?v=..."
+                   className="w-full bg-slate-50 px-6 py-4 rounded-2xl font-bold text-slate-800 border-none focus:ring-4 focus:ring-slate-100 transition-all outline-none"
                 />
              </div>
              

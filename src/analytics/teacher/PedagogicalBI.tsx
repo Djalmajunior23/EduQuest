@@ -12,10 +12,11 @@ import {
   Target, Microscope, Binary
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { BIService, BIAnalysis } from '../../../services/BIService';
-import { useAuth } from '../../../lib/AuthContext';
-import { useTenant } from '../../../lib/TenantContext';
-import { cn } from '../../../lib/utils';
+import { BIService, BIAnalysis } from '../../services/BIService';
+import { useAuth } from '../../lib/AuthContext';
+import { useTenant } from '../../lib/TenantContext';
+import { cn } from '../../lib/utils';
+import { normalizeArray } from '../../utils/normalizeArray';
 
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
@@ -174,9 +175,9 @@ export default function PedagogicalBI() {
                        <Info className="w-4 h-4" /> Entenda a TRI
                     </button>
                  </div>
-                 <div className="h-[350px]">
+                 <div className="h-[350px] min-h-[350px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                       <AreaChart data={triGrowth} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                       <AreaChart data={normalizeArray(triGrowth)} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
                           <defs>
                              <linearGradient id="colorProf" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="5%" stopColor="#818cf8" stopOpacity={0.2}/>
@@ -256,9 +257,9 @@ export default function PedagogicalBI() {
 
            <div className="bg-white p-10 rounded-[3rem] border border-slate-200 shadow-sm">
               <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-8">Déficit de Competências</h3>
-              <div className="h-[250px] mb-8">
+              <div className="h-[250px] min-h-[250px] w-full mb-8">
                 <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart cx="50%" cy="50%" outerRadius="80%" data={skillData}>
+                  <RadarChart cx="50%" cy="50%" outerRadius="80%" data={normalizeArray(skillData)}>
                     <PolarGrid stroke="#e2e8f0" />
                     <PolarAngleAxis dataKey="subject" tick={{fontSize: 9, fill: '#94a3b8', fontWeight: 900}} />
                     <Radar dataKey="A" stroke="#6366f1" fill="#6366f1" fillOpacity={0.5} />

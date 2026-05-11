@@ -13,7 +13,8 @@ import {
   Clock,
   CheckSquare,
   FileText,
-  AlertCircle
+  AlertCircle,
+  Play
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '../../../lib/utils';
@@ -25,6 +26,16 @@ export default function SAView() {
   const [sa, setSA] = useState<LearningSituation | null>(null);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'student' | 'teacher'>(profile?.perfil === 'ALUNO' ? 'student' : 'teacher');
+
+  const getEmbedUrl = (url: string) => {
+    if (!url) return null;
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    if (match && match[2].length === 11) {
+      return `https://www.youtube.com/embed/${match[2]}`;
+    }
+    return null;
+  };
 
   useEffect(() => {
     if (id) {
@@ -89,6 +100,37 @@ export default function SAView() {
               </div>
            </div>
         </section>
+
+        {/* Sessão: Vídeo de Apoio (Opcional) */}
+        {sa.video_url && (
+          <section className="space-y-8">
+            <h3 className="text-sm font-black text-red-600 uppercase tracking-[0.2em] flex items-center gap-2">
+              <Play className="w-4 h-4" /> Vídeo de Apoio
+            </h3>
+            <div className="aspect-video w-full rounded-[2.5rem] overflow-hidden bg-slate-900 shadow-2xl border border-slate-800">
+              {getEmbedUrl(sa.video_url) ? (
+                <iframe 
+                  src={getEmbedUrl(sa.video_url)!}
+                  className="w-full h-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center text-white space-y-4 p-10 text-center">
+                   <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center animate-pulse">
+                      <Play className="w-8 h-8" />
+                   </div>
+                   <div>
+                      <p className="font-black uppercase tracking-widest text-xs">Link Externo de Vídeo</p>
+                      <a href={sa.video_url} target="_blank" rel="noreferrer" className="text-blue-400 font-bold hover:underline break-all mt-2 block">
+                        {sa.video_url}
+                      </a>
+                   </div>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
 
         {/* Sessão: Metas e Entrega (Foco Aluno) */}
         <section className="grid grid-cols-1 md:grid-cols-3 gap-12">

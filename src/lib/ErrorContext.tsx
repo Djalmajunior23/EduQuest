@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { AlertCircle, RefreshCw, X } from 'lucide-react';
+import { normalizeArray } from '../utils/normalizeArray';
 
 interface ErrorMessage {
   id: string;
@@ -53,7 +54,7 @@ export function ErrorProvider({ children }: { children: React.ReactNode }) {
       {/* Global Error UI Overlay */}
       <div className="fixed bottom-6 right-6 z-[9999] flex flex-col gap-3 max-w-md w-full pointer-events-none">
         <AnimatePresence>
-          {errors.map((err) => (
+          {normalizeArray(errors).map((err: any) => (
             <motion.div
               key={err.id}
               initial={{ opacity: 0, y: 20, scale: 0.95 }}

@@ -94,14 +94,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <LevelUpCelebration />
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex flex-col w-72 bg-white border-r border-slate-200">
-        <div className="p-8 flex items-center gap-4 border-b border-slate-100">
-          <div className="bg-slate-900 p-3 rounded-2xl shadow-xl shadow-indigo-500/20 ring-1 ring-white/10">
-            <Zap className="w-6 h-6 text-indigo-400 animate-pulse" />
+        <div className="p-8 flex items-center justify-between border-b border-slate-100">
+          <div className="flex items-center gap-4">
+            <div className="bg-slate-900 p-3 rounded-2xl shadow-xl shadow-indigo-500/20 ring-1 ring-white/10">
+              <Zap className="w-6 h-6 text-indigo-400 animate-pulse" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-2xl font-black italic uppercase tracking-tighter text-slate-900 leading-none">NEXUS<span className="text-indigo-600">INTAI</span></span>
+              <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">Plataforma Inteligente</span>
+            </div>
           </div>
-          <div className="flex flex-col">
-            <span className="text-2xl font-black italic uppercase tracking-tighter text-slate-900 leading-none">NEXUS<span className="text-indigo-600">INTAI</span></span>
-            <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">Plataforma Inteligente</span>
-          </div>
+          <NotificationBell />
         </div>
 
         <nav className="flex-1 px-4 py-8 space-y-2 overflow-y-auto custom-scrollbar">

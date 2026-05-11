@@ -6,6 +6,7 @@ import { AuthGuard } from './components/AuthGuard';
 import { Layout } from './components/Layout';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import Login from './pages/Login';
+import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
 import ExamList from './pages/ExamList';
 import ExamTake from './pages/ExamTake';
@@ -26,15 +27,17 @@ import LabDashboard from './modules/professor/laboratorios/LabDashboard';
 import LabEditor from './modules/professor/laboratorios/LabEditor';
 import { StudentAITutor } from './modules/student/ai-tutor';
 import { ProfessorAIHub } from './modules/professor/ai-hub';
-import { PedagogicalBI } from './modules/teacher/bi';
-import { CoordinatorBI } from './modules/coordinator/bi';
+import { PedagogicalBI } from './analytics/teacher';
+import { CoordinatorBI } from './analytics/coordinator';
 import UserManager from './pages/admin/UserManager';
+import BaseConfigPage from './pages/admin/BaseConfigPage';
 import CourseManager from './modules/admin/courses/CourseManager';
 import UCManager from './modules/admin/courses/UCManager';
 import CapacidadesManager from './modules/admin/courses/CapacidadesManager';
 import ProfessorInsights from './modules/professor/insights/ProfessorInsights';
 import StudentAdaptiveJourney from './modules/student/adaptive/StudentAdaptiveJourney';
 import Profile from './pages/Profile';
+import NotificationsPage from './pages/notifications/NotificationsPage';
 
 // New Advanced Modules
 import ABPManager from './modules/pedagogical/abp/ABPManager';
@@ -85,23 +88,24 @@ import { ErrorProvider } from './lib/ErrorContext';
 
 export default function App() {
   return (
-    <ErrorBoundary>
-      <ErrorProvider>
+    <ErrorProvider>
+      <ErrorBoundary>
         <AuthProvider>
           <TenantProvider>
             <NotificationProvider>
-            <Router>
-              <EduJarvisChat />
-              <Routes>
-                <Route path="/login" element={<Login />} />
-            
-            <Route path="/" element={
-              <AuthGuard>
-                <Layout>
-                  <Dashboard />
-                </Layout>
-              </AuthGuard>
-            } />
+              <Router>
+                <EduJarvisChat />
+                <Routes>
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
+              
+              <Route path="/" element={
+                <AuthGuard>
+                  <Layout>
+                    <Dashboard />
+                  </Layout>
+                </AuthGuard>
+              } />
 
             <Route path="/enterprise" element={
               <AuthGuard>
@@ -440,6 +444,13 @@ export default function App() {
               </AuthGuard>
             } />
 
+            <Route path="/admin/base-configuration" element={
+              <AuthGuard requiredRole="ADMIN">
+                <Layout>
+                  <BaseConfigPage />
+                </Layout>
+              </AuthGuard>
+            } />
             <Route path="/admin/users" element={
               <AuthGuard requiredRole="ADMIN">
                 <Layout>
@@ -476,6 +487,14 @@ export default function App() {
               <AuthGuard>
                 <Layout>
                   <Profile />
+                </Layout>
+              </AuthGuard>
+            } />
+
+            <Route path="/notifications" element={
+              <AuthGuard>
+                <Layout>
+                  <NotificationsPage />
                 </Layout>
               </AuthGuard>
             } />
@@ -534,7 +553,7 @@ export default function App() {
       </NotificationProvider>
       </TenantProvider>
     </AuthProvider>
-    </ErrorProvider>
-    </ErrorBoundary>
+  </ErrorBoundary>
+  </ErrorProvider>
   );
 }

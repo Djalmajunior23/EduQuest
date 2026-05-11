@@ -64,6 +64,8 @@ model Usuario {
   tenant          Tenant?       @relation(fields: [tenantId], references: [id])
   turmaId         String?
   turma           Turma?        @relation(fields: [turmaId], references: [id])
+  telefone        String?
+  fotoUrl         String?
   ultimoLoginEm   DateTime?
   criadoEm        DateTime      @default(now())
   atualizadoEm    DateTime      @updatedAt
@@ -71,9 +73,23 @@ model Usuario {
   submissoes      Submissao[]
   conquistas      ConquistaUsuario[]
   logs            LogSistema[]
+  auditoriaLogs   AuditoriaLog[]
   chats           ChatHistory[]
   notificacoes    Notificacao[]
   planosEstudo    PlanoEstudo[]
+}
+
+model AuditoriaLog {
+  id          String   @id @default(uuid())
+  acao        String   // CRIACAO, EDICAO, EXCLUSAO
+  entidade    String   // ex: 'Usuario'
+  entidadeId  String
+  dadosAntigos Json?
+  dadosNovos   Json?
+  usuarioId   String?  // Quem fez a ação
+  usuario     Usuario? @relation(fields: [usuarioId], references: [id])
+  ip          String?
+  createdAt   DateTime @default(now())
 }
 
 model Competencia {

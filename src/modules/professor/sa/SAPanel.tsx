@@ -66,7 +66,7 @@ export default function SAPanel() {
         criterios_avaliacao: ["Funcionalidade CRUD", "Segurança", "UX/UI Industrial"],
         evidencias: ["Prints das telas", "Código fonte"],
         ucId: "web_dev",
-        conhecimentoTecnicoIds: ["react", "firebase"],
+        conhecimentoTecnicoIds: ["react", "node"],
         capacidadeTecnicaIds: ["analise", "dev"],
         recursos_necessarios: ["VS Code", "Firebase"],
         cronograma: "4 Semanas",

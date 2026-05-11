@@ -3,7 +3,6 @@ import { reportGlobalError } from "./ErrorContext";
 
 const axiosInstance = axios.create({
   baseURL: "/",
-  withCredentials: true,
 });
 
 axiosInstance.interceptors.response.use(
@@ -51,6 +50,7 @@ async function requestWrap<T = any>(promise: Promise<any>): Promise<{ data: T | 
 export const api = {
   get: <T = any>(url: string, config?: any) => requestWrap<T>(axiosInstance.get(url, config)),
   post: <T = any>(url: string, data?: any, config?: any) => requestWrap<T>(axiosInstance.post(url, data, config)),
+  patch: <T = any>(url: string, data?: any, config?: any) => requestWrap<T>(axiosInstance.patch(url, data, config)),
   put: <T = any>(url: string, data?: any, config?: any) => requestWrap<T>(axiosInstance.put(url, data, config)),
   delete: <T = any>(url: string, config?: any) => requestWrap<T>(axiosInstance.delete(url, config)),
   from: (table: string) => {
@@ -79,6 +79,12 @@ export const api = {
       },
       update(data: any, options?: any) {
         this._method = 'PUT';
+        this._data = data;
+        this._options = options;
+        return this;
+      },
+      patch(data: any, options?: any) {
+        this._method = 'PATCH';
         this._data = data;
         this._options = options;
         return this;
@@ -148,6 +154,8 @@ export const api = {
           promise = axiosInstance.get(url, { params: { ...this._filters, _limit: this._limit, _order: this._order?.col, _columns: this._columns } });
         } else if (this._method === 'POST') {
           promise = axiosInstance.post(url, this._data);
+        } else if (this._method === 'PATCH') {
+          promise = axiosInstance.patch(url, this._data);
         } else if (this._method === 'PUT') {
           promise = axiosInstance.put(url, this._data);
         } else if (this._method === 'DELETE') {

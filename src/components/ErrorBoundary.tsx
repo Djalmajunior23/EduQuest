@@ -1,5 +1,5 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { AlertCircle, RefreshCw } from 'lucide-react';
+import { AlertTriangle, RefreshCw } from 'lucide-react';
 
 interface Props {
   children?: ReactNode;
@@ -7,13 +7,12 @@ interface Props {
 
 interface State {
   hasError: boolean;
-  error: Error | null;
+  error?: Error;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
   public state: State = {
-    hasError: false,
-    error: null
+    hasError: false
   };
 
   public static getDerivedStateFromError(error: Error): State {
@@ -27,26 +26,27 @@ export class ErrorBoundary extends Component<Props, State> {
   public render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-slate-900 flex flex-col justify-center items-center p-4">
-          <div className="bg-slate-800 p-8 rounded-[2rem] border border-rose-500/20 max-w-lg w-full text-center shadow-2xl">
-            <div className="w-20 h-20 bg-rose-500/10 rounded-[1.5rem] flex items-center justify-center mx-auto mb-6 text-rose-500">
-              <AlertCircle className="w-10 h-10" />
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+          <div className="max-w-md w-full bg-white rounded-[2.5rem] shadow-xl border border-slate-100 p-10 text-center">
+            <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <AlertTriangle className="w-8 h-8 text-red-500" />
             </div>
-            <h1 className="text-2xl font-black text-white mb-2">Ops! Algo deu errado.</h1>
-            <p className="text-slate-400 mb-8 max-w-md mx-auto">
-              Nossa equipe já foi notificada. Você pode tentar recarregar a página para continuar.
+            <h1 className="text-2xl font-black italic uppercase tracking-tighter text-slate-900 mb-2">Ops! Algo deu errado</h1>
+            <p className="text-slate-500 mb-8 leading-relaxed">
+              Encontramos um problema inesperado na interface. O EduJarvis já foi notificado e estamos trabalhando nisso.
             </p>
-            
+            <div className="bg-slate-50 rounded-2xl p-4 mb-8 text-left overflow-auto max-h-32">
+                <code className="text-[10px] font-mono text-slate-600 block leading-tight">
+                    {this.state.error?.message || 'Erro desconhecido'}
+                </code>
+            </div>
             <button
-              onClick={() => window.location.href = '/'}
-              className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-8 rounded-2xl w-full transition"
+              onClick={() => window.location.reload()}
+              className="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold uppercase text-xs tracking-widest flex items-center justify-center gap-2 hover:bg-slate-800 transition-all shadow-lg shadow-slate-200"
             >
-              <RefreshCw className="w-5 h-5" />
+              <RefreshCw className="w-4 h-4" />
               Recarregar Sistema
             </button>
-            <div className="mt-8 text-left bg-slate-900 p-4 rounded-xl border border-slate-700 overflow-auto max-h-48 text-xs text-rose-400 font-mono">
-              {this.state.error && this.state.error.toString()}
-            </div>
           </div>
         </div>
       );

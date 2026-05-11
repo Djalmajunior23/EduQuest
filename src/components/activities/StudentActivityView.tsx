@@ -3,7 +3,7 @@ import { normalizeArray } from '../../utils/normalizeArray';
 import { useAuth } from '../../lib/AuthContext';
 import { activityService } from '../../services/activityService';
 import { Activity, ActivitySubmission } from '../../types/activities';
-import { FileUp, Save, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { FileUp, Save, CheckCircle, Clock, AlertCircle, Play } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function StudentActivityView() {
@@ -19,6 +19,16 @@ export default function StudentActivityView() {
   const [submitting, setSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
+
+  const getEmbedUrl = (url: string) => {
+    if (!url) return null;
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    if (match && match[2].length === 11) {
+      return `https://www.youtube.com/embed/${match[2]}`;
+    }
+    return null;
+  };
 
   const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
   const ALLOWED_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/gif', 'image/webp'];
@@ -163,6 +173,31 @@ export default function StudentActivityView() {
               <div className="prose max-w-none text-slate-700 whitespace-pre-wrap">
                 {activeActivity.description}
               </div>
+
+              {activeActivity.videoUrl && (
+                <div className="my-6">
+                  <h4 className="text-[10px] font-black text-red-600 uppercase tracking-widest flex items-center gap-2 mb-3 italic">
+                    <Play className="w-3 h-3" /> Material de Apoio em Vídeo
+                  </h4>
+                  <div className="aspect-video w-full rounded-2xl overflow-hidden bg-slate-900 shadow-lg border border-slate-800">
+                    {getEmbedUrl(activeActivity.videoUrl) ? (
+                      <iframe 
+                        src={getEmbedUrl(activeActivity.videoUrl)!}
+                        className="w-full h-full"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center text-white space-y-2 p-6 text-center">
+                         <Play className="w-6 h-6 text-red-500 animate-pulse" />
+                         <a href={activeActivity.videoUrl} target="_blank" rel="noreferrer" className="text-blue-400 font-bold hover:underline break-all text-xs">
+                           Ver Vídeo de Apoio (Link Externo)
+                         </a>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {(() => {
                 const sub = getSub(activeActivity.id!);

@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useAuth } from '../lib/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { 
   User, 
   Mail, 
@@ -10,7 +11,8 @@ import {
   Lock,
   Save,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Bell
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
@@ -18,6 +20,7 @@ import { updateUserProfile } from '../services/userManagementService';
 
 export default function Profile() {
   const { profile, user } = useAuth();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -218,7 +221,7 @@ export default function Profile() {
                     <button 
                       type="submit"
                       disabled={loading}
-                      className="flex-1 md:flex-none flex items-center justify-center gap-2 px-10 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
+                      className="flex-1 md:flex-none flex items-center justify-center gap-2 px-10 py-4 bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:scale-[1.02] hover:from-slate-950 hover:to-slate-900 active:scale-95 transition-all duration-300 disabled:opacity-50 shadow-lg shadow-slate-200"
                     >
                        {loading ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
                        Atualizar Dados

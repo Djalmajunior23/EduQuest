@@ -1,11 +1,43 @@
 import { prisma } from '../../lib/prisma';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret';
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
+import { JWT_SECRET, JWT_EXPIRES_IN } from '../../lib/config';
+import { emailService } from '../../services/email/email.service';
 
 export class AuthService {
+  // ... existing methods ...
+  static async requestPasswordReset(email: string) {
+    const user = await prisma.usuario.findUnique({ where: { email } });
+    if (!user) return; // Silent return for security
+
+    const resetToken = jwt.sign(
+      { id: user.id, purpose: 'password_reset' },
+      JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+
+    const resetUrl = `${process.env.APP_URL || process.env.VITE_APP_URL || ''}/reset-password?token=${resetToken}`;
+
+    await emailService.sendPasswordResetEmail(user.email, resetUrl);
+  }
+
+  static async resetPassword(token: string, newPassword: string) {
+    try {
+      const decoded: any = jwt.verify(token, JWT_SECRET);
+      if (decoded.purpose !== 'password_reset') {
+        throw new Error('Token inválido');
+      }
+
+      const hashed = await bcrypt.hash(newPassword, 10);
+      await prisma.usuario.update({
+        where: { id: decoded.id },
+        data: { senhaHash: hashed }
+      });
+    } catch (error) {
+      throw new Error('Link expirado ou inválido');
+    }
+  }
+
   static async login(email: string, senhaHash: string) {
     const user = await prisma.usuario.findUnique({
       where: { email },

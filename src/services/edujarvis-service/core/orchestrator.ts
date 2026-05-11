@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { EDUCATION_PROMPTS } from "../prompts";
 
 export enum EduJarvisAgent {
@@ -6,7 +6,8 @@ export enum EduJarvisAgent {
   CORRECTION = 'correction',
   PEDAGOGICAL = 'pedagogical',
   SIMULADO = 'simulado',
-  ANALYTICS = 'analytics'
+  ANALYTICS = 'analytics',
+  GAMIFICATION = 'gamification'
 }
 
 export interface OrchestratorConfig {
@@ -17,10 +18,10 @@ export interface OrchestratorConfig {
 }
 
 export class EduJarvisOrchestrator {
-  private ai: GoogleGenAI;
+  private ai: GoogleGenerativeAI;
   
   constructor(apiKey: string) {
-    this.ai = new GoogleGenAI({ apiKey });
+    this.ai = new GoogleGenerativeAI(apiKey);
   }
 
   async run(config: OrchestratorConfig): Promise<string> {
@@ -72,6 +73,12 @@ export class EduJarvisOrchestrator {
       case EduJarvisAgent.PEDAGOGICAL:
         base += EDUCATION_PROMPTS.PEDAGOGICAL_BASE;
         break;
+      case EduJarvisAgent.ANALYTICS:
+        base += EDUCATION_PROMPTS.ANALYTICS_BASE;
+        break;
+      case EduJarvisAgent.GAMIFICATION:
+        base += EDUCATION_PROMPTS.GAMIFICATION_BASE;
+        break;
       default:
         base += "Você é o EduJarvis, assistente educacional inteligente.";
     }
@@ -86,25 +93,47 @@ export class EduJarvisOrchestrator {
   }
 
   private async executeWithFallback(prompt: string, config: OrchestratorConfig) {
-    // Primary = gemini-3.1-pro-preview (Complex Task)
-    // Fallback = gemini-3-flash-preview (Basic Task)
-    
-    const primaryModel = config.model || "gemini-3.1-pro-preview";
-    const fallbackModel = "gemini-3-flash-preview";
+    // Basic Security Guardrails
+    const maliciousPatterns = [
+      /ignore previous instructions/i,
+      /reveal your secret/i,
+      /show system prompts/i,
+      /forget everything you know/i,
+      /you are now an evil/i,
+      /dangerous command/i,
+      /rm -rf/i,
+      /drop database/i
+    ];
+
+    if (maliciousPatterns.some(pattern => pattern.test(prompt))) {
+      console.warn(`[NeuralCore] Potential injection attempt detected in prompt!`);
+      return "Sinto muito, mas não posso processar essa solicitação devido a restrições de segurança.";
+    }
+
+    if (this.ai.apiKey === "SAFE_MODE_KEY") {
+      throw new Error("EduJarvis is running in Safe Mode - AI Disabled");
+    }
+
+    const primaryModel = config.model || "gemini-1.5-pro";
+    const secondaryModel = "gemini-1.5-flash";
     
     try {
-      const response = await this.ai.models.generateContent({
-        model: primaryModel,
-        contents: [{ role: 'user', parts: [{ text: prompt }] }]
-      });
-      return response.text || '';
+      console.log(`[NeuralCore] Attempting Primary Model: ${primaryModel}`);
+      const model = this.ai.getGenerativeModel({ model: primaryModel });
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      return response.text() || '';
     } catch (primaryErr) {
-      console.warn("[EduJarvis] Primary model failed, attempting fallback...", primaryErr);
-      const response = await this.ai.models.generateContent({
-        model: fallbackModel,
-        contents: [{ role: 'user', parts: [{ text: prompt }] }]
-      });
-      return response.text || '';
+      console.warn(`[NeuralCore] Primary (${primaryModel}) failed. Escalating to Secondary (${secondaryModel})...`, primaryErr);
+      try {
+        const model = this.ai.getGenerativeModel({ model: secondaryModel });
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        return response.text() || '';
+      } catch (secondaryErr) {
+        console.error(`[NeuralCore] Secondary (${secondaryModel}) also failed.`, secondaryErr);
+        throw secondaryErr;
+      }
     }
   }
 }

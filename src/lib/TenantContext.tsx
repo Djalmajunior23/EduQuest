@@ -2,7 +2,9 @@ import { api } from '../lib/api';
 
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useAuth } from './AuthContext';export interface TenantConfig {
+import { useAuth } from './AuthContext';
+
+export interface TenantConfig {
   id: string;
   name: string;
   statusAssinatura: 'ATIVA' | 'INADIMPLENTE' | 'CANCELADA';

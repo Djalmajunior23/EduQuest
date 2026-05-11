@@ -20,6 +20,7 @@ import { Type } from '@google/genai';export interface LearningSituation {
   cronograma: string;
   orientacoes_aluno: string;
   orientacoes_professor: string;
+  video_url: string;
   status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
   isTemplate: boolean;
   createdBy: string;

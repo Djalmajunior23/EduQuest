@@ -1,113 +1,108 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, PerfilUsuario } from '@prisma/client';
 import bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  const adminEmail = 'admin@eduquest.com';
-  
-  // Check if admin already exists
-  const existingAdmin = await prisma.usuario.findUnique({
-    where: { email: adminEmail }
+  console.log('Seed: Iniciando cadastros básicos...');
+
+  // 1. Criar Tenant Principal
+  const tenant = await prisma.tenant.upsert({
+    where: { domain: 'nexusinstitute.edu.br' },
+    update: {},
+    create: {
+      name: 'Nexus Institute of Technology',
+      domain: 'nexusinstitute.edu.br',
+      statusAssinatura: 'ATIVA',
+      limiteAlunos: 1000,
+      limiteTokens: 1000000,
+      branding: {
+        primaryColor: '#6366f1',
+        logoUrl: '/logo.png'
+      }
+    },
   });
 
-  if (!existingAdmin) {
-    const passwordHash = await bcrypt.hash('Admin@123', 10);
-    
-    // Create a default tenant if none exists
-    let tenant = await prisma.tenant.findFirst();
-    if (!tenant) {
-      tenant = await prisma.tenant.create({
-        data: {
-          name: 'EduQuest Enterprise',
-          limiteAlunos: 1000,
-          limiteTokens: 1000000
-        }
-      });
+  console.log(`Tenant criado/verificado: ${tenant.name}`);
+
+  // 2. Criar Instituição
+  await prisma.instituicao.upsert({
+    where: { tenantId: tenant.id },
+    update: {},
+    create: {
+      nome: 'Unidade Central São Paulo',
+      cnpj: '12.345.678/0001-90',
+      endereco: 'Av. Paulista, 1000 - SP',
+      tenantId: tenant.id
     }
+  });
 
-    await prisma.usuario.create({
-      data: {
-        nome: 'Professor Djalma',
-        email: adminEmail,
-        senhaHash: passwordHash,
-        perfil: 'ADMIN',
-        ativo: true,
-        tenantId: tenant.id
-      }
-    });
+  // 3. Criar Administrador
+  const adminEmail = 'admin@eduquest.test';
+  const adminSenha = 'password123';
+  const hashedSenha = await bcrypt.hash(adminSenha, 10);
 
-    console.log('Test Admin User Created: admin@eduquest.com / Admin@123');
-  }
+  const admin = await prisma.usuario.upsert({
+    where: { email: adminEmail },
+    update: {
+        senhaHash: hashedSenha,
+        perfil: 'ADMIN' as PerfilUsuario
+    },
+    create: {
+      nome: 'Administrador EduQuest',
+      email: adminEmail,
+      senhaHash: hashedSenha,
+      perfil: 'ADMIN' as PerfilUsuario,
+      tenantId: tenant.id,
+      ativo: true
+    },
+  });
 
-  // Ensure common data exists
-  const tenant = await prisma.tenant.findFirst();
-  if (tenant) {
-    // Create Example Course
-    const course = await prisma.curso.upsert({
-      where: { id: 'example-course-id' },
-      update: {},
-      create: {
-        id: 'example-course-id',
-        nome: 'Desenvolvimento de Sistemas',
-        descricao: 'Curso focado em desenvolvimento full stack e IA.',
-        tenantId: tenant.id
-      }
-    });
+  console.log(`Usuário Admin: ${admin.email} / Senha: ${adminSenha}`);
 
-    // Create Example Turma
-    await prisma.turma.upsert({
-      where: { id: 'example-turma-id' },
-      update: {},
-      create: {
-        id: 'example-turma-id',
-        nome: 'DS-2024-T1',
-        anoLetivo: 2024,
-        semestre: 1,
-        cursoId: course.id,
-        tenantId: tenant.id
-      }
-    });
+  // 4. Criar Professor de Exemplo
+  const profEmail = 'professor@eduquest.test';
+  const profSenha = 'password123';
+  const hashedProfSenha = await bcrypt.hash(profSenha, 10);
 
-    // Create a student for testing
-    const studentEmail = 'aluno@eduquest.com';
-    const existingStudent = await prisma.usuario.findUnique({ where: { email: studentEmail } });
-    if (!existingStudent) {
-      const studentHash = await bcrypt.hash('Aluno@123', 10);
-      await prisma.usuario.create({
-        data: {
-          nome: 'Fernando Aluno',
-          email: studentEmail,
-          senhaHash: studentHash,
-          perfil: 'ALUNO',
-          tenantId: tenant.id,
-          turmaId: 'example-turma-id'
-        }
-      });
-      console.log('Test Student User Created: aluno@eduquest.com / Aluno@123');
+  await prisma.usuario.upsert({
+    where: { email: profEmail },
+    update: {
+        senhaHash: hashedProfSenha,
+        perfil: 'PROFESSOR' as PerfilUsuario
+    },
+    create: {
+      nome: 'Professor de Teste',
+      email: profEmail,
+      senhaHash: hashedProfSenha,
+      perfil: 'PROFESSOR' as PerfilUsuario,
+      tenantId: tenant.id,
+      ativo: true
     }
+  });
 
-    // Create initial badges
-    const badges = [
-      { nome: 'Primeiros Passos', descricao: 'Concluiu a primeira atividade.', icone: 'Zap' },
-      { nome: 'Mestre da Lógica', descricao: 'Acertou 10 questões de algoritmos.', icone: 'Brain' },
-      { nome: 'Explorador IA', descricao: 'Usou o EduJarvis 5 vezes.', icone: 'Bot' }
-    ];
+  // 5. Criar Aluno de Exemplo
+  const alunoEmail = 'aluno@eduquest.test';
+  const alunoSenha = 'password123';
+  const hashedAlunoSenha = await bcrypt.hash(alunoSenha, 10);
 
-    for (const b of badges) {
-       await prisma.badge.upsert({
-         where: { id: b.nome.toLowerCase().replace(/ /g, '-') },
-         update: {},
-         create: {
-           id: b.nome.toLowerCase().replace(/ /g, '-'),
-           nome: b.nome,
-           descricao: b.descricao,
-           icone: b.icone,
-           tenantId: tenant.id
-         }
-       });
+  await prisma.usuario.upsert({
+    where: { email: alunoEmail },
+    update: {
+        senhaHash: hashedAlunoSenha,
+        perfil: 'ALUNO' as PerfilUsuario
+    },
+    create: {
+      nome: 'Aluno de Teste',
+      email: alunoEmail,
+      senhaHash: hashedAlunoSenha,
+      perfil: 'ALUNO' as PerfilUsuario,
+      tenantId: tenant.id,
+      ativo: true
     }
-  }
+  });
+
+  console.log('Seed: Cadastro concluído com sucesso!');
 }
 
 main()

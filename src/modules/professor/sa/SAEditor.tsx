@@ -46,6 +46,7 @@ export default function SAEditor() {
     cronograma: '',
     orientacoes_aluno: '',
     orientacoes_professor: '',
+    video_url: '',
     status: 'DRAFT',
     isTemplate: false
   });
@@ -320,6 +321,35 @@ export default function SAEditor() {
                       </div>
                     ))}
                  </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Sessão 4: Recursos Multimídia */}
+          <section className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-sm space-y-8">
+            <div className="flex items-center gap-4 mb-4">
+               <div className="p-3 bg-red-600 rounded-2xl text-white">
+                  <Library className="w-6 h-6" />
+               </div>
+               <h3 className="text-xl font-black uppercase italic tracking-tighter">Recursos Multimídia</h3>
+            </div>
+
+            <div className="space-y-6">
+              <div>
+                <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2 italic">URL do Vídeo (YouTube/Vimeo)</label>
+                <div className="relative">
+                  <input 
+                    type="url" 
+                    value={sa.video_url}
+                    onChange={(e) => setSA(prev => ({ ...prev, video_url: e.target.value }))}
+                    className="w-full p-6 pl-14 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-red-500 transition-all font-medium text-slate-900"
+                    placeholder="https://www.youtube.com/watch?v=..."
+                  />
+                  <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400">
+                    <Wand2 className="w-5 h-5" />
+                  </div>
+                </div>
+                <p className="mt-3 text-xs text-slate-400 font-medium">Link de referência para contextualização ou instrução gravada.</p>
               </div>
             </div>
           </section>

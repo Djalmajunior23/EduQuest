@@ -3,8 +3,10 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../lib/AuthContext';
 import { activityService } from '../../services/activityService';
 import { Activity, ActivitySubmission } from '../../types/activities';
-import { ArrowLeft, Users, BrainCircuit, CheckCircle2, Clock } from 'lucide-react';
+import { ArrowLeft, Users, BrainCircuit, CheckCircle2, Clock, Play } from 'lucide-react';
 import { format } from 'date-fns';
+
+import { normalizeArray } from '../../utils/normalizeArray';
 
 export default function ActivityDetailsView() {
   const { id } = useParams();
@@ -13,6 +15,16 @@ export default function ActivityDetailsView() {
   const [activity, setActivity] = useState<Activity | null>(null);
   const [submissions, setSubmissions] = useState<ActivitySubmission[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const getEmbedUrl = (url: string) => {
+    if (!url) return null;
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    if (match && match[2].length === 11) {
+      return `https://www.youtube.com/embed/${match[2]}`;
+    }
+    return null;
+  };
 
   useEffect(() => {
     if (id && user) {
@@ -58,8 +70,34 @@ export default function ActivityDetailsView() {
       <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm prose max-w-none text-slate-700">
         <h3>Enunciado</h3>
         <p className="whitespace-pre-wrap">{activity.description}</p>
+        
+        {activity.videoUrl && (
+          <div className="my-6 not-prose">
+            <h4 className="text-sm font-black text-red-600 uppercase tracking-widest flex items-center gap-2 mb-4">
+              <Play className="w-4 h-4" /> Vídeo de Instrução
+            </h4>
+            <div className="aspect-video w-full max-w-2xl rounded-2xl overflow-hidden bg-slate-900 shadow-lg border border-slate-800">
+              {getEmbedUrl(activity.videoUrl) ? (
+                <iframe 
+                  src={getEmbedUrl(activity.videoUrl)!}
+                  className="w-full h-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center text-white space-y-2 p-10 text-center">
+                   <Play className="w-8 h-8 text-red-500 animate-pulse" />
+                   <a href={activity.videoUrl} target="_blank" rel="noreferrer" className="text-blue-400 font-bold hover:underline break-all block">
+                     Ver Instrução em Vídeo (Link Externo)
+                   </a>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         <div className="flex gap-2 mt-4">
-          {activity.competencies.map(c => <span key={c} className="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-xs font-bold">{c}</span>)}
+          {normalizeArray(activity.competencies).map(c => <span key={c} className="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-xs font-bold">{c}</span>)}
         </div>
       </div>
 
@@ -82,7 +120,7 @@ export default function ActivityDetailsView() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {submissions.map(sub => (
+              {normalizeArray(submissions).map(sub => (
                 <tr key={sub.id} className="hover:bg-slate-50 transition">
                   <td className="p-4 font-mono text-xs text-slate-500">{sub.studentId.slice(0, 8)}...</td>
                   <td className="p-4">

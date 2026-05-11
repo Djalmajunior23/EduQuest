@@ -1,8 +1,8 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { Trophy, Star, Zap, Flame, Shield } from 'lucide-react';
-import { cn } from '../../lib/utils';
-import { normalizeArray } from '../../utils/normalizeArray';
+import { cn } from '../lib/utils';
+import { normalizeArray } from '../utils/normalizeArray';
 
 interface GamificationStatsProps {
   stats: {

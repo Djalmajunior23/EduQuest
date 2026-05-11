@@ -75,6 +75,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
+    // Listen for tokens injected by AI Studio
+    const handleMessage = async (event: MessageEvent) => {
+      if (event.origin !== 'https://aistudio.google.com') return;
+      const aiStudioToken = event.data?.token;
+      if (aiStudioToken && mounted) {
+        console.log("AI Studio token received, initializing session...");
+        try {
+          await setBackendToken(aiStudioToken);
+        } catch (err) {
+          console.error("Failed to initialize AI Studio session:", err);
+        }
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+
     const initializeAuth = async () => {
       const token = localStorage.getItem('eduquest_token');
       if (!token) {
@@ -108,6 +124,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       mounted = false;
+      window.removeEventListener('message', handleMessage);
     };
   }, []);
 
@@ -129,15 +146,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (e: any) {
       console.error("Failed to fetch backend session:", e);
+      localStorage.removeItem('eduquest_token'); // Limpa token inválido
       throw e;
     }
   };
 
   const signInWithEmail = async (email: string, senha: string) => {
-    const { data, error } = await api.post<{ accessToken: string }>('/api/auth/login', { email, senha });
+    const { data, error } = await api.post<{ token: string, user: any }>('/api/auth/login', { email, senha });
     if (error) throw new Error(error);
-    if (data?.accessToken) {
-       await setBackendToken(data.accessToken);
+    if (data?.token) {
+       await setBackendToken(data.token);
     }
   };
 

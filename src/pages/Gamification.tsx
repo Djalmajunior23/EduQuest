@@ -5,7 +5,7 @@ import { api } from '../lib/api';
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../lib/AuthContext';
 import { Loader2, Trophy, Rocket, Target, Sparkles } from 'lucide-react';
-import { StudentGamificationHeader, MissionList, RankingBoard } from '../modules/gamification/GamificationUI';
+import { StudentGamificationHeader, MissionList, RankingBoard } from '../gamification/GamificationUI';
 import { motion } from 'motion/react';export default function Gamification() {
   const { profile } = useAuth();
   const [loading, setLoading] = useState(true);

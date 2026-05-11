@@ -17,6 +17,7 @@ export default function Login() {
   
   const [emailError, setEmailError] = useState('');
   const [authError, setAuthError] = useState('');
+  const [resetSent, setResetSent] = useState(false);
 
   const from = location.state?.from?.pathname || "/";
 
@@ -72,6 +73,27 @@ export default function Login() {
     } catch (error: any) {
       console.error('Auth error:', error);
       setAuthError(error.message || 'Erro de autenticação. Verifique suas credenciais.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email || !validateEmail(email)) {
+      setEmailError('Insira seu e-mail para recuperar a senha.');
+      return;
+    }
+    setLoading(true);
+    try {
+      await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      setResetSent(true);
+      setAuthError('Instruções de recuperação foram enviadas para seu e-mail.');
+    } catch (error) {
+      setAuthError('Erro ao processar solicitação.');
     } finally {
       setLoading(false);
     }
@@ -155,11 +177,22 @@ export default function Login() {
                 required
               />
             </div>
+            {!isSignUp && (
+              <div className="flex justify-end mt-2">
+                <button 
+                  type="button" 
+                  onClick={handleForgotPassword}
+                  className="text-xs font-bold text-indigo-600 hover:underline"
+                >
+                  Esqueci minha senha
+                </button>
+              </div>
+            )}
           </div>
 
           <button
             type="submit"
-            disabled={loading || !!emailError}
+            disabled={loading || !!emailError || !email.trim()}
             className="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-xl hover:bg-blue-700 transition-all active:scale-[0.98] disabled:opacity-50 shadow-lg shadow-blue-200 mt-2"
           >
             {loading ? 'Aguarde...' : (isSignUp ? 'Criar Conta' : 'Entrar')}

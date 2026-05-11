@@ -8,6 +8,7 @@ export interface Laboratorio {
   titulo: string;
   versaoProfessor: string;
   versaoAluno: string;
+  video_url?: string;
   status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
   tenantId: string;
   createdAt?: any;
@@ -53,6 +54,7 @@ export const laboratorioService = {
         titulo: lab.titulo,
         versao_professor: lab.versaoProfessor,
         versao_aluno: lab.versaoAluno,
+        video_url: lab.video_url,
         status: lab.status,
         tenant_id: lab.tenantId,
         created_at: new Date().toISOString(),
@@ -72,6 +74,7 @@ export const laboratorioService = {
         ...lab,
         versao_professor: lab.versaoProfessor,
         versao_aluno: lab.versaoAluno,
+        video_url: lab.video_url,
         tenant_id: lab.tenantId,
         updated_at: new Date().toISOString()
       })

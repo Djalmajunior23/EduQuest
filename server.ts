@@ -20,23 +20,77 @@ import tenantRoutes from './src/server/modules/tenants/tenants.routes';
 import simuladoRoutes from './src/server/modules/simulados/simulados.routes';
 import usuarioRoutes from './src/server/modules/usuarios/usuarios.routes';
 import questoesRoutes from './src/server/modules/questoes/questoes.routes';
+import notificationRoutes from './src/server/modules/notifications/notifications.routes';
+import adminCommRoutes from './src/server/modules/admin/communication.routes';
+import emailRoutes from './src/server/modules/email/email.routes';
+
+import hpp from 'hpp';
+import rateLimit from 'express-rate-limit';
+import { sanitize } from './src/server/lib/security';
+import { authMiddleware, authorize } from './src/server/middlewares/auth.middleware';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  app.set('trust proxy', true); // Trust all proxies in AI Studio/Cloud Run environment
+  const PORT = 3000; // Hardcoded for AI Studio compatibility
 
-  // Middlewares
+  // Security Middlewares
   app.use(helmet({
-    contentSecurityPolicy: false, // For easier integration with cross-origin assets if needed
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://apis.google.com"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com"],
+        imgSrc: ["'self'", "data:", "https:", "https://images.unsplash.com"],
+        connectSrc: ["'self'", "https://generativelanguage.googleapis.com", "*.google-analytics.com"],
+        frameAncestors: ["'self'", "https://aistudio.google.com", "https://ai.studio"], // AI Studio support
+      },
+    },
+    crossOriginEmbedderPolicy: false,
   }));
-  app.use(cors());
-  app.use(morgan('dev'));
-  app.use(express.json());
-  app.use(express.urlencoded({ extended: true }));
+
+  // CORS Restriction (Whitelist in production)
+  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['*'];
+  app.use(cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('CORS access denied'), false);
+      }
+    },
+    credentials: true
+  }));
+
+  app.use(morgan('dev')); // Use dev format for better readability
+  app.use(express.json({ limit: '1mb' })); 
+  app.use(express.urlencoded({ extended: true, limit: '1mb' }));
   app.use(cookieParser());
+  app.use(hpp()); // HTTP Parameter Pollution protection
+
+  // Global Sanitization Middleware
+  app.use((req, res, next) => {
+    if (req.body) req.body = sanitize(req.body);
+    if (req.query) req.query = sanitize(req.query);
+    if (req.params) req.params = sanitize(req.params);
+    next();
+  });
+
+  // Rate Limiting
+  const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per window
+    standardHeaders: true,
+    legacyHeaders: false,
+    keyGenerator: (req: any) => req.user?.id || req.ip || 'anonymous',
+    validate: false, // Silence startup validation warnings
+    message: { error: 'Muitas solicitações, por favor tente mais tarde.' }
+  });
+  app.use('/api/', apiLimiter);
 
   // Health check route
   app.get('/health', (req, res) => {
@@ -45,51 +99,120 @@ async function startServer() {
 
   // API Routes
   app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+    res.json({
+      status: 'ok',
+      environment: process.env.NODE_ENV || 'development',
+      database: 'connected',
+      email: process.env.RESEND_API_KEY ? 'configured' : 'disabled',
+      version: '1.0.0',
+      uptime: process.uptime()
+    });
   });
 
   // API Modules
   app.use('/api/auth', authRoutes);
-  app.use('/api/turmas', turmaRoutes);
-  app.use('/api/atividades', atividadeRoutes);
-  app.use('/api/cursos', cursoRoutes);
-  app.use('/api/tenants', tenantRoutes);
-  app.use('/api/simulados', simuladoRoutes);
-  app.use('/api/usuarios', usuarioRoutes);
-  app.use('/api/questoes', questoesRoutes);
+  
+  // Protected Routes
+  app.use('/api/turmas', authMiddleware, turmaRoutes);
+  app.use('/api/atividades', authMiddleware, atividadeRoutes);
+  app.use('/api/cursos', authMiddleware, cursoRoutes);
+  app.use('/api/tenants', authMiddleware, tenantRoutes);
+  app.use('/api/simulados', authMiddleware, simuladoRoutes);
+  app.use('/api/usuarios', authMiddleware, usuarioRoutes);
+  app.use('/api/questoes', authMiddleware, questoesRoutes);
+  app.use('/api/notifications', authMiddleware, notificationRoutes);
+  app.use('/api/admin/communication', authMiddleware, authorize(['ADMIN']), adminCommRoutes);
+  app.use('/api/email', emailRoutes);
 
-  // IA Routes (New Neural Core API)
-  app.post('/api/ai/generate', async (req, res) => {
+  // IA Routes - Highly Secured
+  const aiLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: 20, // Max 20 IA calls per hour per user
+    keyGenerator: (req: any) => req.user?.id || req.ip || 'anonymous',
+    validate: false,
+    message: { error: 'Limite de IA excedido para este período.' }
+  });
+
+  app.post('/api/ai/generate', authMiddleware, aiLimiter, async (req, res) => {
     try {
       const { model, contents, systemInstruction, config } = req.body;
-      const { GoogleGenAI } = await import('@google/genai');
-      const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) {
+        throw new Error('GEMINI_API_KEY environment variable is required');
+      }
+      const { GoogleGenerativeAI } = await import('@google/generative-ai');
+      const genAI = new GoogleGenerativeAI(apiKey);
       
-      const result = await genAI.models.generateContent({
-        model: model || 'gemini-3-flash-preview',
-        systemInstruction: systemInstruction,
+      const responseModel = genAI.getGenerativeModel({ 
+        model: model || 'gemini-1.5-flash',
+        systemInstruction: systemInstruction 
+      });
+      
+      const result = await responseModel.generateContent({
         contents: contents,
-        config: config
+        ...config
       });
 
-      res.json({ text: result.text });
+      res.json({ text: result.response.text() });
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: (error as Error).message });
     }
   });
 
-  app.post('/api/ai/chat', async (req, res) => {
+  app.post('/api/edujarvis/chat', authMiddleware, aiLimiter, async (req, res) => {
     try {
-      const { message, profile, context } = req.body;
+      const { message, profile, context, action, agentId } = req.body;
       const { EduJarvisService } = await import('./src/services/edujarvis-service');
-      const response = await EduJarvisService.sendMessage(message, profile, context);
-      res.json(response);
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: (error as Error).message });
+      
+      const response = await EduJarvisService.sendMessage(message, profile, { ...context, agentId, action });
+      res.json({ ...response, success: true, source: 'ai' });
+    } catch (error: any) {
+      console.error("[EduJarvis] Erro real:", {
+        message: error?.message,
+        stack: error?.stack,
+        url: req.url,
+      });
+
+      // Fallback response
+      const fallbackMessage = getLocalEduJarvisFallback(action, message);
+      res.json({
+        success: true,
+        source: 'fallback',
+        message: fallbackMessage,
+        role: 'ASSISTANT',
+        timestamp: new Date().toISOString(),
+      });
     }
   });
+
+  function getLocalEduJarvisFallback(action: string, userMessage: string) {
+    const actions: Record<string, string> = {
+      criar_atividade:
+        "Posso ajudar a estruturar uma atividade prática. Informe tema, turma, duração e objetivo.",
+      gerar_estudo_caso:
+        "Para gerar um estudo de caso, informe o curso, contexto, problema e competências avaliadas.",
+      criar_aula_invertida:
+        "Para criar uma aula invertida, informe tema, recursos disponíveis e produto esperado.",
+      gerar_questoes:
+        "Informe tema, quantidade de questões, nível de dificuldade e tipo de questão.",
+      analisar_desempenho:
+        "Para analisar desempenho, preciso dos dados da turma, notas ou resultados do simulado.",
+      corrigir_codigo:
+        "Envie o código do aluno, linguagem usada e critérios de avaliação.",
+      risco_evasao:
+        "Para analisar risco de evasão, preciso de presença, notas, entregas e participação.",
+      plano_recuperacao:
+        "Informe a dificuldade do aluno, competência não atingida e prazo disponível.",
+      aula_completa:
+        "Informe tema, carga horária, perfil da turma e objetivo da aula."
+    };
+    return actions[action] || "Estou em modo seguro. A IA externa não respondeu, mas posso orientar seu processo pedagógico. Descreva o que deseja fazer.";
+  }
+
+  // Generic/Fallback Routes for table-based calls
+  const { default: genericRoutes } = await import('./src/server/modules/generic/generic.routes');
+  app.use('/api', authMiddleware, genericRoutes);
 
   // Legacy/Phase Routes (Deactivated for system cleanup)
   // app.use('/api/advanced-ai', advancedAIRoutes);

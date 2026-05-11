@@ -11,6 +11,7 @@ import {
 } from 'recharts';
 import { cn } from '../../lib/utils';
 import { Link } from 'react-router-dom';
+import { normalizeArray } from '../../utils/normalizeArray';
 
 const COLORS = ['#6366f1', '#3b82f6', '#f59e0b', '#ef4444'];
 
@@ -233,7 +234,7 @@ export function AdminDashboardPanel() {
                         <ResponsiveContainer width="100%" height="100%">
                           <PieChart>
                             <Pie
-                              data={data?.distribuicaoPerfis || []}
+                              data={normalizeArray(data?.distribuicaoPerfis)}
                               cx="50%"
                               cy="50%"
                               innerRadius={80}
@@ -242,7 +243,7 @@ export function AdminDashboardPanel() {
                               dataKey="value"
                               stroke="none"
                             >
-                              {(data?.distribuicaoPerfis || []).map((entry: any, index: number) => (
+                              {normalizeArray(data?.distribuicaoPerfis).map((entry: any, index: number) => (
                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} className="hover:opacity-80 transition-opacity cursor-pointer outline-none" />
                               ))}
                             </Pie>

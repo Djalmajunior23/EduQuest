@@ -24,6 +24,7 @@ export default function ActivityCreateView() {
     status: 'draft',
     bloomLevel: 'Entender',
     rubricId: '',
+    videoUrl: '',
     correctionMode: 'evaluative'
   });
 
@@ -192,6 +193,17 @@ export default function ActivityCreateView() {
                 <option key={r.id} value={r.id}>{r.title}</option>
               ))}
             </select>
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="block text-sm font-bold text-slate-700 mb-2">URL do Vídeo de Instrução (Opcional)</label>
+            <input 
+              type="url" 
+              value={formData.videoUrl || ''} 
+              onChange={e => setFormData({...formData, videoUrl: e.target.value})}
+              placeholder="https://www.youtube.com/watch?v=..."
+              className="w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none"
+            />
           </div>
 
           {(formData.type === 'code' || formData.type === 'database') && (

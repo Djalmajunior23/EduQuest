@@ -66,7 +66,7 @@ export default function AdminGamification() {
                {[
                  { title: 'Motor de XP & Níveis', desc: 'Configure as fórmulas de progressão (Logarítmica/Linear) e curvas de dificuldade.', icon: Settings2 },
                  { title: 'Gestão de Missões', desc: 'Cadastre e gerencie as missões disponíveis para os alunos na plataforma.', icon: ListTodo, link: '/admin/gamification/missions' },
-                 { title: 'Workflows de Automação', desc: 'Gerencie as conexões n8n para eventos de gamificação (webhook/firebase).', icon: Globe },
+                 { title: 'Workflows de Automação', desc: 'Gerencie as conexões n8n para eventos de gamificação.', icon: Globe },
                  { title: 'Loja de Recompensas', desc: 'Defina custos, tipos de tokens e inventário global de prêmios.', icon: LayoutGrid },
                  { title: 'BI & Analytics Center', desc: 'Integre com PowerBI/Superset para dashboards gerenciais avançados.', icon: PieChart },
                ].map((item, i) => (

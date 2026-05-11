@@ -3,7 +3,9 @@ import { api } from '../lib/api';
 
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useAuth } from './AuthContext';export interface AppNotification {
+import { useAuth } from './AuthContext';
+
+export interface AppNotification {
   id: string;
   userId: string;
   title: string;

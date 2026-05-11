@@ -2,6 +2,7 @@ import { StrictMode, Suspense, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { ErrorProvider } from './lib/ErrorContext';
 import LoadingScreen from './components/LoadingScreen';
 import { isEnvValid } from './lib/env';
 import './index.css';
@@ -55,11 +56,13 @@ function Main() {
 
   return (
     <StrictMode>
-      <ErrorBoundary>
-        <Suspense fallback={<LoadingScreen />}>
-          <App />
-        </Suspense>
-      </ErrorBoundary>
+      <ErrorProvider>
+        <ErrorBoundary>
+          <Suspense fallback={<LoadingScreen />}>
+            <App />
+          </Suspense>
+        </ErrorBoundary>
+      </ErrorProvider>
     </StrictMode>
   );
 }

@@ -22,6 +22,7 @@ export interface Activity {
   status: ActivityStatus;
   rubricId?: string;
   correctionMode?: CorrectionMode;
+  videoUrl?: string;
   testCases?: {
     input: string;
     expectedOutput: string;
