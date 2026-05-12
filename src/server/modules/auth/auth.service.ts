@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET, JWT_EXPIRES_IN } from '../../lib/config';
 import { emailService } from '../../services/email/email.service';
+import { generatePlatformEmail } from '../../lib/emailUtils';
 
 export class AuthService {
   // ... existing methods ...
@@ -92,13 +93,15 @@ export class AuthService {
     }
 
     const hashed = await bcrypt.hash(data.senha, 10);
+    const platformEmail = await generatePlatformEmail(data.nome, data.perfil || 'ALUNO');
     const user = await prisma.usuario.create({
       data: {
         email: data.email,
         nome: data.nome,
         senhaHash: hashed,
         perfil: data.perfil || 'ALUNO',
-        tenantId: tenant.id
+        tenantId: tenant.id,
+        platform_email: platformEmail
       }
     });
 

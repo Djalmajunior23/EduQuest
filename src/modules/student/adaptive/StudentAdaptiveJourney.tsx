@@ -9,6 +9,7 @@ import {   BrainCircuit, Compass, Target, Trophy, Flame, Loader2, ArrowRight, Za
   Cpu, Network, Database, LayoutGrid, Code2
 } from 'lucide-react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from 'recharts';
+import { ChartContainer } from '../../../components/charts/ChartContainer';
 import { cn } from '../../../lib/utils';export default function StudentAdaptiveJourney() {
   const { user, profile } = useAuth();
   const [perfil, setPerfil] = useState<any>(null);
@@ -305,7 +306,7 @@ import { cn } from '../../../lib/utils';export default function StudentAdaptiveJ
        {/* RADAR DE COMPETÊNCIAS */}
        <div className="bg-white rounded-[2rem] p-8 border border-slate-200 shadow-sm mt-8">
            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6 text-center">Auditoria de Capacidades Técnicas</h3>
-           <div className="max-w-2xl mx-auto h-[350px]">
+           <ChartContainer height={350} className="max-w-2xl mx-auto">
                 <ResponsiveContainer width="100%" height="100%">
                     <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
                         <PolarGrid stroke="#e2e8f0" />
@@ -315,7 +316,7 @@ import { cn } from '../../../lib/utils';export default function StudentAdaptiveJ
                         <Tooltip />
                     </RadarChart>
                 </ResponsiveContainer>
-           </div>
+           </ChartContainer>
        </div>
 
     </div>

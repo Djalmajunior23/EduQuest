@@ -156,7 +156,7 @@ import { generateQuestions, suggestQuestionMetadata } from '../services/aiAssist
       text: '', 
       options: ['', '', '', ''], 
       correctOptionIndex: 0, 
-      difficulty: 'medium', 
+      difficulty: 'Médio', 
       tags: '',
       competence: '',
       discipline: '',
@@ -198,7 +198,7 @@ import { generateQuestions, suggestQuestionMetadata } from '../services/aiAssist
       text: question.text || '',
       options: question.options || ['', '', '', ''],
       correctOptionIndex: question.correct_option_index || 0,
-      difficulty: question.difficulty || 'medium',
+      difficulty: question.difficulty || 'Médio',
       tags: Array.isArray(question.tags) ? question.tags.join(', ') : '',
       competence: question.competence || '',
       discipline: question.discipline || '',
@@ -424,9 +424,9 @@ import { generateQuestions, suggestQuestionMetadata } from '../services/aiAssist
             className="p-2 border rounded-xl border-slate-200"
           >
             <option value="all">Filtro: Dificuldade (Todas)</option>
-            <option value="easy">Easy</option>
-            <option value="medium">Medium</option>
-            <option value="hard">Hard</option>
+            <option value="Fácil">Fácil</option>
+            <option value="Médio">Médio</option>
+            <option value="Difícil">Difícil</option>
           </select>
           <select 
             value={filterBloom}
@@ -462,13 +462,13 @@ import { generateQuestions, suggestQuestionMetadata } from '../services/aiAssist
                     onChange={(e) => handleUpdateDifficulty(q.id, e.target.value)}
                     className={cn(
                       "px-1 py-0.5 rounded text-[10px] font-black uppercase transition-all bg-transparent outline-none cursor-pointer",
-                      q.difficulty === 'easy' ? "text-emerald-600" :
-                      q.difficulty === 'medium' ? "text-amber-600" : "text-red-600"
+                      q.difficulty === 'Fácil' ? "text-emerald-600" :
+                      q.difficulty === 'Médio' ? "text-amber-600" : "text-red-600"
                     )}
                   >
-                    <option value="easy">Easy</option>
-                    <option value="medium">Medium</option>
-                    <option value="hard">Hard</option>
+                    <option value="Fácil">Fácil</option>
+                    <option value="Médio">Médio</option>
+                    <option value="Difícil">Difícil</option>
                   </select>
                 </div>
                 <div className="flex items-center gap-1.5 px-2 py-1 bg-slate-100/50 rounded-lg">
@@ -713,12 +713,14 @@ import { generateQuestions, suggestQuestionMetadata } from '../services/aiAssist
                 <div className="flex items-center gap-3">
                   <button 
                     type="button"
+                    id="ai-quick-fill-btn"
                     onClick={handleSuggestMetadata}
                     disabled={metadataLoading || !formData.text}
-                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-indigo-700 transition-all disabled:opacity-50 shadow-lg shadow-indigo-100"
+                    className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:from-indigo-700 hover:to-blue-700 transition-all disabled:opacity-50 shadow-xl shadow-indigo-200 group relative overflow-hidden"
                   >
+                    <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500 ease-in-out" />
                     {metadataLoading ? <Loader2 className="w-4 h-4 animate-spin"/> : <Sparkles className="w-4 h-4" />}
-                    Sugerir com IA
+                    Smart Fill (IA)
                   </button>
                   <button 
                     onClick={() => {
@@ -822,23 +824,26 @@ import { generateQuestions, suggestQuestionMetadata } from '../services/aiAssist
 
                 {activeTab === 'metadata' && (
                   <div className="space-y-8">
-                    <div className="p-4 bg-indigo-50 rounded-xl border border-indigo-100">
-                      <div className="flex justify-between items-center mb-4">
+                    <div className="p-5 bg-gradient-to-br from-indigo-50 to-blue-50 rounded-2xl border border-indigo-100 relative overflow-hidden">
+                      <div className="absolute top-0 right-0 p-2 opacity-10">
+                        <Sparkles className="w-24 h-24 text-indigo-400" />
+                      </div>
+                      <div className="flex justify-between items-center mb-4 relative z-10">
                         <h4 className="text-sm font-bold text-indigo-900 flex items-center gap-2">
                           <Layers className="w-4 h-4" />
-                          Classificação Pedagógica (Taxonomia & Dificuldade)
+                          Classificação Pedagógica Automática
                         </h4>
                         <button
                           type="button"
                           onClick={handleSuggestMetadata}
                           disabled={metadataLoading || !formData.text}
-                          className="flex items-center gap-1 text-xs font-bold bg-indigo-200 text-indigo-700 px-3 py-1.5 rounded-lg hover:bg-indigo-300 disabled:opacity-50 transition-colors"
+                          className="flex items-center gap-2 text-xs font-bold bg-white text-indigo-600 px-4 py-2 rounded-xl hover:bg-indigo-50 border border-indigo-200 disabled:opacity-50 transition-all shadow-sm shadow-indigo-100"
                         >
                           {metadataLoading ? <Loader2 className="w-4 h-4 animate-spin"/> : <Sparkles className="w-4 h-4" />}
-                          Preencher com IA
+                          Recalcular com IA
                         </button>
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
                         <div>
                           <label className="block text-xs font-bold text-slate-500 mb-1">Dificuldade</label>
                             <select 
@@ -846,9 +851,9 @@ import { generateQuestions, suggestQuestionMetadata } from '../services/aiAssist
                               onChange={e => setFormData({...formData, difficulty: e.target.value})}
                               className="w-full p-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none"
                             >
-                              <option value="easy">Easy</option>
-                              <option value="medium">Medium</option>
-                              <option value="hard">Hard</option>
+                              <option value="Fácil">Fácil</option>
+                              <option value="Médio">Médio</option>
+                              <option value="Difícil">Difícil</option>
                             </select>
                         </div>
                         <div>

@@ -26,6 +26,8 @@ import { generateLessonPlan } from '../services/aiAssistantService';
 import { useAuth } from '../lib/AuthContext';export default function LessonPlanner() {
   const { profile } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [generatedPlan, setGeneratedPlan] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [plans, setPlans] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState('plans');
@@ -39,6 +41,7 @@ import { useAuth } from '../lib/AuthContext';export default function LessonPlann
     aiInsights: true
   });
 
+  // ... (inside handleGenerate, setGeneratedPlan and setIsReviewModalOpen(true))
   useEffect(() => {
     if (profile) {
       fetchPlans();
@@ -79,16 +82,35 @@ import { useAuth } from '../lib/AuthContext';export default function LessonPlann
       });
 
       if (plan) {
+        setGeneratedPlan({
+           ...formData,
+           ai_recommendation: plan.aiRecommendation,
+           activities: plan.activities
+        });
+        setIsModalOpen(false);
+        setIsReviewModalOpen(true);
+      }
+    } catch (error) {
+      console.error('Error generating plan:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleApprovePlan = async () => {
+    if (!generatedPlan || !profile) return;
+    setLoading(true);
+    try {
         const newPlan = {
-          title: formData.title,
-          uc: formData.uc,
-          theme: formData.theme,
-          level: formData.level,
-          discipline: formData.discipline,
-          objectives: formData.objectives,
-          ai_insights: formData.aiInsights,
-          ai_recommendation: plan.aiRecommendation,
-          activities: plan.activities,
+          title: generatedPlan.title,
+          uc: generatedPlan.uc,
+          theme: generatedPlan.theme,
+          level: generatedPlan.level,
+          discipline: generatedPlan.discipline,
+          objectives: generatedPlan.objectives,
+          ai_insights: generatedPlan.aiInsights,
+          ai_recommendation: generatedPlan.ai_recommendation,
+          activities: generatedPlan.activities,
           teacher_id: profile.id,
           created_at: new Date().toISOString()
         };
@@ -100,7 +122,8 @@ import { useAuth } from '../lib/AuthContext';export default function LessonPlann
         if (error) throw error;
         
         fetchPlans();
-        setIsModalOpen(false);
+        setIsReviewModalOpen(false);
+        setGeneratedPlan(null);
         setFormData({ 
           title: '', 
           uc: '', 
@@ -110,11 +133,10 @@ import { useAuth } from '../lib/AuthContext';export default function LessonPlann
           objectives: '', 
           aiInsights: true 
         });
-      }
     } catch (error) {
-      console.error('Error generating plan:', error);
+       console.error('Error saving plan:', error);
     } finally {
-      setLoading(false);
+       setLoading(false);
     }
   };
 
@@ -246,6 +268,32 @@ import { useAuth } from '../lib/AuthContext';export default function LessonPlann
           </div>
         </div>
       </div>
+
+      {/* Review Plan Modal */}
+      <AnimatePresence>
+        {isReviewModalOpen && generatedPlan && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-[2.5rem] w-full max-w-2xl p-10 shadow-2xl relative overflow-hidden"
+            >
+              <h2 className="text-2xl font-bold text-slate-900 mb-6">Revisar Plano Gerado</h2>
+              <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-black text-slate-400 uppercase mb-2">Sugestão de IA</label>
+                    <textarea value={generatedPlan.ai_recommendation} onChange={(e) => setGeneratedPlan({...generatedPlan, ai_recommendation: e.target.value})} className="w-full bg-slate-50 p-4 rounded-xl text-sm" rows={6}/>
+                  </div>
+              </div>
+              <div className="flex gap-4 mt-8">
+                  <button onClick={() => setIsReviewModalOpen(false)} className="px-6 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold">Cancelar</button>
+                  <button onClick={handleApprovePlan} className="flex-1 px-6 py-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700">Aprovar e Salvar</button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* New Plan Modal */}
       <AnimatePresence>

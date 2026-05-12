@@ -23,7 +23,7 @@ export async function generateQuestions(params: {
     3. O índice da opção correta (0-3).
     4. Uma explicação pedagógica detalhada sobre a resposta correta e os distratores.
     5. O nível da Taxonomia de Bloom.
-    6. A dificuldade (easy, medium, hard).
+    6. A dificuldade (Fácil, Médio, Difícil).
   `;
 
   const schema = {
@@ -112,12 +112,18 @@ export async function analyzePedagogicalResults(results: any): Promise<string> {
 
 export async function suggestQuestionMetadata(questionData: { text: string; options: string[]; correctIndex: number }): Promise<any> {
   const prompt = `
-    Analise a seguinte questão de múltipla escolha e classifique pedagogicamente.
-
+    [SISTEMA]: Você é um especialista em avaliação pedagógica e Taxonomia de Bloom.
+    [TAREFA]: Analise a questão de múltipla escolha abaixo e forneça os metadados pedagógicos.
+    
     Questão: ${questionData.text}
     Opções:
     ${normalizeArray(questionData.options).map((opt: string, i: number) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n')}
     Alternativa Correta: ${String.fromCharCode(65 + questionData.correctIndex)}
+
+    DIRETRIZES:
+    - Identifique a dificuldade (Fácil, Médio, Difícil).
+    - Determine o nível da Taxonomia de Bloom (Lembrar, Entender, Aplicar, Analisar, Avaliar, Criar).
+    - Escreva uma explicação detalhada e pedagógica justificando a resposta correta.
   `;
 
   const schema = {

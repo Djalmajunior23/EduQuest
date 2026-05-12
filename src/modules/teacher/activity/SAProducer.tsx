@@ -9,18 +9,14 @@ import React, { useState } from 'react';export default function SAProducer() {
   const handleGenerate = async () => {
     setGenerating(true);
     try {
-      const response = await fetch('/api/ai/generate-sa', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          context: {
-            ...prompt,
-            conhecimentos: prompt.conhecimentos.split(','),
-            capacidades: prompt.capacidades.split(',')
-          } 
-        }),
+      const { data, error } = await api.post<any>('/api/ai/generate-sa', { 
+        context: {
+          ...prompt,
+          conhecimentos: prompt.conhecimentos.split(','),
+          capacidades: prompt.capacidades.split(',')
+        } 
       });
-      const data = await response.json();
+      if (error) throw new Error(error);
       setSaContent(data.content);
     } catch (error) {
       console.error(error);

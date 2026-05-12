@@ -1,3 +1,4 @@
+import { ChartContainer } from './charts/ChartContainer';
 import { api } from '../lib/api';
 import { normalizeArray } from '../utils/normalizeArray';
 
@@ -5,8 +6,9 @@ import React, { useEffect, useState } from 'react';
 import {   LineChart, Line, AreaChart, Area, BarChart, Bar, 
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie 
 } from 'recharts';
-import {   Trophy, Users, Target, Zap, TrendingUp, AlertTriangle, 
-  CheckCircle2, Clock, Brain, LayoutDashboard, FileText
+import { 
+  Trophy, Users, Target, Zap, TrendingUp, AlertTriangle, 
+  CheckCircle2, Clock, Brain, LayoutDashboard, FileText, ChevronRight
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useAuth } from '../lib/AuthContext';
@@ -109,7 +111,7 @@ import { cn } from '../lib/utils';export default function AnalyticsDashboard() {
                   </div>
                </div>
             </div>
-            <div className="h-[300px] min-h-[300px] w-full">
+            <ChartContainer height={300}>
                <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={normalizeArray(data?.performance)}>
                      <defs>
@@ -134,7 +136,7 @@ import { cn } from '../lib/utils';export default function AnalyticsDashboard() {
                      <Area type="monotone" dataKey="avg" stroke="#e2e8f0" strokeWidth={2} fill="transparent" strokeDasharray="5 5" />
                   </AreaChart>
                </ResponsiveContainer>
-            </div>
+            </ChartContainer>
          </div>
 
          {/* Technical Mastery */}
@@ -171,7 +173,7 @@ import { cn } from '../lib/utils';export default function AnalyticsDashboard() {
             <h3 className="text-lg font-black italic uppercase tracking-tighter text-slate-900 mb-8 flex items-center gap-2">
                <Clock className="w-5 h-5 text-emerald-600" /> Engajamento Semanal
             </h3>
-            <div className="h-[200px] min-h-[200px] w-full">
+            <ChartContainer height={200}>
                <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={normalizeArray(data?.engagement)}>
                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -187,7 +189,7 @@ import { cn } from '../lib/utils';export default function AnalyticsDashboard() {
                      <Bar dataKey="hours" fill="#10b981" radius={[8, 8, 0, 0]} />
                   </BarChart>
                </ResponsiveContainer>
-            </div>
+            </ChartContainer>
          </div>
 
          {/* Alertas & Riscos */}
@@ -227,11 +229,5 @@ import { cn } from '../lib/utils';export default function AnalyticsDashboard() {
          </div>
       </div>
     </div>
-  );
-}
-
-function ChevronRight({ className }: { className?: string }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m9 18 6-6-6-6"/></svg>
   );
 }

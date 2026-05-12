@@ -99,15 +99,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       
       try {
-        const { data, error } = await api.get<{ user: any }>('/api/auth/me');
-        if (data && data.user && mounted) {
-           setUser({ id: data.user.id, email: data.user.email });
+        const { data, error } = await api.get<any>('/api/auth/me');
+        if (data?.success && data.data?.user && mounted) {
+           setUser({ id: data.data.user.id, email: data.data.user.email });
            setProfile({
-             ...data.user,
-             id: data.user.id,
-             role: data.user.perfil,
-             tenantId: data.user.tenantId,
-             saldoTokensIA: data.user.aiTokens
+             ...data.data.user,
+             id: data.data.user.id,
+             role: data.data.user.perfil,
+             tenantId: data.data.user.tenantId,
+             saldoTokensIA: data.data.user.aiTokens
            });
         } else if (error) {
            console.warn("Session validation failed:", error);
@@ -131,15 +131,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const setBackendToken = async (token: string) => {
     localStorage.setItem('eduquest_token', token);
     try {
-      const { data, error } = await api.get<{ user: any }>('/api/auth/me');
-      if (data && data.user) {
-        setUser({ id: data.user.id, email: data.user.email });
+      const { data, error } = await api.get<any>('/api/auth/me');
+      if (data?.success && data.data?.user) {
+        setUser({ id: data.data.user.id, email: data.data.user.email });
         setProfile({
-          ...data.user,
-          id: data.user.id,
-          role: data.user.perfil,
-          tenantId: data.user.tenantId,
-          saldoTokensIA: data.user.aiTokens
+          ...data.data.user,
+          id: data.data.user.id,
+          role: data.data.user.perfil,
+          tenantId: data.data.user.tenantId,
+          saldoTokensIA: data.data.user.aiTokens
         });
       } else if (error) {
          throw new Error(error);
@@ -152,17 +152,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signInWithEmail = async (email: string, senha: string) => {
-    const { data, error } = await api.post<{ token: string, user: any }>('/api/auth/login', { email, senha });
+    const { data, error } = await api.post<any>('/api/auth/login', { email, senha });
     if (error) throw new Error(error);
-    if (data?.token) {
-       await setBackendToken(data.token);
+    if (data?.success && data.data?.token) {
+       await setBackendToken(data.data.token);
     }
   };
 
   const signUpWithEmail = async (email: string, senha: string, nome: string) => {
-    const { data, error } = await api.post<{ user: any }>('/api/auth/register', { email, senha, nome });
+    const { data, error } = await api.post<any>('/api/auth/register', { email, senha, nome });
     if (error) throw new Error(error);
-    if (data) {
+    if (data?.success) {
        await signInWithEmail(email, senha);
     }
   };

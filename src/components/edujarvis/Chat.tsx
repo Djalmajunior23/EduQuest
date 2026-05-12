@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Send, X, Bot, Sparkles, User, Minimize2, Terminal, Code } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import { api } from '../../lib/api';
 import { useAuth } from '../../lib/AuthContext';
 import { cn } from '../../lib/utils';
 import { EduJarvisQuickActions } from './QuickActions';
@@ -113,21 +114,18 @@ export function EduJarvisChat() {
     setIsLoading(true);
 
     try {
-      const resp = await fetch('/api/edujarvis/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-            message: textToSend, 
-            profile, 
-            agentId: selectedAgent 
-        })
+      const { data, error } = await api.post<any>('/api/edujarvis/chat', { 
+         message: textToSend, 
+         profile, 
+         agentId: selectedAgent 
       });
       
-      const response = await resp.json();
+      if (error) throw new Error(error);
+
       setMessages(prev => [...prev, {
-        role: response.role || 'ASSISTANT',
-        content: response.message || response.content,
-        timestamp: response.timestamp || new Date(),
+        role: data.role || 'ASSISTANT',
+        content: data.message || data.content,
+        timestamp: data.timestamp || new Date(),
         contentLoaded: false // For typing effect
       }]);
     } catch (error) {

@@ -106,7 +106,17 @@ class MailService {
       this.initializeProvider();
     }
     
-    const result = await this.provider!.send(options);
+    let result: { success: boolean; messageId?: string, error?: string };
+
+    try {
+      result = await this.provider!.send(options);
+      if (!result.success) {
+        console.warn(`[EmailService] Falha ao enviar e-mail para ${options.to}: ${result.error}`);
+      }
+    } catch (e) {
+      console.warn(`[EmailService] Erro inesperado ao tentar enviar e-mail para ${options.to}:`, e);
+      result = { success: false, error: 'Erro inesperado ao enviar e-mail' };
+    }
     
     // Log do e-mail no banco de dados (EmailLogs)
     if (process.env.DATABASE_URL) {

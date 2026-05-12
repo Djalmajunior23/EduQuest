@@ -24,6 +24,7 @@ import { UserTable } from '../../components/users/UserTable';
 import { UserFormModal } from '../../components/users/UserFormModal';
 import { BulkImportModal } from '../../components/admin/BulkImportModal';
 import { listarUsuarios } from '../../services/userService';
+import { api } from '../../lib/api';
 
 
 const PermissionModal = ({isOpen, onClose, user, permissions, toggle, onSave}: any) => {
@@ -98,15 +99,12 @@ export default function UserManager() {
     setIsSaving(true);
     try {
       const url = selectedUser ? `/api/usuarios/${selectedUser.id}` : '/api/usuarios';
-      const method = selectedUser ? 'PUT' : 'POST';
+      
+      const { data: result, error } = selectedUser 
+        ? await api.put(url, data)
+        : await api.post(url, data);
 
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-      const result = await response.json();
-      if (!result.success) throw new Error(result.error);
+      if (error) throw new Error(error);
       
       setIsModalOpen(false);
       setSelectedUser(null);
@@ -128,11 +126,8 @@ export default function UserManager() {
   const savePermissions = async () => {
     if (!selectedUser) return;
     try {
-      await fetch(`/api/usuarios/${selectedUser.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ permissoes_granulares: newPermissions })
-      });
+      const { error } = await api.put(`/api/usuarios/${selectedUser.id}`, { permissoes_granulares: newPermissions });
+      if (error) throw new Error(error);
       setIsPermissionModalOpen(false);
       fetchUsers();
     } catch (e) {
@@ -282,13 +277,14 @@ export default function UserManager() {
       </section>
 
       {/* Users List - Refined Table */}
-      <section className="bg-white rounded-[3rem] border border-slate-100 shadow-2xl shadow-slate-100/50 overflow-hidden">
+      <section id="user-directory-panel" className="bg-white rounded-[3rem] border border-slate-100 shadow-2xl shadow-slate-100/50 overflow-hidden">
          <div className="overflow-x-auto">
             <UserTable
               users={normalizeArray(users).map(u => ({
                 id: u.id,
                 nome: u.nome,
                 email: u.email,
+                platform_email: u.platform_email,
                 perfil: u.perfil,
                 ativo: u.ativo
               }))}
@@ -298,11 +294,8 @@ export default function UserManager() {
               }}
               onToggleStatus={async (userId, ativo) => {
                 try {
-                  await fetch(`/api/usuarios/${userId}/status`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ativo })
-                  });
+                  const { error } = await api.patch(`/api/usuarios/${userId}/status`, { ativo });
+                  if (error) throw new Error(error);
                   fetchUsers();
                 } catch (e) {
                   console.error(e);
@@ -316,11 +309,8 @@ export default function UserManager() {
                 }
                 
                 try {
-                  await fetch(`/api/usuarios/${userId}/reset-password`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ novaSenha })
-                  });
+                  const { error } = await api.patch(`/api/usuarios/${userId}/reset-password`, { novaSenha });
+                  if (error) throw new Error(error);
                   alert('Senha redefinida com sucesso. O usuário precisará alterá-la no próximo login.');
                 } catch (e) {
                   console.error(e);
@@ -330,10 +320,9 @@ export default function UserManager() {
               onDelete={async (userId) => {
                 if (!confirm('Você tem certeza que deseja deletar este usuário? Esta ação não pode ser desfeita.')) return;
                 try {
-                  const res = await fetch(`/api/usuarios/${userId}`, { method: 'DELETE' });
-                  const json = await res.json();
-                  if (!json.success) {
-                    alert(json.error || 'Erro ao deletar usuário.');
+                  const { error } = await api.delete(`/api/usuarios/${userId}`);
+                  if (error) {
+                    alert(error || 'Erro ao deletar usuário.');
                   }
                   fetchUsers();
                 } catch (e) {

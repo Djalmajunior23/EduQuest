@@ -31,7 +31,7 @@ export class AIService {
 
   public static async generateJSON<T = any>(prompt: string, schema: any, modelTier?: string): Promise<T> {
     const ai = this.getAI();
-    const modelId = modelTier === 'PREMIUM' ? 'gemini-2.0-pro-exp-02-05' : 'gemini-2.0-flash'; // Optimized models
+    const modelId = modelTier === 'PREMIUM' ? 'gemini-3.1-pro-preview' : 'gemini-3-flash-preview'; // Updated to latest recommended models
 
     try {
       const result = await ai.models.generateContent({

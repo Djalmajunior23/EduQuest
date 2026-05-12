@@ -58,20 +58,18 @@ export default function QuestionBank() {
     if (!aiPrompt.trim()) return;
     setGenerating(true);
     try {
-      const response = await fetch('/api/ai/generate-questions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: aiPrompt }),
+      const { data, error } = await api.post<any[]>('/api/ai/generate-questions', {
+        prompt: aiPrompt
       });
-      const data = await response.json();
+      if (error) throw new Error(error);
       const safeData = normalizeArray(data);
       setSuggestedQuestions(safeData.map((q) => ({
         ...q,
         ucId: 'UC-Inteligência Educacional Interativa-001'
       })));
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      alert('Falha ao gerar questões com IA.');
+      alert('Falha ao gerar questões com IA: ' + (error.message || 'Erro desconhecido'));
     } finally {
       setGenerating(false);
     }
@@ -183,8 +181,8 @@ export default function QuestionBank() {
                   <div className="flex-1 space-y-4">
                     <div className="flex items-center gap-2">
                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                        q.difficulty === 'easy' ? 'bg-green-100 text-green-700' : 
-                        q.difficulty === 'medium' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
+                        q.difficulty === 'Fácil' ? 'bg-green-100 text-green-700' : 
+                        q.difficulty === 'Médio' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
                       }`}>
                         {q.difficulty}
                       </span>
@@ -282,10 +280,10 @@ export default function QuestionBank() {
                     onChange={(e) => setFilterDifficulty(e.target.value)}
                     className="w-full bg-white border-none rounded-xl py-2.5 px-4 shadow-sm focus:ring-2 focus:ring-indigo-600 font-bold text-sm"
                   >
-                    <option value="">Todas</option>
-                    <option value="easy">Fácil</option>
-                    <option value="medium">Médio</option>
-                    <option value="hard">Difícil</option>
+                    <option value="all">Filtro: Dificuldade (Todas)</option>
+                    <option value="Fácil">Fácil</option>
+                    <option value="Médio">Médio</option>
+                    <option value="Difícil">Difícil</option>
                   </select>
                 </div>
                 <div>
@@ -357,8 +355,8 @@ export default function QuestionBank() {
                 <div className="flex-1 space-y-3">
                   <div className="flex items-center gap-3">
                     <span className={`text-[10px] uppercase font-black px-3 py-1 rounded-full ${
-                        q.difficulty === 'easy' ? 'bg-green-50 text-green-600' : 
-                        q.difficulty === 'medium' ? 'bg-indigo-50 text-indigo-600' : 'bg-red-50 text-red-600'
+                        q.difficulty === 'Fácil' ? 'bg-green-50 text-green-600' : 
+                        q.difficulty === 'Médio' ? 'bg-indigo-50 text-indigo-600' : 'bg-red-50 text-red-600'
                       }`}>
                         {q.difficulty}
                       </span>

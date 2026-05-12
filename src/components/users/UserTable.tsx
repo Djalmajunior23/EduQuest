@@ -8,6 +8,7 @@ interface User {
   id: string;
   nome: string;
   email: string;
+  platform_email?: string | null;
   perfil: string;
   ativo: boolean;
 }
@@ -53,7 +54,14 @@ export const UserTable = ({ users, onEdit, onToggleStatus, onResetPassword, onDe
               className="hover:bg-slate-50 transition-colors"
             >
               <td className="px-6 py-4 font-bold text-slate-900">{user.nome}</td>
-              <td className="px-6 py-4 text-slate-500">{user.email}</td>
+              <td className="px-6 py-4">
+                <div className="flex flex-col">
+                  <span className="text-slate-900 font-medium">{user.email}</span>
+                  {user.platform_email && (
+                    <span className="text-[10px] font-black text-indigo-500 uppercase tracking-tight">Institutional: {user.platform_email}</span>
+                  )}
+                </div>
+              </td>
               <td className="px-6 py-4 font-bold">{user.perfil}</td>
               <td className="px-6 py-4">
                 <span className={cn(
@@ -65,10 +73,10 @@ export const UserTable = ({ users, onEdit, onToggleStatus, onResetPassword, onDe
               </td>
               <td className="px-6 py-4 text-right">
                 <div className="flex justify-end gap-2">
-                  <button onClick={() => onEdit(user)} className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg"><Edit2 size={16} /></button>
-                  <button onClick={() => onToggleStatus(user.id, !user.ativo)} className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg"><Power size={16} /></button>
-                  <button onClick={() => onResetPassword(user.id)} className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg"><Lock size={16} /></button>
-                  <button onClick={() => onDelete(user.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg"><Trash2 size={16} /></button>
+                  <button onClick={() => onEdit(user)} title="Editar Usuário" className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"><Edit2 size={16} /></button>
+                  <button onClick={() => onToggleStatus(user.id, !user.ativo)} title={user.ativo ? "Bloquear Usuário" : "Ativar Usuário"} className={cn("p-2 rounded-lg transition-colors", user.ativo ? "text-slate-600 hover:bg-slate-100" : "text-emerald-600 hover:bg-emerald-50")}><Power size={16} /></button>
+                  <button onClick={() => onResetPassword(user.id)} title="Resetar Senha" className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"><Lock size={16} /></button>
+                  <button onClick={() => onDelete(user.id)} title="Excluir Usuário" className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 size={16} /></button>
                 </div>
               </td>
             </motion.tr>

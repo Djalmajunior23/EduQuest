@@ -7,7 +7,8 @@ import {
   BarChart as ReBarChart, Bar, XAxis, YAxis, CartesianGrid, 
   Tooltip, ResponsiveContainer, Cell, LineChart, Line, AreaChart, Area 
 } from 'recharts';
-import { cn } from '@/lib/utils';
+import { ChartContainer } from '../../components/charts/ChartContainer';
+import { cn } from '../../lib/utils';
 
 const COMPETENCY_DATA = [
   { name: 'Lógica de Programação', score: 85, critical: false },
@@ -58,7 +59,7 @@ export const BIModule = () => {
                         </div>
                     </div>
 
-                    <div className="h-[300px] w-full">
+                    <ChartContainer height={300}>
                         <ResponsiveContainer width="100%" height="100%">
                             <ReBarChart data={COMPETENCY_DATA} layout="vertical" margin={{ left: 40 }}>
                                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
@@ -81,7 +82,7 @@ export const BIModule = () => {
                                 </Bar>
                             </ReBarChart>
                         </ResponsiveContainer>
-                    </div>
+                    </ChartContainer>
                 </div>
 
                 {/* Alunos em Risco */}
@@ -180,7 +181,7 @@ export const BIModule = () => {
                         </h3>
                         <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-8">Uso da Plataforma / Semana</p>
                     </div>
-                    <div className="h-[200px] w-full">
+                    <ChartContainer height={200}>
                         <ResponsiveContainer width="100%" height="100%">
                             <AreaChart data={ENGAGEMENT_TREND}>
                                 <defs>
@@ -195,7 +196,7 @@ export const BIModule = () => {
                                 <Area type="monotone" dataKey="rate" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorEngage)" />
                             </AreaChart>
                         </ResponsiveContainer>
-                    </div>
+                    </ChartContainer>
                 </div>
 
                 {/* Resumo de Microcertificações */}

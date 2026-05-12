@@ -8,9 +8,13 @@ export class ProxiedGoogleGenAI {
   public models = {
     generateContent: async ({ model, contents, systemInstruction, config }: any) => {
       try {
+        const token = localStorage.getItem("eduquest_token");
         const res = await fetch('/api/ai/generate', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
           body: JSON.stringify({ model, contents, systemInstruction, config })
         });
         

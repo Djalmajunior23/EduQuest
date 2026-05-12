@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { ChartContainer } from '../../components/charts/ChartContainer';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Users, BookOpen, Brain, ShieldAlert, Target, Loader2, Info, 
@@ -169,7 +170,7 @@ export function AdminDashboardPanel() {
                           </div>
                         </div>
 
-                        <div className="h-[400px] w-full">
+                        <ChartContainer height={400}>
                            <ResponsiveContainer width="100%" height="100%">
                               <AreaChart data={GROWTH_DATA} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
                                 <defs>
@@ -193,7 +194,7 @@ export function AdminDashboardPanel() {
                                 <Area type="monotone" dataKey="active" stroke="#6366f1" strokeWidth={5} fillOpacity={1} fill="url(#colorActive)" />
                               </AreaChart>
                            </ResponsiveContainer>
-                        </div>
+                        </ChartContainer>
                      </div>
                   </section>
 

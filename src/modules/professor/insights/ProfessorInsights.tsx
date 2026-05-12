@@ -9,6 +9,7 @@ import {   BrainCircuit, ShieldAlert, Sparkles, AlertTriangle, TrendingUp, Trend
   User, CheckCircle2, ChevronRight, XOctagon, Loader2
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { ChartContainer } from '../../../components/charts/ChartContainer';
 import { cn } from '../../../lib/utils';export default function ProfessorInsights() {
   const { user } = useAuth();
   const [alertas, setAlertas] = useState<any[]>([]);
@@ -108,7 +109,7 @@ import { cn } from '../../../lib/utils';export default function ProfessorInsight
                 </div>
              </div>
 
-             <div className="h-[220px] w-full">
+             <ChartContainer height={220}>
                 <ResponsiveContainer width="100%" height="100%">
                    <AreaChart data={classTrend} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
                      <defs>
@@ -125,7 +126,7 @@ import { cn } from '../../../lib/utils';export default function ProfessorInsight
                      <Area type="monotone" dataKey="engajamento" stroke="#f43f5e" strokeDasharray="5 5" strokeWidth={2} fill="transparent" />
                    </AreaChart>
                 </ResponsiveContainer>
-             </div>
+             </ChartContainer>
          </div>
 
          {/* Painel Tático Rápido */}

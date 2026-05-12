@@ -66,6 +66,9 @@ model Usuario {
   turma           Turma?        @relation(fields: [turmaId], references: [id])
   telefone        String?
   fotoUrl         String?
+  platform_email       String?   @unique
+  email_alias_active   Boolean   @default(true)
+  email_created_at     DateTime  @default(now())
   ultimoLoginEm   DateTime?
   criadoEm        DateTime      @default(now())
   atualizadoEm    DateTime      @updatedAt

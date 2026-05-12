@@ -10,6 +10,7 @@ import {
   TrendingUp, Activity, Globe, Sparkles, ChevronRight, Info
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { ChartContainer } from '../../components/charts/ChartContainer';
 import { useAuth } from '../../lib/AuthContext';
 import { useTenant } from '../../lib/TenantContext';
 import { cn } from '../../lib/utils';
@@ -129,7 +130,7 @@ export default function CoordinatorBI() {
                  </button>
               </div>
 
-              <div className="flex-1 min-h-[350px]">
+              <ChartContainer height={350} className="flex-1">
                  <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={PLANO_DATA} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
                        <defs>
@@ -147,7 +148,7 @@ export default function CoordinatorBI() {
                        <Area type="monotone" dataKey="count" stroke="#6366f1" strokeWidth={5} fillOpacity={1} fill="url(#colorCount)" />
                     </AreaChart>
                  </ResponsiveContainer>
-              </div>
+              </ChartContainer>
            </div>
         </div>
 
@@ -178,7 +179,7 @@ export default function CoordinatorBI() {
               <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-8">
                  Alocação por Curso
               </h3>
-              <div className="h-[200px] flex items-center justify-center">
+              <ChartContainer height={200}>
                  <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                        <Pie
@@ -198,7 +199,7 @@ export default function CoordinatorBI() {
                        <Tooltip />
                     </PieChart>
                  </ResponsiveContainer>
-              </div>
+              </ChartContainer>
               <div className="grid grid-cols-2 gap-4 mt-8">
                  {distributionData.map((entry, i) => (
                     <div key={i} className="flex flex-col">

@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { prisma } from '../../lib/prisma';
 import { logAuditoria } from '../../lib/auditoria';
 import { AuthRequest } from '../../middlewares/auth.middleware';
+import { generatePlatformEmail } from '../../lib/emailUtils';
 import bcrypt from 'bcrypt';
 
 const router = Router();
@@ -81,6 +82,7 @@ router.post('/', async (req: AuthRequest, res: Response) => {
     }
 
     const senhaHash = await bcrypt.hash(senha, SALT_ROUNDS);
+    const platform_email = await generatePlatformEmail(nome, perfil);
 
     const usuario = await prisma.usuario.create({
       data: {
@@ -91,7 +93,8 @@ router.post('/', async (req: AuthRequest, res: Response) => {
         tenantId,
         turmaId: turmaId || null,
         deveTrocarSenha: deveTrocarSenha ?? true,
-        ativo: ativo ?? true
+        ativo: ativo ?? true,
+        platform_email
       }
     });
 
@@ -139,6 +142,7 @@ router.post('/import', async (req: AuthRequest, res: Response) => {
                 const perfilValido = ['ADMIN', 'PROFESSOR', 'ALUNO', 'COORDENADOR', 'GESTOR', 'SUPORTE'].includes(data.perfil?.toUpperCase());
                 
                 const senhaHash = await bcrypt.hash(data.senha, SALT_ROUNDS);
+                const platform_email = await generatePlatformEmail(data.nome, data.perfil || 'ALUNO');
                 
                 const user = await prisma.usuario.create({
                     data: {
@@ -146,7 +150,8 @@ router.post('/import', async (req: AuthRequest, res: Response) => {
                         email: data.email,
                         senhaHash,
                         perfil: perfilValido ? data.perfil?.toUpperCase() : 'ALUNO',
-                        tenantId
+                        tenantId,
+                        platform_email
                     }
                 });
                 
@@ -157,7 +162,7 @@ router.post('/import', async (req: AuthRequest, res: Response) => {
             }
         }
         
-        res.json({ success: true, result: { total: rowsToProcess.length, success, failed, errors } });
+        res.json({ success: true, data: { total: rowsToProcess.length, success, failed, errors } });
     } catch (error: any) {
         res.status(500).json({ success: false, error: error.message });
     }
@@ -258,6 +263,33 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
       res.json({ success: true, data: usuario });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+router.post('/migrate-emails', async (req: AuthRequest, res: Response) => {
+    try {
+        const users = await prisma.usuario.findMany({
+            where: {
+                OR: [
+                    { platform_email: null },
+                    { platform_email: '' }
+                ]
+            }
+        });
+
+        let updated = 0;
+        for (const user of users) {
+            const platform_email = await generatePlatformEmail(user.nome, user.perfil);
+            await prisma.usuario.update({
+                where: { id: user.id },
+                data: { platform_email }
+            });
+            updated++;
+        }
+
+        res.json({ success: true, message: `${updated} usuários atualizados.` });
+    } catch (error: any) {
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 

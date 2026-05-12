@@ -36,10 +36,6 @@ axiosInstance.interceptors.request.use((config) => {
 async function requestWrap<T = any>(promise: Promise<any>): Promise<{ data: T | null; error: string | null }> {
   try {
     const response = await promise;
-    // O backend agora retorna { success: true, data: ... }
-    if (response.data && response.data.success !== undefined) {
-       return { data: response.data.data as T, error: null };
-    }
     return { data: response.data as T, error: null };
   } catch (err: any) {
     const errorMsg = err.response?.data?.error || err.response?.data?.message || err.message;
@@ -53,7 +49,7 @@ export const api = {
   patch: <T = any>(url: string, data?: any, config?: any) => requestWrap<T>(axiosInstance.patch(url, data, config)),
   put: <T = any>(url: string, data?: any, config?: any) => requestWrap<T>(axiosInstance.put(url, data, config)),
   delete: <T = any>(url: string, config?: any) => requestWrap<T>(axiosInstance.delete(url, config)),
-  from: (table: string) => {
+  from: <T = any>(table: string) => {
     const builder: any = {
       _table: table,
       _method: 'GET',
@@ -162,7 +158,12 @@ export const api = {
           promise = axiosInstance.delete(url);
         }
 
-        return requestWrap(promise!).then(onfulfilled, onrejected);
+        return requestWrap(promise!).then(res => {
+          if (res.data && (res.data as any).success !== undefined) {
+            return { data: (res.data as any).data as T, error: res.error };
+          }
+          return res;
+        }).then(onfulfilled, onrejected);
       }
     };
     return builder;

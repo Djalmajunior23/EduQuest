@@ -12,6 +12,7 @@ import {
   Target, Microscope, Binary
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { ChartContainer } from '../../components/charts/ChartContainer';
 import { BIService, BIAnalysis } from '../../services/BIService';
 import { useAuth } from '../../lib/AuthContext';
 import { useTenant } from '../../lib/TenantContext';
